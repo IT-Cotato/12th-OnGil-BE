@@ -7,8 +7,7 @@ services:
     restart: always
     environment:
       SPRING_PROFILES_ACTIVE: prod           # prod 프로필 사용
-      DB_PASSWORD: ${DB_PASSWORD}            # RDS 비밀번호 (prod.env에서 읽음)
     ports:
       - "8081:8081"
     env_file:
-      - ./env/prod.env                       # 서버 전용 비밀번호 저장 파일
+      - ./env/prod.env                       # 서버 전용 비밀번호 및 기타 설정 저장 파일
