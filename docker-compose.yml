@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  backend:
+    image: neibler/ongil-backend:latest      # 또는 chj78/ongil-backend:latest
+    container_name: ongil-backend
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod           # prod 프로필 사용
+      DB_PASSWORD: ${DB_PASSWORD}            # RDS 비밀번호 (prod.env에서 읽음)
+    ports:
+      - "8081:8081"
+    env_file:
+      - ./env/prod.env                       # 서버 전용 비밀번호 저장 파일
