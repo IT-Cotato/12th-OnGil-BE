@@ -1,0 +1,38 @@
+language: "ko"
+early_access: false
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_instructions:
+    - path: "src/main/java/**/*.java"
+      instructions: "SOLID 원칙, 스프링 어노테이션, 의존성 주입 패턴, 예외 처리에 중점을 둔다"
+    - path: "src/test/**/*.java"
+      instructions: "테스트 커버리지, 스프링 테스트 어노테이션, mock 사용법, 네이밍 규칙을 확인한다"
+    - path: "**/*.{yml,yaml,properties}"
+      instructions: "스프링 설정, 보안 설정, DB 연결, 환경 설정을 검증한다"
+  path_filters:
+    - "!**/build/**"
+    - "!**/.gradle/**"
+    - "!**/gradle/wrapper/**"
+    - "!**/gradlew*"
+    - "!**/out/**"
+    - "!**/*.class"
+    - "!**/*.jar"
+    - "!**/*.war"
+    - "!**/node_modules/**"
+chat:
+  auto_reply: true
+tone_instructions: "버그·성능·SOLID·클린코드 관점에서 핵심 피드백과 변경 요약을 제공하며, 허구 정보 생성·추측을 금지합니다."
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
