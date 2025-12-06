@@ -4,5 +4,5 @@ branches:
     prefix: 'fix/'
   - label: '*'
     prefix: 'feature/'
-commentMessage: '브랜치 ${branchName} created!'
+commentMessage: 'Branch ${branchName} created!'
 autoCloseIssue: true
