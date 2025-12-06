@@ -1,0 +1,8 @@
+branchName: '${issue.number}'
+branches:
+  - label: '🐞 Fix'
+    prefix: 'fix/'
+  - label: '*'
+    prefix: 'feature/'
+commentMessage: '브랜치 ${branchName} created!'
+autoCloseIssue: true
