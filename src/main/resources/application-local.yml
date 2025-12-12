@@ -2,7 +2,7 @@ spring:
   config:
     activate:
       on-profile: local
-    import: optional:file:env/local.env[.properties]
+    import: optional:file:.env[.properties]
 
   datasource:
     url: ${LOCAL_DB_URL}
