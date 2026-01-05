@@ -8,6 +8,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod           # prod 프로필 사용
     ports:
-      - "8081:8081"
+      - "8080:8080"
     env_file:
       - .env                                 # 최상위 .env 파일 사용
