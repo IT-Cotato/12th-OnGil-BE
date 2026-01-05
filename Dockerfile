@@ -6,7 +6,7 @@ ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} app.jar
 
 # 3. 컨테이너가 노출할 포트 (Spring Boot 기본 8080)
-EXPOSE 8081
+EXPOSE 8080
 
 # 4. 컨테이너 시작 시 실행할 명령
 ENTRYPOINT ["java","-jar","/app.jar"]
