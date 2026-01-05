@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ser.Serializers;
 import com.ongil.backend.domain.order.enums.OrderStatus;
 import com.ongil.backend.domain.payment.entity.Payment;
 import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "orders")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Order extends Serializers.Base {
+public class Order extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
