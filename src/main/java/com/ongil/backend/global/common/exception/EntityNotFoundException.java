@@ -1,4 +1,4 @@
-package com.ongil.backend.common.exception;
+package com.ongil.backend.global.common.exception;
 
 // 404 Not Found
 public class EntityNotFoundException extends AppException {

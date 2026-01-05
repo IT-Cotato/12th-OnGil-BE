@@ -2,14 +2,12 @@ package com.ongil.backend.domain.review.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
 import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -21,10 +19,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "reviews")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Review {
+public class Review extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "review_id")
 	private Long id;
 
 	@Enumerated(EnumType.STRING)
@@ -73,14 +72,6 @@ public class Review {
 
 	@Column(name = "earned_points")
 	private Integer earnedPoints;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;

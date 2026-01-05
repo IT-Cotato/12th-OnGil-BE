@@ -10,4 +10,4 @@ services:
     ports:
       - "8081:8081"
     env_file:
-      - ./env/prod.env                       # 서버 전용 비밀번호 및 기타 설정 저장 파일
+      - .env                   # 서버 전용 비밀번호 및 기타 설정 저장 파일

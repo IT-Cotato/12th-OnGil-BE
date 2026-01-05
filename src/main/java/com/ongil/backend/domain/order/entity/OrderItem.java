@@ -1,13 +1,11 @@
 package com.ongil.backend.domain.order.entity;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.review.entity.Review;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -19,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "order_items")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class OrderItem {
+public class OrderItem extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,10 +34,6 @@ public class OrderItem {
 
 	@Column(name = "price_at_order", nullable = false)
 	private Integer priceAtOrder;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "order_id", nullable = false)

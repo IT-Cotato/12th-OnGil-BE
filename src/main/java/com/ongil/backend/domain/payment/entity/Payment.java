@@ -2,11 +2,10 @@ package com.ongil.backend.domain.payment.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.payment.enums.PaymentMethod;
 import com.ongil.backend.domain.payment.enums.PaymentStatus;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -18,10 +17,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "payments")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Payment {
+public class Payment extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "payment_id")
 	private Long id;
 
 	@Column(name = "payment_amount", nullable = false)
@@ -38,15 +38,11 @@ public class Payment {
 	@Column(name = "payment_status", nullable = false)
 	private PaymentStatus paymentStatus;
 
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
 	@Column(name = "canceled_at")
 	private LocalDateTime canceledAt;
 
 	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "order_id", nullable = false)
+	@JoinColumn(name = "order_id", nullable = false, unique = true)
 	private Order order;
 
 	@Builder

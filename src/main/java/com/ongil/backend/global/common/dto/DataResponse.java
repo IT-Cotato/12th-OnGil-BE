@@ -1,4 +1,4 @@
-package com.ongil.backend.common.dto;
+package com.ongil.backend.global.common.dto;
 
 import org.springframework.http.HttpStatus;
 

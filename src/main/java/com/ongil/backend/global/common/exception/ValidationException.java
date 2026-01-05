@@ -1,4 +1,4 @@
-package com.ongil.backend.common.exception;
+package com.ongil.backend.global.common.exception;
 
 // 비즈니스 로직 검증 실패 (400 Bad Request, 409 Conflict)
 public class ValidationException extends AppException {

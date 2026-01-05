@@ -4,8 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.hibernate.annotations.CreationTimestamp;
-
+import com.fasterxml.jackson.databind.ser.Serializers;
 import com.ongil.backend.domain.order.enums.OrderStatus;
 import com.ongil.backend.domain.payment.entity.Payment;
 import com.ongil.backend.domain.user.entity.User;
@@ -20,10 +19,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "orders")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Order {
+public class Order extends Serializers.Base {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "order_id")
 	private Long id;
 
 	@Column(name = "order_number", nullable = false, unique = true, length = 50)
@@ -53,10 +53,6 @@ public class Order {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "order_status", nullable = false)
 	private OrderStatus orderStatus;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 
 	@Column(name = "shipping_started_at")
 	private LocalDateTime shippingStartedAt;

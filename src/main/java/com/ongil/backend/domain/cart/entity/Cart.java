@@ -1,11 +1,8 @@
 package com.ongil.backend.domain.cart.entity;
 
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,10 +14,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "carts")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Cart {
+public class Cart extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "cart_id")
 	private Long id;
 
 	@Column(name = "selected_size", length = 20)
@@ -31,10 +29,6 @@ public class Cart {
 
 	@Column(nullable = false)
 	private Integer quantity;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)

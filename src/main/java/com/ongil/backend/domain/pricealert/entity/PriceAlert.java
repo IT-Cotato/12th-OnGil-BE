@@ -2,10 +2,9 @@ package com.ongil.backend.domain.pricealert.entity;
 
 import java.time.LocalDateTime;
 
-import org.hibernate.annotations.CreationTimestamp;
-
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,10 +16,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "price_alerts")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class PriceAlert {
+public class PriceAlert extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "price_alert_id")
 	private Long id;
 
 	@Column(name = "target_price", nullable = false)
@@ -28,10 +28,6 @@ public class PriceAlert {
 
 	@Column(name = "is_active", nullable = false)
 	private Boolean isActive = true;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 
 	@Column(name = "read_at")
 	private LocalDateTime readAt;
