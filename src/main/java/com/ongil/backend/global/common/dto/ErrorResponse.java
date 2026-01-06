@@ -1,8 +1,8 @@
-package com.ongil.backend.common.dto;
+package com.ongil.backend.global.common.dto;
 
 import org.springframework.http.HttpStatus;
 
-import com.ongil.backend.common.exception.ErrorCode;
+import com.ongil.backend.global.common.exception.ErrorCode;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;

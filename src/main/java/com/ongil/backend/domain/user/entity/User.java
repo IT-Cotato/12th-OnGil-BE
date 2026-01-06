@@ -1,18 +1,10 @@
 package com.ongil.backend.domain.user.entity;
 
-import java.time.*;
 import java.util.*;
 
-import org.hibernate.annotations.*;
-
 import com.ongil.backend.domain.address.entity.*;
-import com.ongil.backend.domain.cart.entity.*;
-import com.ongil.backend.domain.magazine.entity.*;
-import com.ongil.backend.domain.order.entity.*;
-import com.ongil.backend.domain.pricealert.entity.*;
-import com.ongil.backend.domain.review.entity.*;
 import com.ongil.backend.domain.user.enums.*;
-import com.ongil.backend.domain.wishlist.entity.*;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
@@ -22,10 +14,11 @@ import lombok.*;
 @Table(name = "users")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class User {
+public class User extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "user_id")
 	private Long id;
 
 	@Column(nullable = false, unique = true, length = 100)
@@ -33,6 +26,9 @@ public class User {
 
 	@Column(nullable = false, length = 50)
 	private String name;
+
+	@Column(name = "profile_img")
+	private String profileImg;
 
 	@Column(length = 20)
 	private String phone;
@@ -57,41 +53,16 @@ public class User {
 	@Column(nullable = false)
 	private UserRole role = UserRole.USER;
 
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
-
 	@OneToMany(mappedBy = "user")
 	private List<Address> addresses = new ArrayList<>();
 
-	@OneToMany(mappedBy = "user")
-	private List<PriceAlert> priceAlerts = new ArrayList<>();
-
-	@OneToMany(mappedBy = "user")
-	private List<MagazineComment> magazineComments = new ArrayList<>();
-
-	@OneToMany(mappedBy = "user")
-	private List<Review> reviews = new ArrayList<>();
-
-	@OneToMany(mappedBy = "user")
-	private List<Wishlist> wishlists = new ArrayList<>();
-
-	@OneToMany(mappedBy = "user")
-	private List<Cart> carts = new ArrayList<>();
-
-	@OneToMany(mappedBy = "user")
-	private List<Order> orders = new ArrayList<>();
-
 	@Builder
-	public User(String email, String name, String phone, String socialProvider,
+	public User(String email, String name, String profileImg, String phone, String socialProvider,
 		String socialId, Integer height, Integer weight, String usualSize,
 		UserRole role) {
 		this.email = email;
 		this.name = name;
+		this.profileImg = profileImg;
 		this.phone = phone;
 		this.socialProvider = socialProvider;
 		this.socialId = socialId;

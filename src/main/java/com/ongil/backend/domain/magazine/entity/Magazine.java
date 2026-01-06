@@ -1,11 +1,9 @@
 package com.ongil.backend.domain.magazine.entity;
 
-import java.time.*;
 import java.util.*;
 
-import org.hibernate.annotations.*;
-
 import com.ongil.backend.domain.magazine.enums.*;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
@@ -15,10 +13,11 @@ import lombok.*;
 @Table(name = "magazines")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Magazine {
+public class Magazine extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "magazine_id")
 	private Long id;
 
 	@Column(nullable = false, length = 200)
@@ -42,10 +41,6 @@ public class Magazine {
 
 	@Column(name = "view_count", nullable = false)
 	private Integer viewCount = 0;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
 
 	@OneToMany(mappedBy = "magazine")
 	private List<MagazineComment> comments = new ArrayList<>();

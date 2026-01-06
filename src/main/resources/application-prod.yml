@@ -1,18 +1,20 @@
 spring:
+  config:
+    activate:
+      on-profile: prod
+    import: optional:file:.env[.properties]
+
   datasource:
-    url: jdbc:mysql://ongil-rds.c7muoime6pde.ap-northeast-2.rds.amazonaws.com:3306/ongil?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ongil_user        # RDS 만들 때 설정한 사용자
-    password: ${DB_PASSWORD}    # 비밀번호는 환경변수로 받기
+    url: ${PROD_DB_URL}
+    username: ${PROD_DB_USERNAME}
+    password: ${PROD_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
-
-server:
-  port: 8080

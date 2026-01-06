@@ -1,11 +1,7 @@
 package com.ongil.backend.domain.magazine.entity;
 
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "magazine_comments")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class MagazineComment {
+public class MagazineComment extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,14 +21,6 @@ public class MagazineComment {
 
 	@Column(nullable = false, length = 500)
 	private String content;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "magazine_id", nullable = false)

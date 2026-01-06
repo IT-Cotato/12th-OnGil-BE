@@ -1,16 +1,9 @@
 package com.ongil.backend.domain.product.entity;
 
-import java.time.*;
-import java.util.*;
-
-import org.hibernate.annotations.*;
-
 import com.ongil.backend.domain.brand.entity.*;
-import com.ongil.backend.domain.cart.entity.*;
 import com.ongil.backend.domain.category.entity.*;
 import com.ongil.backend.domain.product.enums.*;
-import com.ongil.backend.domain.review.entity.*;
-import com.ongil.backend.domain.wishlist.entity.*;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
@@ -20,10 +13,11 @@ import lombok.*;
 @Table(name = "products")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Product {
+public class Product extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "product_id")
 	private Long id;
 
 	@Column(nullable = false, length = 200)
@@ -72,14 +66,6 @@ public class Product {
 	@Column(name = "product_type", nullable = false)
 	private ProductType productType = ProductType.NORMAL;
 
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
-
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "brand_id", nullable = false)
 	private Brand brand;
@@ -87,15 +73,6 @@ public class Product {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", nullable = false)
 	private Category category;
-
-	@OneToMany(mappedBy = "product")
-	private List<Review> reviews = new ArrayList<>();
-
-	@OneToMany(mappedBy = "product")
-	private List<Wishlist> wishlists = new ArrayList<>();
-
-	@OneToMany(mappedBy = "product")
-	private List<Cart> carts = new ArrayList<>();
 
 	@Builder
 	public Product(String name, String description, Integer price, String materialOriginal,

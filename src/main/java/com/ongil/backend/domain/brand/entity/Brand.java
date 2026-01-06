@@ -1,11 +1,9 @@
 package com.ongil.backend.domain.brand.entity;
 
-import java.time.*;
 import java.util.*;
 
-import org.hibernate.annotations.*;
-
 import com.ongil.backend.domain.product.entity.*;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
@@ -15,10 +13,11 @@ import lombok.*;
 @Table(name = "brands")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Brand {
+public class Brand extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "brand_id")
 	private Long id;
 
 	@Column(nullable = false, length = 100)
@@ -30,11 +29,7 @@ public class Brand {
 	@Column(name = "logo_image_url", length = 500)
 	private String logoImageUrl;
 
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@OneToMany(mappedBy = "brand")
+	@OneToMany(mappedBy = "brand", fetch = FetchType.LAZY)
 	private List<Product> products = new ArrayList<>();
 
 	@Builder

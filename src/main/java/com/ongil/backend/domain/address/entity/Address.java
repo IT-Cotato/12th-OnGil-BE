@@ -1,11 +1,7 @@
 package com.ongil.backend.domain.address.entity;
 
-import java.time.LocalDateTime;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,10 +13,11 @@ import lombok.NoArgsConstructor;
 @Table(name = "addresses")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class Address {
+public class Address extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "address_id")
 	private Long id;
 
 	@Column(name = "recipient_name", nullable = false, length = 50)
@@ -43,14 +40,6 @@ public class Address {
 
 	@Column(name = "is_default", nullable = false)
 	private Boolean isDefault = false;
-
-	@CreationTimestamp
-	@Column(name = "created_at", nullable = false, updatable = false)
-	private LocalDateTime createdAt;
-
-	@UpdateTimestamp
-	@Column(name = "updated_at")
-	private LocalDateTime updatedAt;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
