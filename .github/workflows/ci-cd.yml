@@ -51,7 +51,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/ongil-backend
+            docker-compose down --remove-orphans
             echo "${{ secrets.ENV_FILE }}" > .env
-            docker-compose pull
-            docker-compose down
-            docker-compose up -d
+            docker-compose up -d --pull always
+            docker system prune -f
