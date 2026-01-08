@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.auth.client.google.GoogleApiClient;
 import com.ongil.backend.domain.auth.client.google.GoogleAuthClient;
@@ -14,6 +15,8 @@ import com.ongil.backend.domain.auth.dto.response.GoogleUserInfoResDto;
 import com.ongil.backend.domain.auth.entity.LoginType;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
+import com.ongil.backend.global.common.exception.AppException;
+import com.ongil.backend.global.common.exception.ErrorCode;
 import com.ongil.backend.global.config.redis.RedisRefreshTokenStore;
 import com.ongil.backend.global.security.jwt.JwtTokenProvider;
 
@@ -21,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class GoogleLoginService {
 
 	@Value("${google.client-id}")
@@ -42,6 +46,10 @@ public class GoogleLoginService {
 		String googleToken = getGoogleAccessToken(code);
 		GoogleUserInfoResDto userInfo = getGoogleUserInfo(googleToken);
 		String socialId = userInfo.sub();
+
+		if (socialId == null || socialId.isBlank()) {
+			throw new AppException(ErrorCode.INVALID_SOCIAL_USER_INFO);
+		}
 
 		boolean isNewUser = !userRepository.existsByLoginTypeAndSocialId(LoginType.GOOGLE, socialId);
 

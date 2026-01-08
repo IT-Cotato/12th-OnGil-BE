@@ -61,7 +61,7 @@ public class User extends BaseEntity {
 	@Builder.Default
 	private Integer points = 0;
 
-	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
 }

@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.auth.converter.AuthConverter;
 import com.ongil.backend.domain.auth.dto.response.AuthResDto;
@@ -14,6 +15,8 @@ import com.ongil.backend.domain.auth.client.kakao.KakaoApiClient;
 import com.ongil.backend.domain.auth.client.kakao.KakaoAuthClient;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
+import com.ongil.backend.global.common.exception.AppException;
+import com.ongil.backend.global.common.exception.ErrorCode;
 import com.ongil.backend.global.config.redis.RedisRefreshTokenStore;
 import com.ongil.backend.global.security.jwt.JwtTokenProvider;
 
@@ -21,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class KakaoLoginService {
 
 	@Value("${kakao.client-id}")
@@ -45,7 +49,11 @@ public class KakaoLoginService {
 		// 카카오 사용자 정보
 		KakaoUserInfoResDto userInfo = getKakaoUserInfo(kakaoToken);
 
-		String socialId = userInfo.id().toString();
+		String socialId = (userInfo.id() != null) ? userInfo.id().toString() : null;
+
+		if (socialId == null || socialId.isBlank()) {
+			throw new AppException(ErrorCode.INVALID_SOCIAL_USER_INFO);
+		}
 
 		// 신규 유저 확인
 		boolean isNewUser = !userRepository.existsByLoginTypeAndSocialId(LoginType.KAKAO, socialId);
