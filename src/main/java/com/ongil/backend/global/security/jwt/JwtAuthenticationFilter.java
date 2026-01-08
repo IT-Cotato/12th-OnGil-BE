@@ -16,8 +16,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
-import com.ongil.backend.domain.user.repository.UserRepository;
-
 // 이후 모든 요청에서 JWT를 검증하고 인증 상태로 만들어줌
 @Component
 @RequiredArgsConstructor
