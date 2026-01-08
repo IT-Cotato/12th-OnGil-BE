@@ -95,14 +95,13 @@ public class KakaoLoginService {
 		return Optional.ofNullable(userInfo.kakaoAccount())
 			.map(KakaoUserInfoResDto.KakaoAccount::profile)
 			.map(KakaoUserInfoResDto.KakaoAccount.Profile::nickname)
-			.orElse("kakao_user_" + userInfo.id()); // 닉네임 없으면 기본값
+			.orElse("kakao_user_" + userInfo.id());
 	}
 
 	private String extractEmail(KakaoUserInfoResDto userInfo) {
 		if (userInfo.kakaoAccount() != null && userInfo.kakaoAccount().email() != null) {
 			return userInfo.kakaoAccount().email();
 		}
-
 		// 이메일이 없을 시 임시 이메일 생성 (디비 제약조건)
 		return userInfo.id() + "@kakao.user";
 	}

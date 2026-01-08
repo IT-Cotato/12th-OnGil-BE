@@ -24,7 +24,6 @@ import com.ongil.backend.domain.user.repository.UserRepository;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtTokenProvider jwtTokenProvider;
-	private final UserRepository userRepository;
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -41,7 +40,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_USER"));
 
 			Authentication auth = new UsernamePasswordAuthenticationToken(userId, null, authorities);
-			SecurityContextHolder.getContext().setAuthentication(auth);
 
 			// 4. SecurityContext에 인증 정보 저장 (이 요청이 실행되는 동안만 유효)
 			SecurityContextHolder.getContext().setAuthentication(auth);

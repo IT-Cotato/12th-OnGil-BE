@@ -14,7 +14,7 @@ public class AuthConverter {
 			.userId(user.getId())
 			.accessToken(accessToken)
 			.refreshToken(refreshToken)
-			.LoginType(user.getLoginType())
+			.loginType(user.getLoginType())
 			.isNewUser(isNewUser)
 			.expires_in((int) (accessExpMs / 1000)) // 초 단위
 			.build();

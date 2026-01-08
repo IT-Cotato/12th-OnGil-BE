@@ -22,7 +22,7 @@ public record AuthResDto(
 
 	@Schema(description = "로그인 타입")
 	@NotNull
-	LoginType LoginType,
+	LoginType loginType,
 
 	@Schema(description = "회원가입 여부(첫 로그인 여부)")
 	@NotNull
