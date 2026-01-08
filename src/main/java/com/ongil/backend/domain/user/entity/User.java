@@ -11,7 +11,15 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "users")
+@Table(
+	name = "users",
+	indexes = { // 조회 성능 향상
+		@Index(name = "idx_login_type_social_id", columnList = "login_type,social_id")
+	},
+	uniqueConstraints = { // 중복 가입 방지
+		@UniqueConstraint(name = "uk_login_type_social_id", columnNames = {"login_type", "social_id"})
+	}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @AllArgsConstructor
@@ -53,6 +61,7 @@ public class User extends BaseEntity {
 	@Builder.Default
 	private Integer points = 0;
 
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
 }
