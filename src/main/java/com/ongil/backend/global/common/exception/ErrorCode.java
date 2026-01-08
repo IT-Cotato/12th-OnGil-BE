@@ -17,6 +17,13 @@ public enum ErrorCode {
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.", "COMMON-005"),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.", "COMMON-006"),
 
+	// AUTH
+	INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.","AUTH-001"),
+	REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "리프레시 토큰이 존재하지 않습니다.","AUTH-002"),
+	STOLEN_REFRESH_TOKEN(HttpStatus.FORBIDDEN, "탈취된 토큰으로 의심됩니다. 다시 로그인해주세요.", "AUTH-003"),
+
+	// USER
+	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다.","USER-001")
 	;
 
 	private final HttpStatus httpStatus;
