@@ -12,5 +12,19 @@ services:
       PROD_DB_URL: ${PROD_DB_URL}
       PROD_DB_USERNAME: ${PROD_DB_USERNAME}
       PROD_DB_PASSWORD: ${PROD_DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     ports:
       - "8080:8080"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: ongil-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - ./redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
