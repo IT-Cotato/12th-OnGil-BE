@@ -37,7 +37,7 @@ public class SwaggerConfig {
 			.addList("accessTokenAuth");
 
 		Server server = new Server();
-		if ("dev".equals(profile)) {
+		if ("prod".equals(profile)) {
 			server.setUrl("http://3.38.199.67:8080");
 			server.setDescription("운영 서버");
 		} else {
