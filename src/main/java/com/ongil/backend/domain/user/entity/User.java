@@ -3,7 +3,7 @@ package com.ongil.backend.domain.user.entity;
 import java.util.*;
 
 import com.ongil.backend.domain.address.entity.*;
-import com.ongil.backend.domain.user.enums.*;
+import com.ongil.backend.domain.auth.entity.LoginType;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
@@ -11,15 +11,32 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "users")
+@Table(
+	name = "users",
+	indexes = { // 조회 성능 향상
+		@Index(name = "idx_login_type_social_id", columnList = "login_type,social_id")
+	},
+	uniqueConstraints = { // 중복 가입 방지
+		@UniqueConstraint(name = "uk_login_type_social_id", columnNames = {"login_type", "social_id"})
+	}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class User extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "user_id")
 	private Long id;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "login_type", nullable = false)
+	private LoginType loginType;
+
+	@Column(name = "social_id", nullable = false)
+	private String socialId;
 
 	@Column(nullable = false, unique = true, length = 100)
 	private String email;
@@ -33,12 +50,6 @@ public class User extends BaseEntity {
 	@Column(length = 20)
 	private String phone;
 
-	@Column(name = "social_provider", length = 20)
-	private String socialProvider;
-
-	@Column(name = "social_id", length = 100)
-	private String socialId;
-
 	private Integer height;
 
 	private Integer weight;
@@ -47,28 +58,10 @@ public class User extends BaseEntity {
 	private String usualSize;
 
 	@Column(nullable = false)
+	@Builder.Default
 	private Integer points = 0;
 
-	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
-	private UserRole role = UserRole.USER;
-
-	@OneToMany(mappedBy = "user")
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
-
-	@Builder
-	public User(String email, String name, String profileImg, String phone, String socialProvider,
-		String socialId, Integer height, Integer weight, String usualSize,
-		UserRole role) {
-		this.email = email;
-		this.name = name;
-		this.profileImg = profileImg;
-		this.phone = phone;
-		this.socialProvider = socialProvider;
-		this.socialId = socialId;
-		this.height = height;
-		this.weight = weight;
-		this.usualSize = usualSize;
-		this.role = role;
-	}
 }
