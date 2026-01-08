@@ -1,8 +1,9 @@
 package com.ongil.backend.domain.auth.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.auth.client.google.GoogleApiClient;
 import com.ongil.backend.domain.auth.client.google.GoogleAuthClient;
@@ -20,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class GoogleLoginService {
 
 	@Value("${google.client-id}")
@@ -40,7 +40,6 @@ public class GoogleLoginService {
 
 	public AuthResDto googleLogin(String code) {
 		String googleToken = getGoogleAccessToken(code);
-
 		GoogleUserInfoResDto userInfo = getGoogleUserInfo(googleToken);
 		String socialId = userInfo.sub();
 
@@ -51,9 +50,9 @@ public class GoogleLoginService {
 				User.builder()
 					.loginType(LoginType.GOOGLE)
 					.socialId(socialId)
-					.email(userInfo.email())
-					.profileImg(userInfo.picture())
-					.name(userInfo.name())
+					.email(extractEmail(userInfo))
+					.profileImg(extractProfileImg(userInfo))
+					.name(extractName(userInfo))
 					.build()
 			));
 
@@ -82,5 +81,24 @@ public class GoogleLoginService {
 
 	private GoogleUserInfoResDto getGoogleUserInfo(String accessToken) {
 		return googleApiClient.getUserInfo("Bearer " + accessToken);
+	}
+
+	private String extractName(GoogleUserInfoResDto userInfo) {
+		return Optional.ofNullable(userInfo.name())
+			.filter(name -> !name.isBlank())
+			.orElse("google_user_" + userInfo.sub());
+	}
+
+	private String extractEmail(GoogleUserInfoResDto userInfo) {
+		if (userInfo.email() != null && !userInfo.email().isBlank()) {
+			return userInfo.email();
+		}
+		return userInfo.sub() + "@google.user";
+	}
+
+	private String extractProfileImg(GoogleUserInfoResDto userInfo) {
+		return Optional.ofNullable(userInfo.picture())
+			.filter(img -> !img.isBlank())
+			.orElse(null);
 	}
 }

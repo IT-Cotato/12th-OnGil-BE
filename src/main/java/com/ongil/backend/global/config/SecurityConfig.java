@@ -31,6 +31,7 @@ public class SecurityConfig {
 
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/ping").permitAll()
+                .requestMatchers("/auth/logout", "/auth/withdraw").authenticated()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/auth/oauth/kakao", "/auth/token/refresh").permitAll()

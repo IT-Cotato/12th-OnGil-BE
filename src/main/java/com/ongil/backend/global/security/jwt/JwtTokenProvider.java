@@ -1,15 +1,15 @@
 package com.ongil.backend.global.security.jwt;
 
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.util.Date;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 
@@ -29,7 +29,7 @@ public class JwtTokenProvider {
 	@Value("${jwt.refresh-expiration-ms}")
 	private long refreshExpMs;
 
-	private Key key;
+	private SecretKey key;
 
 	@PostConstruct
 	void init() {
@@ -39,27 +39,26 @@ public class JwtTokenProvider {
 	public String createAccessToken(Long userId) {
 		Date now = new Date();
 		return Jwts.builder()
-			.setIssuer(issuer)
-			.setSubject(String.valueOf(userId))
-			.setIssuedAt(now)
-			.setExpiration(new Date(now.getTime() + accessExpMs))
-			.signWith(key, SignatureAlgorithm.HS256)
+			.issuer(issuer)
+			.subject(String.valueOf(userId))
+			.issuedAt(now)
+			.expiration(new Date(now.getTime() + accessExpMs))
+			.signWith(key)
 			.compact();
 	}
 
 	public String createRefreshToken(Long userId) {
 		Date now = new Date();
 		return Jwts.builder()
-			.setIssuer(issuer)
-			.setSubject(String.valueOf(userId))
-			.setIssuedAt(now)
-			.setExpiration(new Date(now.getTime() + refreshExpMs))
+			.issuer(issuer)
+			.subject(String.valueOf(userId))
+			.issuedAt(now)
+			.expiration(new Date(now.getTime() + refreshExpMs))
 			.claim("type", "refresh")
-			.signWith(key, SignatureAlgorithm.HS256)
+			.signWith(key)
 			.compact();
 	}
 
-	// 토큰 유효성 검증
 	public boolean validateToken(String token) {
 		try {
 			parseClaims(token);
@@ -87,11 +86,11 @@ public class JwtTokenProvider {
 	}
 
 	private Claims parseClaims(String token) {
-		return Jwts.parserBuilder()
-			.setSigningKey(key)
+		return Jwts.parser()
+			.verifyWith(key)
 			.requireIssuer(issuer)
 			.build()
-			.parseClaimsJws(token)
-			.getBody();
+			.parseSignedClaims(token)
+			.getPayload();
 	}
 }
