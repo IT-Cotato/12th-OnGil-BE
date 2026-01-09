@@ -1,13 +1,15 @@
 package com.ongil.backend.domain.product.entity;
 
-import com.ongil.backend.domain.brand.entity.*;
-import com.ongil.backend.domain.category.entity.*;
-import com.ongil.backend.domain.product.enums.*;
+import com.ongil.backend.domain.brand.entity.Brand;
+import com.ongil.backend.domain.category.entity.Category;
+import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "products")
@@ -32,8 +34,15 @@ public class Product extends BaseEntity {
 	@Column(name = "material_original", length = 500)
 	private String materialOriginal;
 
-	@Column(name = "ai_material_description", columnDefinition = "TEXT")
-	private String aiMaterialDescription;
+	// AI 소재 설명(장점, 단점, 세탁법)
+	@Column(name = "ai_material_advantages", columnDefinition = "TEXT")
+	private String aiMaterialAdvantages;
+
+	@Column(name = "ai_material_disadvantages", columnDefinition = "TEXT")
+	private String aiMaterialDisadvantages;
+
+	@Column(name = "ai_material_care", columnDefinition = "TEXT")
+	private String aiMaterialCare;
 
 	@Column(name = "washing_method", length = 500)
 	private String washingMethod;
@@ -75,15 +84,22 @@ public class Product extends BaseEntity {
 	private Category category;
 
 	@Builder
-	public Product(String name, String description, Integer price, String materialOriginal,
-		String aiMaterialDescription, String washingMethod, String imageUrls,
-		String sizes, String colors, Integer discountRate, Integer discountPrice,
-		ProductType productType, Brand brand, Category category) {
+	public Product(String name, String description, Integer price,
+		String materialOriginal,
+		String aiMaterialAdvantages,
+		String aiMaterialDisadvantages,
+		String aiMaterialCare,
+		String washingMethod, String imageUrls,
+		String sizes, String colors, Integer discountRate,
+		Integer discountPrice, ProductType productType,
+		Brand brand, Category category) {
 		this.name = name;
 		this.description = description;
 		this.price = price;
 		this.materialOriginal = materialOriginal;
-		this.aiMaterialDescription = aiMaterialDescription;
+		this.aiMaterialAdvantages = aiMaterialAdvantages;
+		this.aiMaterialDisadvantages = aiMaterialDisadvantages;
+		this.aiMaterialCare = aiMaterialCare;
 		this.washingMethod = washingMethod;
 		this.imageUrls = imageUrls;
 		this.sizes = sizes;
@@ -93,5 +109,16 @@ public class Product extends BaseEntity {
 		this.productType = productType;
 		this.brand = brand;
 		this.category = category;
+	}
+
+	// AI 소재 설명 업데이트
+	public void updateAiMaterialDescription(
+		String advantages,
+		String disadvantages,
+		String care
+	) {
+		this.aiMaterialAdvantages = advantages;
+		this.aiMaterialDisadvantages = disadvantages;
+		this.aiMaterialCare = care;
 	}
 }
