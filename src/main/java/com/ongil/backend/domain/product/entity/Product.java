@@ -111,11 +111,6 @@ public class Product extends BaseEntity {
 		this.category = category;
 	}
 
-	// 조회수 증가
-	public void increaseViewCount() {
-		this.viewCount++;
-	}
-
 	// AI 소재 설명 업데이트
 	public void updateAiMaterialDescription(
 		String advantages,

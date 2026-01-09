@@ -18,6 +18,11 @@ public class ProductConverter {
 
 	// 상품 상세 응답 변환
 	public ProductDetailResponse toDetailResponse(Product product, List<ProductOption> options) {
+
+		if (product.getBrand() == null || product.getCategory() == null) {
+			throw new IllegalStateException("상품의 브랜드 또는 카테고리 정보가 누락되었습니다.");
+		}
+
 		return ProductDetailResponse.builder()
 			.id(product.getId())
 			.name(product.getName())
@@ -47,6 +52,11 @@ public class ProductConverter {
 
 	// 상품 간단 응답 변환
 	public ProductSimpleResponse toSimpleResponse(Product product) {
+
+		if (product.getBrand() == null) {
+			throw new IllegalStateException("상품의 브랜드 정보가 누락되었습니다.");
+		}
+
 		return ProductSimpleResponse.builder()
 			.id(product.getId())
 			.name(product.getName())

@@ -32,7 +32,7 @@ public class ProductService {
 		Product product = productRepository.findById(productId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
 
-		product.increaseViewCount();
+		productRepository.incrementViewCount(productId);
 
 		if (needsAiDescription(product)) {
 			generateAndSaveAiDescription(product);
@@ -60,10 +60,11 @@ public class ProductService {
 			);
 
 		} catch (Exception e) {
+			AiMaterialDescriptionResponse defaultResponse = AiMaterialDescriptionResponse.createDefault();
 			product.updateAiMaterialDescription(
-				"착용감이 좋습니다\n품질이 우수합니다",
-				"특별한 단점이 없습니다",
-				"제품 라벨의 세탁 방법을 따라주세요"
+				defaultResponse.getAdvantages(),
+				defaultResponse.getDisadvantages(),
+				defaultResponse.getCare()
 			);
 		}
 	}
