@@ -70,10 +70,10 @@ public class Product extends BaseEntity {
 	@Column(name = "purchase_count", nullable = false)
 	private Integer purchaseCount = 0;
 
-	@Column(name = "review_count", nullable = false)
+	@Column(name = "review_count")
 	private Integer reviewCount = 0;
-	
-	@Formula("view_count + purchase_count")
+
+	@Formula("coalesce(view_count, 0) + coalesce(purchase_count, 0)")
 	private Integer popularity;
 
 	@Column(name = "on_sale", nullable = false)

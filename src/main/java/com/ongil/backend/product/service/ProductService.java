@@ -74,7 +74,7 @@ public class ProductService {
 			minPrice,
 			maxPrice,
 			condition.getSize(),
-			pageable
+			pageableWithSort
 		);
 
 		return products.map(productConverter::toSimpleResponse);
@@ -143,15 +143,18 @@ public class ProductService {
 			);
 			case REVIEW -> Sort.by(
 				Sort.Order.desc("reviewCount"),   // 1차: 리뷰 많은 순
-				Sort.Order.desc("popularity")     // 2차: 인기순
+				Sort.Order.desc("popularity"),    // 2차: 인기순
+				Sort.Order.asc("id")
 			);
 			case PRICE_HIGH -> Sort.by(
 				Sort.Order.desc("price"),         // 1차: 가격 높은 순
-				Sort.Order.desc("popularity")     // 2차: 인기순
+				Sort.Order.desc("popularity"),     // 2차: 인기순
+				Sort.Order.asc("id")              // 3차: id 오름차순
 			);
 			case PRICE_LOW -> Sort.by(
 				Sort.Order.asc("price"),          // 1차: 가격 낮은 순
-				Sort.Order.desc("popularity")     // 2차: 인기순
+				Sort.Order.desc("popularity"),     // 2차: 인기순
+				Sort.Order.asc("id")
 			);
 		};
 	}

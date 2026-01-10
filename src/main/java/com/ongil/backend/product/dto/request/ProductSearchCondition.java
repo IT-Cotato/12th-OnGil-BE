@@ -27,7 +27,16 @@ public class ProductSearchCondition {
 			Integer minPrice = Integer.parseInt(parts[0].trim());
 			Integer maxPrice = Integer.parseInt(parts[1].trim());
 
+			if (minPrice < 0 || maxPrice < 0) {
+				return null;
+			}
+
+			if (minPrice > maxPrice) {
+				return null;
+			}
+
 			return new Integer[] {minPrice, maxPrice};
+
 		} catch (NumberFormatException e) {
 			return null;
 		}
