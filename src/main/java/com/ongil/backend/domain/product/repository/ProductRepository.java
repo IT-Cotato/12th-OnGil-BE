@@ -54,4 +54,18 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		Integer maxPrice,
 		Pageable pageable
 	);
+
+	// 키워드 검색 (브랜드명, 카테고리명, 색상, 상품명)
+	@EntityGraph(attributePaths = {"brand", "category"})
+	@Query("""
+		SELECT p FROM Product p
+		WHERE p.onSale = true
+		  AND (
+		    LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+		    OR LOWER(p.brand.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+		    OR LOWER(p.category.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+		    OR LOWER(p.colors) LIKE LOWER(CONCAT('%', :keyword, '%'))
+		  )
+		""")
+	Page<Product> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 }

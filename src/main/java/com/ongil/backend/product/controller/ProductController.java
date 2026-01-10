@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.ongil.backend.domain.product.enums.ProductSortType;
@@ -16,9 +17,12 @@ import com.ongil.backend.product.service.ProductService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Product", description = "상품 관련 API")
+@Validated
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
@@ -66,6 +70,19 @@ public class ProductController {
 	@GetMapping("/{productId}/similar")
 	public DataResponse<List<ProductSimpleResponse>> getSimilarProducts(@PathVariable Long productId) {
 		List<ProductSimpleResponse> products = productService.getSimilarProducts(productId);
+		return DataResponse.from(products);
+	}
+
+	@Operation(summary = "상품 검색", description = "키워드로 상품을 검색합니다. (브랜드명, 카테고리명, 색상, 상품명)")
+	@GetMapping("/search")
+	public DataResponse<Page<ProductSimpleResponse>> searchProducts(
+		@RequestParam
+		@NotBlank(message = "검색 키워드는 필수입니다")
+		@Size(min = 1, max = 50, message = "검색 키워드는 1-50자 이내여야 합니다")
+		String keyword,
+		@PageableDefault(size = 20) Pageable pageable
+	) {
+		Page<ProductSimpleResponse> products = productService.searchProducts(keyword, pageable);
 		return DataResponse.from(products);
 	}
 }
