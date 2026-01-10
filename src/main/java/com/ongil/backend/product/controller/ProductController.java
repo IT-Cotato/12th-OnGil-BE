@@ -1,12 +1,15 @@
 package com.ongil.backend.product.controller;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.web.bind.annotation.*;
 
 import com.ongil.backend.global.common.dto.DataResponse;
+import com.ongil.backend.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.product.dto.response.ProductDetailResponse;
+import com.ongil.backend.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.product.service.ProductService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,5 +29,26 @@ public class ProductController {
 	public DataResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
 		ProductDetailResponse productDetail = productService.getProductDetail(productId);
 		return DataResponse.from(productDetail);
+	}
+
+	@Operation(summary = "상품 목록 조회", description = "조건에 맞는 상품들의 목록을 조회합니다.")
+	@GetMapping
+	public DataResponse<Page<ProductSimpleResponse>> getProducts(
+		@RequestParam(required = false) Long category,
+		@RequestParam(required = false) Long brand,
+		@RequestParam(required = false) String priceRange,
+		@RequestParam(required = false) String clothingSize,
+		@PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+	) {
+		ProductSearchCondition condition = ProductSearchCondition.builder()
+			.categoryId(category)
+			.brandId(brand)
+			.priceRange(priceRange)
+			.size(clothingSize)
+			.build();
+
+		Page<ProductSimpleResponse> products = productService.getProducts(condition, pageable);
+
+		return DataResponse.from(products);
 	}
 }
