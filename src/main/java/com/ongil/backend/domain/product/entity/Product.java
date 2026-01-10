@@ -1,5 +1,7 @@
 package com.ongil.backend.domain.product.entity;
 
+import org.hibernate.annotations.Formula;
+
 import com.ongil.backend.domain.brand.entity.Brand;
 import com.ongil.backend.domain.category.entity.Category;
 import com.ongil.backend.domain.product.enums.ProductType;
@@ -67,6 +69,9 @@ public class Product extends BaseEntity {
 
 	@Column(name = "purchase_count", nullable = false)
 	private Integer purchaseCount = 0;
+
+	@Formula("view_count + purchase_count")
+	private Integer popularity;
 
 	@Column(name = "on_sale", nullable = false)
 	private Boolean onSale = true;
