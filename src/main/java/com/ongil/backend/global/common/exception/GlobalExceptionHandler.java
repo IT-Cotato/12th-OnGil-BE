@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import com.ongil.backend.global.common.dto.ErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -58,4 +59,20 @@ public class GlobalExceptionHandler {
 			.status(HttpStatus.BAD_REQUEST)
 			.body(errorResponse);
 	}
+
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+		ConstraintViolationException e,
+		HttpServletRequest request
+	) {
+		log.error("ConstraintViolation 에러 발생: {}", e.getMessage());
+		ErrorResponse errorResponse = ErrorResponse.of(
+			ErrorCode.INVALID_PARAMETER,
+			request
+		);
+		return ResponseEntity
+			.status(HttpStatus.BAD_REQUEST)
+			.body(errorResponse);
+	}
+
 }
