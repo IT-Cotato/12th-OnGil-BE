@@ -31,4 +31,5 @@ public class ProductSimpleResponse {
 	// 통계 (정렬용)
 	private Integer viewCount;
 	private Integer purchaseCount;
+	private Integer reviewCount;
 }

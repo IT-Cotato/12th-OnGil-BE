@@ -70,6 +70,7 @@ public class ProductConverter {
 			.productTypeDescription(product.getProductType().getDescription())
 			.viewCount(product.getViewCount())
 			.purchaseCount(product.getPurchaseCount())
+			.reviewCount(product.getReviewCount())
 			.build();
 	}
 
