@@ -35,6 +35,7 @@ public class ProductService {
 	private final ProductConverter productConverter;
 	private final AiMaterialService aiMaterialService;
 
+	// 상품 상세 조회
 	@Transactional
 	public ProductDetailResponse getProductDetail(Long productId) {
 		Product product = productRepository.findById(productId)
@@ -51,6 +52,7 @@ public class ProductService {
 		return productConverter.toDetailResponse(product, options);
 	}
 
+	// 조건에 따른 상품 조회
 	public Page<ProductSimpleResponse> getProducts(
 		ProductSearchCondition condition,
 		ProductSortType sortType,
@@ -80,6 +82,7 @@ public class ProductService {
 		return products.map(productConverter::toSimpleResponse);
 	}
 
+	// 특가 상품 조회
 	public List<ProductSimpleResponse> getSpecialSaleProducts() {
 		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "discountRate"));
 		Page<Product> products = productRepository.findByOnSaleTrueAndProductTypeOrderByDiscountRateDesc(
@@ -89,6 +92,7 @@ public class ProductService {
 		return productConverter.toSimpleResponseList(products.getContent());
 	}
 
+	// 비슷한 상품 조회
 	public List<ProductSimpleResponse> getSimilarProducts(Long productId) {
 		Product product = productRepository.findById(productId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -107,6 +111,16 @@ public class ProductService {
 		);
 
 		return similarProducts.map(productConverter::toSimpleResponse).getContent();
+	}
+
+	// 키워드 검색
+	public Page<ProductSimpleResponse> searchProducts(String keyword, Pageable pageable) {
+		if (keyword == null || keyword.trim().isEmpty()) {
+			return Page.empty(pageable);
+		}
+
+		Page<Product> products = productRepository.searchByKeyword(keyword.trim(), pageable);
+		return products.map(productConverter::toSimpleResponse);
 	}
 
 	private boolean needsAiDescription(Product product) {

@@ -68,4 +68,14 @@ public class ProductController {
 		List<ProductSimpleResponse> products = productService.getSimilarProducts(productId);
 		return DataResponse.from(products);
 	}
+
+	@Operation(summary = "상품 검색", description = "키워드로 상품을 검색합니다. (브랜드명, 카테고리명, 색상, 상품명)")
+	@GetMapping("/search")
+	public DataResponse<Page<ProductSimpleResponse>> searchProducts(
+		@RequestParam String keyword,
+		@PageableDefault(size = 20) Pageable pageable
+	) {
+		Page<ProductSimpleResponse> products = productService.searchProducts(keyword, pageable);
+		return DataResponse.from(products);
+	}
 }
