@@ -19,29 +19,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CorsConfigurationSource corsConfigurationSource;
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final CorsConfigurationSource corsConfigurationSource;
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .formLogin(AbstractHttpConfigurer::disable)
-            .httpBasic(AbstractHttpConfigurer::disable)
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+		http
+			.cors(cors -> cors.configurationSource(corsConfigurationSource))
+			.csrf(AbstractHttpConfigurer::disable)
+			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .requestMatchers("/auth/logout", "/auth/withdraw").authenticated()
-                .requestMatchers("/auth/oauth/kakao", "/auth/oauth/google", "/auth/token/refresh").permitAll()
-                .requestMatchers("/auth/**").permitAll()
-                .anyRequest().authenticated()
-            )
+			.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+				.requestMatchers("/auth/logout", "/auth/withdraw").authenticated()
+				.requestMatchers("/auth/oauth/kakao", "/auth/oauth/google", "/auth/token/refresh").permitAll()
+				.requestMatchers("/auth/**").permitAll()
+				.requestMatchers("/api/products/**").permitAll()
+				.requestMatchers("/api/brands/**").permitAll()
+				.requestMatchers("/api/categories/**").permitAll()
+				.anyRequest().authenticated()
+			)
 
-            // JWT 필터 적용
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+			// JWT 필터 적용
+			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+		return http.build();
+	}
 }
