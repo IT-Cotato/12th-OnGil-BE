@@ -1,5 +1,7 @@
 package com.ongil.backend.product.controller;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -49,6 +51,22 @@ public class ProductController {
 
 		Page<ProductSimpleResponse> products = productService.getProducts(condition, pageable);
 
+		return DataResponse.from(products);
+	}
+
+	@Operation(summary = "특가 상품 조회", description = "할인율이 높은 특가 상품 목록(10개)을 조회합니다.")
+	@GetMapping("/special-sale")
+	public DataResponse<Page<ProductSimpleResponse>> getSpecialSaleProducts(
+		@PageableDefault(size = 20, sort = "discountRate", direction = Sort.Direction.DESC) Pageable pageable
+	) {
+		Page<ProductSimpleResponse> specialSaleProducts = productService.getSpecialSaleProducts(pageable);
+		return DataResponse.from(specialSaleProducts);
+	}
+
+	@Operation(summary = "비슷한 상품 조회", description = "특정 상품과 비슷한 상품 최대 6개를 조회합니다.")
+	@GetMapping("/{productId}/similar")
+	public DataResponse<List<ProductSimpleResponse>> getSimilarProducts(@PathVariable Long productId) {
+		List<ProductSimpleResponse> products = productService.getSimilarProducts(productId);
 		return DataResponse.from(products);
 	}
 }

@@ -9,21 +9,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ongil.backend.domain.product.entity.Product;
+import com.ongil.backend.domain.product.enums.ProductType;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-	/**
-	 * 조회수 증가 (동시성 안전)
-	 */
+	// 조회수 증가
 	@Modifying
 	@Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.id = :productId")
 	void incrementViewCount(@Param("productId") Long productId);
 
-	/**
-	 * 조건에 맞는 상품들을 페이징 조회
-	 *
-	 * @EntityGraph: FETCH JOIN 대신 사용 (Pageable과 호환)
-	 */
+	// 조건에 따른 상품 조회
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("""
 		SELECT p FROM Product p
@@ -40,6 +35,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		@Param("minPrice") Integer minPrice,
 		@Param("maxPrice") Integer maxPrice,
 		@Param("size") String size,
+		Pageable pageable
+	);
+
+	// 특가 상품 조회
+	@EntityGraph(attributePaths = {"brand", "category"})
+	Page<Product> findByOnSaleTrueAndProductTypeOrderByDiscountRateDesc(
+		ProductType productType,
+		Pageable pageable
+	);
+
+	// 비슷한 상품 조회(같은 카테고리 + 비슷한 가격대)
+	@EntityGraph(attributePaths = {"brand", "category"})
+	Page<Product> findByOnSaleTrueAndCategoryIdAndIdNotAndPriceBetween(
+		Long categoryId,
+		Long excludeProductId,
+		Integer minPrice,
+		Integer maxPrice,
 		Pageable pageable
 	);
 }
