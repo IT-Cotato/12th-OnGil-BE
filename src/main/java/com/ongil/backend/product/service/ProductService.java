@@ -5,11 +5,13 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.entity.ProductOption;
+import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
@@ -51,11 +53,20 @@ public class ProductService {
 
 	public Page<ProductSimpleResponse> getProducts(
 		ProductSearchCondition condition,
+		ProductSortType sortType,
 		Pageable pageable
 	) {
 		Integer[] priceRange = condition.parsePriceRange();
 		Integer minPrice = priceRange != null ? priceRange[0] : null;
 		Integer maxPrice = priceRange != null ? priceRange[1] : null;
+
+		// 정렬 조건 생성
+		Sort sort = createSort(sortType);
+		Pageable pageableWithSort = PageRequest.of(
+			pageable.getPageNumber(),
+			pageable.getPageSize(),
+			sort
+		);
 
 		Page<Product> products = productRepository.findAllByCondition(
 			condition.getCategoryId(),
@@ -69,13 +80,13 @@ public class ProductService {
 		return products.map(productConverter::toSimpleResponse);
 	}
 
-	public Page<ProductSimpleResponse> getSpecialSaleProducts(Pageable pageable) {
+	public List<ProductSimpleResponse> getSpecialSaleProducts() {
+		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "discountRate"));
 		Page<Product> products = productRepository.findByOnSaleTrueAndProductTypeOrderByDiscountRateDesc(
 			ProductType.SPECIAL_SALE,
 			pageable
 		);
-
-		return products.map(productConverter::toSimpleResponse);
+		return productConverter.toSimpleResponseList(products.getContent());
 	}
 
 	public List<ProductSimpleResponse> getSimilarProducts(Long productId) {
@@ -122,5 +133,26 @@ public class ProductService {
 				defaultResponse.getCare()
 			);
 		}
+	}
+
+	private Sort createSort(ProductSortType sortType) {
+		return switch (sortType) {
+			case POPULAR -> Sort.by(
+				Sort.Order.desc("popularity"),
+				Sort.Order.asc("id")
+			);
+			case REVIEW -> Sort.by(
+				Sort.Order.desc("reviewCount"),   // 1차: 리뷰 많은 순
+				Sort.Order.desc("popularity")     // 2차: 인기순
+			);
+			case PRICE_HIGH -> Sort.by(
+				Sort.Order.desc("price"),         // 1차: 가격 높은 순
+				Sort.Order.desc("popularity")     // 2차: 인기순
+			);
+			case PRICE_LOW -> Sort.by(
+				Sort.Order.asc("price"),          // 1차: 가격 낮은 순
+				Sort.Order.desc("popularity")     // 2차: 인기순
+			);
+		};
 	}
 }
