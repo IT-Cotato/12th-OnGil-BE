@@ -8,6 +8,9 @@ import org.springframework.stereotype.Component;
 import com.ongil.backend.domain.category.entity.Category;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.wishlist.entity.Wishlist;
+import com.ongil.backend.global.common.exception.EntityNotFoundException;
+import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.common.exception.ValidationException;
 import com.ongil.backend.wishlist.dto.response.WishlistResponse;
 
 @Component
@@ -15,9 +18,12 @@ public class WishlistConverter {
 
 	public WishlistResponse toResponse(Wishlist wishlist) {
 		Product product = wishlist.getProduct();
+		if (product == null) {
+			throw new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+		}
 
 		if (product.getBrand() == null || product.getCategory() == null) {
-			throw new IllegalStateException("상품의 브랜드 또는 카테고리 정보가 누락되었습니다.");
+			throw new ValidationException(ErrorCode.INVALID_PARAMETER);
 		}
 
 		return WishlistResponse.builder()
