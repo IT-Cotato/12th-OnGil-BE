@@ -35,6 +35,11 @@ public enum ErrorCode {
 	// CATEGORY
 	CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "카테고리를 찾을 수 없습니다.", "CATEGORY-001"),
 
+	// WISHLIST
+	WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "찜을 찾을 수 없습니다.", "WISHLIST-001"),
+	WISHLIST_ALREADY_EXISTS(HttpStatus.CONFLICT, "이미 찜한 상품입니다.", "WISHLIST-002"),
+	WISHLIST_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 찜만 삭제할 수 있습니다.", "WISHLIST-003"),
+
 	;
 
 	private final HttpStatus httpStatus;
