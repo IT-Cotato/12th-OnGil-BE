@@ -70,5 +70,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	Page<Product> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
 	// 브랜드별 상품 조회 (페이징)
+	@EntityGraph(attributePaths = {"brand", "category"})
 	Page<Product> findByBrandId(Long brandId, Pageable pageable);
 }
