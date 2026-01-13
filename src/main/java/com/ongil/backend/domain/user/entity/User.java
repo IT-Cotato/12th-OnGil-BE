@@ -14,10 +14,10 @@ import lombok.*;
 @Table(
 	name = "users",
 	indexes = { // 조회 성능 향상
-		@Index(name = "idx_login_type_social_id", columnList = "login_type,social_id")
+		@Index(name = "idx_login_type_social_id", columnList = "login_type,login_id")
 	},
 	uniqueConstraints = { // 중복 가입 방지
-		@UniqueConstraint(name = "uk_login_type_social_id", columnNames = {"login_type", "social_id"})
+		@UniqueConstraint(name = "uk_login_type_social_id", columnNames = {"login_type", "login_id"})
 	}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,8 +35,12 @@ public class User extends BaseEntity {
 	@Column(name = "login_type", nullable = false)
 	private LoginType loginType;
 
-	@Column(name = "social_id", nullable = false)
-	private String socialId;
+	// 일반로그인 ID 또는 소셜 고유 ID
+	@Column(name = "login_id", nullable = false)
+	private String loginId;
+
+	@Column(name = "password")
+	private String password;
 
 	@Column(nullable = false, unique = true, length = 100)
 	private String email;
