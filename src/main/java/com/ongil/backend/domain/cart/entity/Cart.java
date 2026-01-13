@@ -47,4 +47,23 @@ public class Cart extends BaseEntity {
 		this.user = user;
 		this.product = product;
 	}
+
+	public void updateSize(String selectedSize) {
+		this.selectedSize = selectedSize;
+	}
+
+	public void updateColor(String selectedColor) {
+		this.selectedColor = selectedColor;
+	}
+
+	public void updateQuantity(Integer quantity) {
+		if (quantity == null) {
+			return;
+		}
+		if (quantity < 1) {
+			throw new IllegalArgumentException("수량은 최소 1개 이상이어야 합니다.");
+		}
+		this.quantity = quantity;
+	}
+
 }
