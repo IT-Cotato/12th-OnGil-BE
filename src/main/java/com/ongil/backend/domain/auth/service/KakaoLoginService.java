@@ -56,13 +56,13 @@ public class KakaoLoginService {
 		}
 
 		// 신규 유저 확인
-		boolean isNewUser = !userRepository.existsByLoginTypeAndSocialId(LoginType.KAKAO, socialId);
+		boolean isNewUser = !userRepository.existsByLoginTypeAndLoginId(LoginType.KAKAO, socialId);
 
-		User user = userRepository.findByLoginTypeAndSocialId(LoginType.KAKAO, socialId)
+		User user = userRepository.findByLoginTypeAndLoginId(LoginType.KAKAO, socialId)
 			.orElseGet(() -> userRepository.save(
 				User.builder()
 					.loginType(LoginType.KAKAO)
-					.socialId(socialId)
+					.loginId(socialId)
 					.email(extractEmail(userInfo))
 					.profileImg(extractProfileImg(userInfo))
 					.name(extractNickname(userInfo))

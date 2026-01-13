@@ -51,13 +51,13 @@ public class GoogleLoginService {
 			throw new AppException(ErrorCode.INVALID_SOCIAL_USER_INFO);
 		}
 
-		boolean isNewUser = !userRepository.existsByLoginTypeAndSocialId(LoginType.GOOGLE, socialId);
+		boolean isNewUser = !userRepository.existsByLoginTypeAndLoginId(LoginType.GOOGLE, socialId);
 
-		User user = userRepository.findByLoginTypeAndSocialId(LoginType.GOOGLE, socialId)
+		User user = userRepository.findByLoginTypeAndLoginId(LoginType.GOOGLE, socialId)
 			.orElseGet(() -> userRepository.save(
 				User.builder()
 					.loginType(LoginType.GOOGLE)
-					.socialId(socialId)
+					.loginId(socialId)
 					.email(extractEmail(userInfo))
 					.profileImg(extractProfileImg(userInfo))
 					.name(extractName(userInfo))
