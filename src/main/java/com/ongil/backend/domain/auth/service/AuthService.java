@@ -77,16 +77,23 @@ public class AuthService {
 
 		User user;
 		boolean isNewUser = userOptional.isEmpty();
+
 		if (isNewUser) {
-			user = userRepository.save(
-				User.builder()
-					.loginType(LoginType.GENERAL)
-					.loginId(loginReqDto.loginId())
-					.password(passwordEncoder.encode(loginReqDto.password()))
-					.name("일반 로그인 회원")
-					.email(loginReqDto.loginId() + "@test.com")
-					.build()
-			);
+			try {
+				user = userRepository.save(
+					User.builder()
+						.loginType(LoginType.GENERAL)
+						.loginId(loginReqDto.loginId())
+						.password(passwordEncoder.encode(loginReqDto.password()))
+						.name("일반 로그인 회원")
+						.email(loginReqDto.loginId() + "@test.com")
+						.build()
+				);
+			} catch (org.springframework.dao.DataIntegrityViolationException e) {
+				user = userRepository.findByLoginTypeAndLoginId(LoginType.GENERAL, loginReqDto.loginId())
+					.orElseThrow(() -> e);
+				isNewUser = false;
+			}
 		} else {
 			// 아이디 존재 시 패스워드 일치 확인
 			user = userOptional.get();

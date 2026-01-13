@@ -14,10 +14,10 @@ import lombok.*;
 @Table(
 	name = "users",
 	indexes = { // 조회 성능 향상
-		@Index(name = "idx_login_type_social_id", columnList = "login_type,login_id")
+		@Index(name = "idx_login_type_login_id", columnList = "login_type, login_id")
 	},
 	uniqueConstraints = { // 중복 가입 방지
-		@UniqueConstraint(name = "uk_login_type_social_id", columnNames = {"login_type", "login_id"})
+		@UniqueConstraint(name = "uk_login_type_login_id", columnNames = {"login_type", "login_id"})
 	}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

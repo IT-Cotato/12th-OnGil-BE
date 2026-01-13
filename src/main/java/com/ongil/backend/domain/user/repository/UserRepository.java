@@ -10,7 +10,7 @@ import com.ongil.backend.domain.user.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
 	Optional<User> findByLoginTypeAndLoginId(
 		LoginType loginType,
-		String socialId
+		String loginId
 	);
 
 	boolean existsByLoginTypeAndLoginId(LoginType loginType, String loginId);
