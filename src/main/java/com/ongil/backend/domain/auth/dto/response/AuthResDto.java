@@ -28,6 +28,13 @@ public record AuthResDto(
 	@NotNull
 	Boolean isNewUser,
 
+	@Schema(description = "프로필 이미지")
+	String profileUrl,
+
+	@Schema(description = "이름")
+	@NotNull
+	String nickName,
+
 	@Schema(description = "액세스 토큰 만료 시간")
 	@NotNull
 	Integer expires_in

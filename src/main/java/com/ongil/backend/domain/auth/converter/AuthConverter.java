@@ -16,6 +16,8 @@ public class AuthConverter {
 			.refreshToken(refreshToken)
 			.loginType(user.getLoginType())
 			.isNewUser(isNewUser)
+			.profileUrl(user.getProfileImg())
+			.nickName(user.getName())
 			.expires_in((int) (accessExpMs / 1000)) // 초 단위
 			.build();
 	}
