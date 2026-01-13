@@ -57,6 +57,9 @@ public class Cart extends BaseEntity {
 	}
 
 	public void updateQuantity(Integer quantity) {
+		if (quantity == null) {
+			return;
+		}
 		if (quantity < 1) {
 			throw new IllegalArgumentException("수량은 최소 1개 이상이어야 합니다.");
 		}

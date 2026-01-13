@@ -109,7 +109,16 @@ public class CartService {
 
 	@Transactional
 	public void deleteCarts(Long userId, List<Long> cartIds) {
+
+		if (cartIds == null || cartIds.isEmpty()) {
+			throw new ValidationException(ErrorCode.INVALID_PARAMETER);
+		}
+
 		List<Cart> carts = cartRepository.findAllById(cartIds);
+
+		if (carts.size() != cartIds.size()) {
+			throw new EntityNotFoundException(ErrorCode.CART_NOT_FOUND);
+		}
 
 		carts.forEach(cart -> {
 			if (!cart.getUser().getId().equals(userId)) {

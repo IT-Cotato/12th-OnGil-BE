@@ -21,7 +21,4 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
 	// 사용자별 전체 장바구니 조회
 	@EntityGraph(attributePaths = {"product", "product.brand"})
 	List<Cart> findByUserIdOrderByCreatedAtDesc(Long userId);
-
-	// 사용자 확인 (본인 장바구니인지)
-	boolean existsByIdAndUserId(Long cartId, Long userId);
 }

@@ -1,8 +1,6 @@
 package com.ongil.backend.domain.cart.controller;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -70,13 +68,9 @@ public class CartController {
 	@DeleteMapping
 	public DataResponse<String> deleteCarts(
 		@AuthenticationPrincipal Long userId,
-		@RequestParam String ids
+		@RequestParam List<Long> ids
 	) {
-		List<Long> cartIds = Arrays.stream(ids.split(","))
-			.map(Long::parseLong)
-			.collect(Collectors.toList());
-
-		cartService.deleteCarts(userId, cartIds);
+		cartService.deleteCarts(userId, ids);
 		return DataResponse.from("선택한 상품이 삭제되었습니다.");
 	}
 }
