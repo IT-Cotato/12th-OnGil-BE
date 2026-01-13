@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ongil.backend.domain.auth.dto.request.LoginReqDto;
 import com.ongil.backend.domain.auth.dto.request.TokenRefreshReqDto;
 import com.ongil.backend.domain.auth.dto.response.AuthResDto;
 import com.ongil.backend.domain.auth.dto.response.TokenRefreshResDto;
@@ -21,6 +22,7 @@ import com.ongil.backend.global.common.dto.DataResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +31,21 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
+@Tag(name = "Auth", description = "회원/인증 API")
 public class AuthController {
 
 	private final AuthService authService;
 	private final KakaoLoginService kakaoLoginService;
 	private final GoogleLoginService googleLoginService;
+
+	@PostMapping("/login")
+	@Operation(summary = "일반 로그인 API", description = "ID와 비밀번호를 받아 JWT 토큰을 발급합니다.")
+	public ResponseEntity<DataResponse<AuthResDto>> login(
+		@Valid @RequestBody LoginReqDto loginReqDto
+	) {
+		AuthResDto res = authService.login(loginReqDto);
+		return ResponseEntity.ok(DataResponse.from(res));
+	}
 
 	@PostMapping("/oauth/kakao")
 	@Operation(summary = "카카오 회원가입/로그인 API", description = "인가코드(code)로 카카오 토큰 교환 후, 우리 서비스 JWT 발급")
@@ -61,6 +73,8 @@ public class AuthController {
 		TokenRefreshResDto res = authService.refreshAccessToken(request.refreshToken());
 		return ResponseEntity.ok(DataResponse.from(res));
 	}
+
+
 
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃 API", description = "Redis에 저장된 리프레시 토큰을 삭제하여 로그아웃 처리")
