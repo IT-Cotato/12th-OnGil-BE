@@ -77,6 +77,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 	@Query("SELECT p FROM Product p " +
 		"WHERE p.category.id = :categoryId " +
+		"AND p.onSale = true " +  // ✅ 판매 중인 상품만!
 		"ORDER BY (p.viewCount + p.purchaseCount) DESC " +
 		"LIMIT 1")
 	Optional<Product> findTopByCategoryIdOrderByPopularity(@Param("categoryId") Long categoryId);

@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.category.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,9 +44,11 @@ public class CategoryService {
 	// 랜덤 카테고리 조회 (홈 화면용)
 	public List<CategoryRandomResponse> getRandomCategories(int count) {
 		List<Category> allCategories = categoryRepository.findAllByOrderByDisplayOrder();
-		Collections.shuffle(allCategories); // 랜덤 섞기
 
-		return allCategories.stream()
+		List<Category> shuffledCategories = new ArrayList<>(allCategories);
+		Collections.shuffle(shuffledCategories);
+
+		return shuffledCategories.stream()
 			.limit(count)
 			.map(category -> {
 				String thumbnailUrl = getTopProductThumbnail(category);

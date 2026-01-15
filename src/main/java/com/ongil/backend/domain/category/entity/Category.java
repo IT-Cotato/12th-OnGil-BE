@@ -39,9 +39,9 @@ public class Category extends BaseEntity {
 	private List<Category> subCategories = new ArrayList<>();
 
 	@Builder
-	public Category(String name, String iconUrl, Integer displayOrder, Category parentCategory) {  // ✅ iconUrl 추가!
+	public Category(String name, String iconUrl, Integer displayOrder, Category parentCategory) {
 		this.name = name;
-		this.iconUrl = iconUrl;  // ✅ 추가!
+		this.iconUrl = iconUrl;
 		this.displayOrder = displayOrder;
 		this.parentCategory = parentCategory;
 	}
