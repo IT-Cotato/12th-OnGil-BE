@@ -1,5 +1,7 @@
 package com.ongil.backend.domain.product.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -72,4 +74,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	// 브랜드별 상품 조회 (페이징)
 	@EntityGraph(attributePaths = {"brand", "category"})
 	Page<Product> findByBrandId(Long brandId, Pageable pageable);
+
+	@Query("SELECT p FROM Product p " +
+		"WHERE p.category.id = :categoryId " +
+		"AND p.onSale = true " +  // ✅ 판매 중인 상품만!
+		"ORDER BY (p.viewCount + p.purchaseCount) DESC " +
+		"LIMIT 1")
+	Optional<Product> findTopByCategoryIdOrderByPopularity(@Param("categoryId") Long categoryId);
 }
