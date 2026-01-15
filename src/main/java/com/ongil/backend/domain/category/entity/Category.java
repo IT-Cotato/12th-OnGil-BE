@@ -25,6 +25,9 @@ public class Category extends BaseEntity {
 	@Column(nullable = false, length = 50)
 	private String name;
 
+	@Column(name = "icon_url", length = 500)
+	private String iconUrl;
+
 	@Column(name = "display_order", nullable = false)
 	private Integer displayOrder;
 
@@ -36,8 +39,9 @@ public class Category extends BaseEntity {
 	private List<Category> subCategories = new ArrayList<>();
 
 	@Builder
-	public Category(String name, Integer displayOrder, Category parentCategory) {
+	public Category(String name, String iconUrl, Integer displayOrder, Category parentCategory) {  // ✅ iconUrl 추가!
 		this.name = name;
+		this.iconUrl = iconUrl;  // ✅ 추가!
 		this.displayOrder = displayOrder;
 		this.parentCategory = parentCategory;
 	}
