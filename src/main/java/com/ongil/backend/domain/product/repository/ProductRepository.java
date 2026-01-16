@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
+import java.util.List;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.enums.ProductType;
 
@@ -81,4 +81,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		"ORDER BY (p.viewCount + p.purchaseCount) DESC " +
 		"LIMIT 1")
 	Optional<Product> findTopByCategoryIdOrderByPopularity(@Param("categoryId") Long categoryId);
+
+	// 특정 브랜드 상품 랜덤 6개 조회
+	@Query(value = "SELECT * FROM products WHERE brand_id = :brandId ORDER BY RAND() LIMIT 6", nativeQuery = true)
+	List<Product> findRandomProductsByBrand(@Param("brandId") Long brandId);
 }
