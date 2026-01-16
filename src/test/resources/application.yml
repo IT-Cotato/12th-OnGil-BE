@@ -15,3 +15,31 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+openai:
+  api-key: test-key
+
+jwt:
+  secret: test-secret-key-for-testing-purposes-only
+  access-expiration-ms: 3600000
+  refresh-expiration-ms: 1209600000
+  issuer: "ongil"
+
+kakao:
+  client-id: test-client-id
+  client-secret: test-client-secret
+  redirect-uri: http://localhost:8080/test
+  token-uri: https://kauth.kakao.com/oauth/token
+  user-info-uri: https://kapi.kakao.com/v2/user/me
+
+google:
+  client-id: test-client-id
+  client-secret: test-client-secret
+  redirect-uri: http://localhost:8080/test
+  authorization-grant-type: authorization_code
+  scope: email, profile
