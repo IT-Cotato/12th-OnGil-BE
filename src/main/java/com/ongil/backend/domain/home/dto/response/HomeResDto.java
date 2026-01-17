@@ -13,5 +13,11 @@ public record HomeResDto(
         List<String> recommendProducts,
 
         @Schema(description = "최신 매거진 제목")
-        String latestMagazineTitle
+        String latestMagazineTitle,
+
+        @Schema(description = "음성 검색 아이콘 URL", example = "https://example.com/icons/voice-search.svg")
+        String voiceSearchIconUrl,
+
+        @Schema(description = "장바구니 아이콘 URL", example = "https://example.com/icons/cart.svg")
+        String cartIconUrl
 ) {}

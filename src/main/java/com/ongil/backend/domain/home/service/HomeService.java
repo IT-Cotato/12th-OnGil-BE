@@ -26,7 +26,11 @@ public class HomeService {
         // 3. DB에서 최신 매거진 가져오기 (가정)
         String magazineTitle = "겨울철 식물 관리법";
 
-        // 4. Converter를 사용해 DTO로 변환
-        return HomeConverter.toHomeResDto(banners, products, magazineTitle);
+        // 4. 음성 검색 및 장바구니 아이콘 URL (가정)
+        String voiceSearchIconUrl = "https://example.com/icons/voice-search.svg";
+        String cartIconUrl = "https://example.com/icons/cart.svg";
+
+        // 5. Converter를 사용해 DTO로 변환
+        return HomeConverter.toHomeResDto(banners, products, magazineTitle, voiceSearchIconUrl, cartIconUrl);
     }
 }

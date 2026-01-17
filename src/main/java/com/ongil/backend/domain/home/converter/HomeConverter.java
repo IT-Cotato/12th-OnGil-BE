@@ -9,11 +9,14 @@ import java.util.List;
 public class HomeConverter {
 
     // 나중에는 파라미터로 실제 Product, Magazine 객체를 받게 됩니다.
-    public static HomeResDto toHomeResDto(List<String> banners, List<String> products, String magazineTitle) {
+    public static HomeResDto toHomeResDto(List<String> banners, List<String> products, String magazineTitle, 
+                                         String voiceSearchIconUrl, String cartIconUrl) {
         return HomeResDto.builder()
                 .bannerUrls(banners)
                 .recommendProducts(products)
                 .latestMagazineTitle(magazineTitle)
+                .voiceSearchIconUrl(voiceSearchIconUrl)
+                .cartIconUrl(cartIconUrl)
                 .build();
     }
 }
