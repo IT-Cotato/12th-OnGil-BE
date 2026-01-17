@@ -27,25 +27,39 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http
-			.cors(cors -> cors.configurationSource(corsConfigurationSource))
-			.csrf(AbstractHttpConfigurer::disable)
-			.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.formLogin(AbstractHttpConfigurer::disable)
-			.httpBasic(AbstractHttpConfigurer::disable)
+				.cors(cors -> cors.configurationSource(corsConfigurationSource))
+				.csrf(AbstractHttpConfigurer::disable)
+				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.formLogin(AbstractHttpConfigurer::disable)
+				.httpBasic(AbstractHttpConfigurer::disable)
 
-			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-				.requestMatchers("/auth/logout", "/auth/withdraw").authenticated()
-				.requestMatchers("/auth/oauth/kakao", "/auth/oauth/google", "/auth/token/refresh").permitAll()
-				.requestMatchers("/auth/**").permitAll()
-				.requestMatchers("/api/products/**").permitAll()
-				.requestMatchers("/api/brands/**").permitAll()
-				.requestMatchers("/api/categories/**").permitAll()
-				.anyRequest().authenticated()
-			)
+				.authorizeHttpRequests(auth -> auth
+						// [1] 시스템 및 문서화 관련 (Swagger 등)
+						.requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-			// JWT 필터 적용
-			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+						// [2] 인증이 꼭 필요한 기능 (로그아웃, 회원탈퇴)
+						.requestMatchers("/auth/logout", "/auth/withdraw").authenticated()
+
+						// [3] 로그인/회원가입 관련 (모두 허용)
+						.requestMatchers("/auth/oauth/kakao", "/auth/oauth/google", "/auth/token/refresh").permitAll()
+						.requestMatchers("/auth/**").permitAll()
+
+						// ⭐️ [4] 하단 네비게이션 및 주요 도메인 (수정된 부분) ⭐️
+						.requestMatchers("/home").permitAll()          // 홈 화면 (로그인 없이 접근 가능하게 변경)
+						.requestMatchers("/magazines/**").permitAll()  // 매거진 (추후 구현 시 로그인 없이 목록 조회 가능하도록 미리 추가)
+
+						// [5] 기존 API 설정
+						.requestMatchers("/api/products/**").permitAll()
+						.requestMatchers("/api/brands/**").permitAll()
+						.requestMatchers("/api/categories/**").permitAll()
+
+						// [6] 그 외 모든 요청은 로그인(인증) 필요
+						// (마이페이지 /user/me, 찜하기 /wishlist 등은 여기에 걸려서 보호됩니다)
+						.anyRequest().authenticated()
+				)
+
+				// JWT 필터 적용
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
