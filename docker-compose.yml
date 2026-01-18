@@ -2,11 +2,11 @@ version: "3.8"
 
 services:
   backend:
-    image: neibler/ongil-backend:latest      # 또는 chj78/ongil-backend:latest
+    image: neibler/ongil-backend:latest
     container_name: ongil-backend
     restart: always
     env_file:
-      - .env
+      - /home/ubuntu/ongil-backend/.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       PROD_DB_URL: ${PROD_DB_URL}
@@ -28,7 +28,7 @@ services:
       - "6379:6379"
     restart: always
     volumes:
-      - ./redis_data:/data
+      - /home/ubuntu/ongil-backend/redis_data:/data
     command: ["redis-server", "--appendonly", "yes"]
 
   elasticsearch:
@@ -41,5 +41,5 @@ services:
     ports:
       - "9200:9200"
     volumes:
-      - ./es_data:/usr/share/elasticsearch/data
+      - /home/ubuntu/ongil-backend/es_data:/usr/share/elasticsearch/data
     restart: always
