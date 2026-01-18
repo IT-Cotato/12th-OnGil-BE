@@ -14,10 +14,12 @@ services:
       PROD_DB_PASSWORD: ${PROD_DB_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      SPRING_ELASTICSEARCH_URIS: ${SPRING_ELASTICSEARCH_URIS}
     ports:
       - "8080:8080"
     depends_on:
       - redis
+      - elasticsearch
 
   redis:
     image: redis:7-alpine
@@ -28,3 +30,16 @@ services:
     volumes:
       - ./redis_data:/data
     command: ["redis-server", "--appendonly", "yes"]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: ongil-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./es_data:/usr/share/elasticsearch/data
+    restart: always

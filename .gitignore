@@ -36,3 +36,7 @@ out/
 ### VS Code ###
 .vscode/
 .env
+
+# Docker Data
+es_data/
+redis_data/
