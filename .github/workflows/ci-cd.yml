@@ -96,7 +96,9 @@ jobs:
 
             cd /home/ubuntu/ongil-backend
             echo "${{ secrets.ENV_FILE }}" > .env
+            cp .env deploy/
 
-            docker-compose -f /home/ubuntu/ongil-backend/deploy/docker-compose.yml down --remove-orphans
-            docker-compose -f /home/ubuntu/ongil-backend/deploy/docker-compose.yml up -d --pull always
+            cd /home/ubuntu/ongil-backend/deploy
+            docker-compose down --remove-orphans
+            docker-compose up -d --pull always
             docker system prune -f
