@@ -18,6 +18,9 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
 		String selectedColor
 	);
 
+	// 특정 유저의 장바구니에 담긴 상품 종류 수(행 개수) 조회
+	long countByUserId(Long userId);
+
 	// 사용자별 전체 장바구니 조회
 	@EntityGraph(attributePaths = {"product", "product.brand"})
 	List<Cart> findByUserIdOrderByCreatedAtDesc(Long userId);

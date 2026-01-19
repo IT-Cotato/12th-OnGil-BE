@@ -22,7 +22,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Tag(name = "Product", description = "상품 관련 API")
 @Validated
 @RestController
@@ -75,15 +77,28 @@ public class ProductController {
 		return DataResponse.from(products);
 	}
 
-	@Operation(summary = "상품 검색", description = "키워드로 상품을 검색합니다. (브랜드명, 카테고리명, 색상, 상품명)")
+	@Operation(summary = "상품 검색 (음성/텍스트)", description = "키워드로 상품을 검색합니다. searchType 파라미터가 없으면 기본 TEXT로 동작합니다.")
 	@GetMapping("/search")
 	public DataResponse<Page<ProductSimpleResponse>> searchProducts(
-		@RequestParam
-		@NotBlank(message = "검색 키워드는 필수입니다")
-		@Size(min = 1, max = 50, message = "검색 키워드는 1-50자 이내여야 합니다")
-		String keyword,
-		@PageableDefault(size = 20) Pageable pageable
+			@RequestParam
+			@NotBlank(message = "검색 키워드는 필수입니다")
+			@Size(min = 1, max = 50, message = "검색 키워드는 1-50자 이내여야 합니다")
+			String keyword,
+
+			// required = false 덕분에 기존 코드는 이 값을 안 보내도 에러가 안 납니다.
+			@RequestParam(required = false, defaultValue = "TEXT")
+			String searchType,
+
+			@PageableDefault(size = 20) Pageable pageable
 	) {
+		// 로그 기록 (음성 검색인지 확인용)
+		if ("VOICE".equalsIgnoreCase(searchType)) {
+			log.info("🎤 음성 검색 요청 - keyword: {}", keyword);
+		} else {
+			log.debug("텍스트 검색 요청 - keyword: {}", keyword);
+		}
+
+		// 서비스 로직은 기존 그대로 호출
 		Page<ProductSimpleResponse> products = productService.searchProducts(keyword, pageable);
 		return DataResponse.from(products);
 	}
