@@ -5,12 +5,14 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
+import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.service.ProductService;
 import com.ongil.backend.global.common.dto.DataResponse;
@@ -84,5 +86,13 @@ public class ProductController {
 	) {
 		Page<ProductSimpleResponse> products = productService.searchProducts(keyword, pageable);
 		return DataResponse.from(products);
+	}
+
+	@Operation(summary = "사이즈 가이드 조회", description = "유사 체형 고객의 구매 데이터를 기반으로 사이즈를 추천합니다.")
+	@GetMapping("/{productId}/size-guide")
+	public DataResponse<SizeGuideResponse> getSizeGuide(
+		@PathVariable Long productId, @AuthenticationPrincipal Long userId) {
+		SizeGuideResponse responses = productService.getSizeGuide(productId, userId);
+		return DataResponse.from(responses);
 	}
 }

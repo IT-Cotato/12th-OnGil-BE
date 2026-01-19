@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.product.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -81,4 +82,74 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		"ORDER BY (p.viewCount + p.purchaseCount) DESC " +
 		"LIMIT 1")
 	Optional<Product> findTopByCategoryIdOrderByPopularity(@Param("categoryId") Long categoryId);
+
+	/**
+	 * 사이즈 가이드 - 유사 고객 집단의 사이즈별 구매 횟수 집계
+	 *
+	 * @param productId 상품 ID
+	 * @param minHeight 최소 키 (사용자 키 - 5cm)
+	 * @param maxHeight 최대 키 (사용자 키 + 5cm)
+	 * @param minWeight 최소 몸무게 (사용자 몸무게 - 5kg)
+	 * @param maxWeight 최대 몸무게 (사용자 몸무게 + 5kg)
+	 * @return List<Object [ ]> - [0]: String selectedSize, [1]: Long count
+	 */
+	@Query("""
+		SELECT oi.selectedSize, COUNT(oi)
+		FROM OrderItem oi
+		JOIN oi.order o
+		JOIN o.user u
+		WHERE oi.product.id = :productId
+		  AND u.height BETWEEN :minHeight AND :maxHeight
+		  AND u.weight BETWEEN :minWeight AND :maxWeight
+		  AND u.height IS NOT NULL
+		  AND u.weight IS NOT NULL
+		  AND oi.selectedSize IS NOT NULL
+		GROUP BY oi.selectedSize
+		ORDER BY COUNT(oi) DESC
+		""")
+	List<Object[]> findSizeStatisticsByProductAndUserBody(
+		@Param("productId") Long productId,
+		@Param("minHeight") Integer minHeight,
+		@Param("maxHeight") Integer maxHeight,
+		@Param("minWeight") Integer minWeight,
+		@Param("maxWeight") Integer maxWeight
+	);
+
+	/**
+	 * 사이즈 가이드 - 유사 고객의 구체적인 구매 정보 조회 (표 형식용)
+	 *
+	 * @param productId  상품 ID
+	 * @param minHeight  최소 키
+	 * @param maxHeight  최대 키
+	 * @param minWeight  최소 몸무게
+	 * @param maxWeight  최대 몸무게
+	 * @param userHeight 사용자 키 (정렬 기준)
+	 * @param userWeight 사용자 몸무게 (정렬 기준)
+	 * @param pageable   페이징 (최대 4개)
+	 * @return List<Object [ ]> - [0]: Integer height, [1]: Integer weight, [2]: String purchasedSize
+	 */
+	@Query("""
+		SELECT u.height, u.weight, oi.selectedSize
+		FROM OrderItem oi
+		JOIN oi.order o
+		JOIN o.user u
+		WHERE oi.product.id = :productId
+		  AND u.height BETWEEN :minHeight AND :maxHeight
+		  AND u.weight BETWEEN :minWeight AND :maxWeight
+		  AND u.height IS NOT NULL
+		  AND u.weight IS NOT NULL
+		  AND oi.selectedSize IS NOT NULL
+		ORDER BY ABS(u.height - :userHeight) ASC,
+		         ABS(u.weight - :userWeight) ASC
+		""")
+	List<Object[]> findSimilarCustomersPurchases(
+		@Param("productId") Long productId,
+		@Param("minHeight") Integer minHeight,
+		@Param("maxHeight") Integer maxHeight,
+		@Param("minWeight") Integer minWeight,
+		@Param("maxWeight") Integer maxWeight,
+		@Param("userHeight") Integer userHeight,
+		@Param("userWeight") Integer userWeight,
+		Pageable pageable
+	);
 }
