@@ -17,7 +17,9 @@ public class UserConverter {
 			.profileUrl(user.getProfileImg())
 			.height(user.getHeight())
 			.weight(user.getWeight())
-			.usualSize(user.getUsualSize())
+			.usualTopSize(user.getUsualTopSize())
+			.usualBottomSize(user.getUsualBottomSize())
+			.usualShoeSize(user.getUsualShoeSize())
 			.points(user.getPoints())
 			.build();
 	}

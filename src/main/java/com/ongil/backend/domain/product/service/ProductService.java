@@ -10,16 +10,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.product.converter.ProductConverter;
+import com.ongil.backend.domain.product.converter.SizeGuideConverter;
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.AiMaterialDescriptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
+import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.entity.ProductOption;
 import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
+import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
@@ -34,6 +38,10 @@ public class ProductService {
 	private final ProductOptionRepository productOptionRepository;
 	private final ProductConverter productConverter;
 	private final AiMaterialService aiMaterialService;
+	private final UserRepository userRepository;
+	private final SizeGuideConverter sizeGuideConverter;
+
+	private static final int SIMILAR_CUSTOMERS_LIMIT = 4;
 
 	// 상품 상세 조회
 	@Transactional
@@ -123,6 +131,55 @@ public class ProductService {
 		return products.map(productConverter::toSimpleResponse);
 	}
 
+	// 사이즈 가이드 기능
+	public SizeGuideResponse getSizeGuide(Long productId, Long userId) {
+		Product product = productRepository.findById(productId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+		if (!hasBodyInfo(user)) {
+			return buildEmptyResponse();
+		}
+
+		Integer minHeight = user.getHeight() - 5;
+		Integer maxHeight = user.getHeight() + 5;
+		Integer minWeight = user.getWeight() - 5;
+		Integer maxWeight = user.getWeight() + 5;
+
+		// 5. 유사 고객 구매 통계 조회
+		List<Object[]> rawStatistics = productRepository.findSizeStatisticsByProductAndUserBody(
+			productId, minHeight, maxHeight, minWeight, maxWeight
+		);
+
+		// 6. 유사 고객이 구매한 사이즈와 그 사이즈를 구매한 횟수 조회, 없을시 >> 체형 정보만 반환
+		if (rawStatistics.isEmpty()) {
+			return buildResponseWithBodyInfoOnly(user, product);
+		}
+
+		// 7.해당 상품을 구매한 유사 고객의 정보(키, 몸무게, 평소 사이즈) (최대 4명)
+		Pageable pageable = PageRequest.of(0, SIMILAR_CUSTOMERS_LIMIT);
+		List<Object[]> rawCustomers = productRepository.findSimilarCustomersPurchases(
+			productId, minHeight, maxHeight, minWeight, maxWeight,
+			user.getHeight(), user.getWeight(), pageable
+		);
+
+		// 8. 응답 데이터 변환 및 생성
+		List<SizeGuideResponse.SizeStatistic> sizeStatistics = sizeGuideConverter.toSizeStatistics(rawStatistics);
+		List<SizeGuideResponse.SimilarCustomer> similarCustomers = sizeGuideConverter.toSimilarCustomers(rawCustomers);
+		List<String> recommendedSizes = sizeGuideConverter.calculateRecommendedSizes(sizeStatistics);
+		SizeGuideResponse.UserBodyInfo userBodyInfo = sizeGuideConverter.toUserBodyInfo(user, product);
+
+		return SizeGuideResponse.builder()
+			.recommendedSizes(recommendedSizes)
+			.sizeStatistics(sizeStatistics)
+			.similarCustomers(similarCustomers)
+			.userBodyInfo(userBodyInfo)
+			.build();
+
+	}
+
 	private boolean needsAiDescription(Product product) {
 		return product.getAiMaterialAdvantages() == null
 			|| product.getAiMaterialDisadvantages() == null
@@ -171,5 +228,29 @@ public class ProductService {
 				Sort.Order.asc("id")
 			);
 		};
+	}
+
+	private boolean hasBodyInfo(User user) {
+		return user.getHeight() != null && user.getWeight() != null;
+	}
+
+	private SizeGuideResponse buildEmptyResponse() {
+		return SizeGuideResponse.builder()
+			.recommendedSizes(null)
+			.sizeStatistics(null)
+			.similarCustomers(null)
+			.userBodyInfo(null)
+			.build();
+	}
+
+	private SizeGuideResponse buildResponseWithBodyInfoOnly(User user, Product product) {
+		SizeGuideResponse.UserBodyInfo userBodyInfo = sizeGuideConverter.toUserBodyInfo(user, product);
+
+		return SizeGuideResponse.builder()
+			.recommendedSizes(null)
+			.sizeStatistics(null)
+			.similarCustomers(null)
+			.userBodyInfo(userBodyInfo)
+			.build();
 	}
 }
