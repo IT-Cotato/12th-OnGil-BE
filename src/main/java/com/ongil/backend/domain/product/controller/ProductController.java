@@ -15,6 +15,7 @@ import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.service.ProductService;
+import com.ongil.backend.domain.search.service.SearchHistoryService;
 import com.ongil.backend.global.common.dto.DataResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ProductController {
 
 	private final ProductService productService;
+	private final SearchHistoryService searchHistoryService;
 
 	@Operation(summary = "상품 상세 조회", description = "상품의 상세 정보를 조회합니다.")
 	@GetMapping("/{productId}")
@@ -89,13 +91,24 @@ public class ProductController {
 			@RequestParam(required = false, defaultValue = "TEXT")
 			String searchType,
 
-			@PageableDefault(size = 20) Pageable pageable
+			@PageableDefault(size = 20) Pageable pageable,
+
+			@AuthenticationPrincipal Long userId
 	) {
 		// 로그 기록 (음성 검색인지 확인용)
 		if ("VOICE".equalsIgnoreCase(searchType)) {
 			log.info("🎤 음성 검색 요청 - keyword: {}", keyword);
 		} else {
 			log.debug("텍스트 검색 요청 - keyword: {}", keyword);
+		}
+
+		// 검색 기록 저장 (로그인한 사용자만)
+		if (userId != null) {
+			try {
+				searchHistoryService.saveSearchHistory(userId, keyword);
+			} catch (Exception e) {
+				log.warn("검색 기록 저장 실패 - userId: {}, keyword: {}, error: {}", userId, keyword, e.getMessage());
+			}
 		}
 
 		// 서비스 로직은 기존 그대로 호출
