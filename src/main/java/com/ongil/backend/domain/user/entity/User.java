@@ -1,13 +1,13 @@
 package com.ongil.backend.domain.user.entity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.ongil.backend.domain.address.entity.*;
+import com.ongil.backend.domain.address.entity.Address;
 import com.ongil.backend.domain.auth.entity.LoginType;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
@@ -58,8 +58,14 @@ public class User extends BaseEntity {
 
 	private Integer weight;
 
-	@Column(name = "usual_size", length = 10)
-	private String usualSize;
+	@Column(name = "usual_top_size", length = 10)
+	private String usualTopSize;
+
+	@Column(name = "usual_bottom_size", length = 10)
+	private String usualBottomSize;
+
+	@Column(name = "usual_shoe_size", length = 10)
+	private String usualShoeSize;
 
 	@Column(nullable = false)
 	@Builder.Default
