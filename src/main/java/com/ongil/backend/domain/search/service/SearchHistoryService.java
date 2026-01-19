@@ -41,8 +41,8 @@ public class SearchHistoryService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-		// 키워드 정규화 (앞뒤 공백 제거, 소문자 변환)
-		String normalizedKeyword = keyword.trim();
+		// 키워드 정규화
+		String normalizedKeyword = normalizeKeyword(keyword);
 
 		if (normalizedKeyword.isEmpty()) {
 			return;
@@ -85,8 +85,16 @@ public class SearchHistoryService {
 	 */
 	@Transactional
 	public void deleteSearchHistory(Long userId, String keyword) {
-		String normalizedKeyword = keyword.trim();
+		String normalizedKeyword = normalizeKeyword(keyword);
 		searchHistoryRepository.deleteByUserIdAndKeyword(userId, normalizedKeyword);
 		log.debug("검색 기록 삭제 완료 - userId: {}, keyword: {}", userId, normalizedKeyword);
+	}
+
+	/**
+	 * 키워드 정규화
+	 * - 앞뒤 공백 제거
+	 */
+	private String normalizeKeyword(String keyword) {
+		return keyword.trim();
 	}
 }

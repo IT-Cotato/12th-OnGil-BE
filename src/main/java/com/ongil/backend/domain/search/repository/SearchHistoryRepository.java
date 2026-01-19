@@ -14,6 +14,8 @@ import com.ongil.backend.domain.search.entity.SearchHistory;
 public interface SearchHistoryRepository extends JpaRepository<SearchHistory, Long> {
 
 	// 사용자의 최근 검색 기록 조회 (중복 제거, 최신순)
+	// Note: 현재 구현은 서브쿼리를 사용하지만, 사용자당 최대 20개로 제한되어 성능 문제는 없습니다.
+	// 향후 대량 데이터 발생 시 ROW_NUMBER() OVER 윈도우 함수를 사용한 최적화 고려 가능
 	@Query("""
 		SELECT sh FROM SearchHistory sh
 		WHERE sh.user.id = :userId
