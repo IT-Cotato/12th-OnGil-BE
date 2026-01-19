@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.product.converter;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -16,6 +17,10 @@ public class SizeGuideConverter {
 
 	// Object[] → SizeStatistic 변환
 	public List<SizeStatistic> toSizeStatistics(List<Object[]> rawStatistics) {
+		if (rawStatistics == null || rawStatistics.isEmpty()) {
+			return Collections.emptyList();
+		}
+
 		return rawStatistics.stream()
 			.map(obj -> SizeStatistic.builder()
 				.size((String)obj[0])
@@ -26,6 +31,10 @@ public class SizeGuideConverter {
 
 	// Object[] → SimilarCustomer 변환
 	public List<SimilarCustomer> toSimilarCustomers(List<Object[]> rawCustomers) {
+		if (rawCustomers == null || rawCustomers.isEmpty()) {
+			return Collections.emptyList();
+		}
+
 		return rawCustomers.stream()
 			.map(obj -> SimilarCustomer.builder()
 				.height((Integer)obj[0])

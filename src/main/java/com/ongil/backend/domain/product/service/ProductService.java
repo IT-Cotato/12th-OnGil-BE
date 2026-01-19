@@ -153,12 +153,12 @@ public class ProductService {
 			productId, minHeight, maxHeight, minWeight, maxWeight
 		);
 
-		// 6. 유사 고객 구매 데이터 없음 → 체형 정보만 반환
+		// 6. 유사 고객이 구매한 사이즈와 그 사이즈를 구매한 횟수 조회, 없을시 >> 체형 정보만 반환
 		if (rawStatistics.isEmpty()) {
 			return buildResponseWithBodyInfoOnly(user, product);
 		}
 
-		// 7. 유사 고객 구체적 구매 정보 조회 (최대 4명)
+		// 7.해당 상품을 구매한 유사 고객의 정보(키, 몸무게, 평소 사이즈) (최대 4명)
 		Pageable pageable = PageRequest.of(0, SIMILAR_CUSTOMERS_LIMIT);
 		List<Object[]> rawCustomers = productRepository.findSimilarCustomersPurchases(
 			productId, minHeight, maxHeight, minWeight, maxWeight,
