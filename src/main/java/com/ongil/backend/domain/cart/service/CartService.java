@@ -31,7 +31,10 @@ public class CartService {
 	private final ProductRepository productRepository;
 	private final UserRepository userRepository;
 	private final CartConverter cartConverter;
-
+	// 홈 화면 뱃지용 카운트 조회
+	public long getCartCount(Long userId) {
+		return cartRepository.countByUserId(userId);
+	}
 	public List<CartResponse> getMyCarts(Long userId) {
 		List<Cart> carts = cartRepository.findByUserIdOrderByCreatedAtDesc(userId);
 		return cartConverter.toResponseList(carts);
