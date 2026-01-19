@@ -92,7 +92,7 @@ public class ProductService {
 
 	// 특가 상품 조회
 	public List<ProductSimpleResponse> getSpecialSaleProducts() {
-		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "discountRate"));
+		Pageable pageable = PageRequest.of(0, 10);
 		Page<Product> products = productRepository.findByOnSaleTrueAndProductTypeOrderByDiscountRateDesc(
 			ProductType.SPECIAL_SALE,
 			pageable
@@ -148,24 +148,24 @@ public class ProductService {
 		Integer minWeight = user.getWeight() - 5;
 		Integer maxWeight = user.getWeight() + 5;
 
-		// 5. 유사 고객 구매 통계 조회
+		// 유사 고객 구매 통계 조회
 		List<Object[]> rawStatistics = productRepository.findSizeStatisticsByProductAndUserBody(
 			productId, minHeight, maxHeight, minWeight, maxWeight
 		);
 
-		// 6. 유사 고객이 구매한 사이즈와 그 사이즈를 구매한 횟수 조회, 없을시 >> 체형 정보만 반환
+		// 유사 고객이 구매한 사이즈와 그 사이즈를 구매한 횟수 조회, 없을시 >> 체형 정보만 반환
 		if (rawStatistics.isEmpty()) {
 			return buildResponseWithBodyInfoOnly(user, product);
 		}
 
-		// 7.해당 상품을 구매한 유사 고객의 정보(키, 몸무게, 평소 사이즈) (최대 4명)
+		// 해당 상품을 구매한 유사 고객의 정보(키, 몸무게, 평소 사이즈) (최대 4명)
 		Pageable pageable = PageRequest.of(0, SIMILAR_CUSTOMERS_LIMIT);
 		List<Object[]> rawCustomers = productRepository.findSimilarCustomersPurchases(
 			productId, minHeight, maxHeight, minWeight, maxWeight,
 			user.getHeight(), user.getWeight(), pageable
 		);
 
-		// 8. 응답 데이터 변환 및 생성
+		// 응답 데이터 변환 및 생성
 		List<SizeGuideResponse.SizeStatistic> sizeStatistics = sizeGuideConverter.toSizeStatistics(rawStatistics);
 		List<SizeGuideResponse.SimilarCustomer> similarCustomers = sizeGuideConverter.toSimilarCustomers(rawCustomers);
 		List<String> recommendedSizes = sizeGuideConverter.calculateRecommendedSizes(sizeStatistics);
@@ -179,6 +179,8 @@ public class ProductService {
 			.build();
 
 	}
+
+	// 헬퍼 메서드
 
 	private boolean needsAiDescription(Product product) {
 		return product.getAiMaterialAdvantages() == null
