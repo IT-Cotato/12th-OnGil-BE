@@ -61,7 +61,7 @@ public class CategoryConverter {
 	public CategoryRandomResponse toRandomResponse(Category category, String thumbnailUrl) {
 		return CategoryRandomResponse.builder()
 			.categoryId(category.getId())
-			.categoryName(category.getName())
+			.name(category.getName())
 			.categoryType(
 				category.getParentCategory() == null
 					? CategoryType.PARENT
@@ -79,7 +79,7 @@ public class CategoryConverter {
 	public CategorySimpleResponse toSimpleResponse(Category category) {
 		return CategorySimpleResponse.builder()
 			.categoryId(category.getId())
-			.categoryName(category.getName())
+			.name(category.getName())
 			.iconUrl(category.getIconUrl())
 			.displayOrder(category.getDisplayOrder())
 			.build();

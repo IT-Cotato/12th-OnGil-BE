@@ -2,6 +2,7 @@ package com.ongil.backend.domain.cart.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,21 +32,27 @@ public class CartService {
 	private final ProductRepository productRepository;
 	private final UserRepository userRepository;
 	private final CartConverter cartConverter;
+
 	// 홈 화면 뱃지용 카운트 조회
 	public long getCartCount(Long userId) {
 		return cartRepository.countByUserId(userId);
 	}
+
+	// 내 장바구니 조회
 	public List<CartResponse> getMyCarts(Long userId) {
 		List<Cart> carts = cartRepository.findByUserIdOrderByCreatedAtDesc(userId);
 		return cartConverter.toResponseList(carts);
 	}
 
+	// 장바구니 추가
 	@Transactional
 	public CartResponse addCart(Long userId, CartCreateRequest request) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-		Product product = productRepository.findById(request.productId())
+		if (!userRepository.existsById(userId)) {
+			throw new EntityNotFoundException(ErrorCode.USER_NOT_FOUND);
+		}
+
+		Product product = productRepository.findWithBrandAndCategoryById(request.productId())
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
 
 		Optional<Cart> existingCart = cartRepository
@@ -63,7 +70,7 @@ public class CartService {
 		}
 
 		Cart cart = Cart.builder()
-			.user(user)
+			.user(User.builder().id(userId).build())
 			.product(product)
 			.selectedSize(request.selectedSize())
 			.selectedColor(request.selectedColor())
@@ -74,15 +81,14 @@ public class CartService {
 		return cartConverter.toResponse(savedCart);
 	}
 
+	// 장바구니 수정 (수량/옵션 변경)
 	@Transactional
 	public CartResponse updateCart(Long userId, Long cartId, CartUpdateRequest request) {
-		Cart cart = cartRepository.findById(cartId)
+
+		Cart cart = cartRepository.findByIdAndUserId(cartId, userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CART_NOT_FOUND));
 
-		if (!cart.getUser().getId().equals(userId)) {
-			throw new ValidationException(ErrorCode.CART_FORBIDDEN);
-		}
-
+		// 옵션 업데이트
 		if (request.selectedSize() != null) {
 			cart.updateSize(request.selectedSize());
 		}
@@ -98,37 +104,31 @@ public class CartService {
 		return cartConverter.toResponse(cart);
 	}
 
+	// 장바구니 개별 삭제
 	@Transactional
 	public void deleteCart(Long userId, Long cartId) {
-		Cart cart = cartRepository.findById(cartId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CART_NOT_FOUND));
+		int deleted = cartRepository.deleteByIdAndUserId(cartId, userId);
 
-		if (!cart.getUser().getId().equals(userId)) {
-			throw new ValidationException(ErrorCode.CART_FORBIDDEN);
+		if (deleted == 0) {
+			throw new EntityNotFoundException(ErrorCode.CART_NOT_FOUND);
 		}
-
-		cartRepository.delete(cart);
 	}
 
+	// 장바구니 선택 삭제
 	@Transactional
 	public void deleteCarts(Long userId, List<Long> cartIds) {
-
 		if (cartIds == null || cartIds.isEmpty()) {
 			throw new ValidationException(ErrorCode.INVALID_PARAMETER);
 		}
 
-		List<Cart> carts = cartRepository.findAllById(cartIds);
+		List<Long> distinctIds = cartIds.stream()
+			.distinct()
+			.collect(Collectors.toList());
 
-		if (carts.size() != cartIds.size()) {
+		int deleted = cartRepository.deleteByIdInAndUserId(distinctIds, userId);
+		
+		if (deleted != distinctIds.size()) {
 			throw new EntityNotFoundException(ErrorCode.CART_NOT_FOUND);
 		}
-
-		carts.forEach(cart -> {
-			if (!cart.getUser().getId().equals(userId)) {
-				throw new ValidationException(ErrorCode.CART_FORBIDDEN);
-			}
-		});
-
-		cartRepository.deleteAll(carts);
 	}
 }

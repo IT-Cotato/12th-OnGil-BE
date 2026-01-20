@@ -8,15 +8,15 @@ import lombok.Getter;
 @Builder
 public class SubCategoryResponse {
 
-	@Schema(description = "카테고리 ID", example = "11")
+	@Schema(description = "카테고리 ID")
 	private Long categoryId;
 
-	@Schema(description = "카테고리명", example = "니트")
+	@Schema(description = "카테고리명")
 	private String name;
 
-	@Schema(description = "아이콘 URL", example = "https://...")
+	@Schema(description = "카테고리 이미지")
 	private String iconUrl;
 
-	@Schema(description = "표시 순서", example = "1")
+	@Schema(description = "표시 순서")
 	private Integer displayOrder;
 }
