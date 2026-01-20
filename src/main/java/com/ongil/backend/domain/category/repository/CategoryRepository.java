@@ -2,6 +2,7 @@ package com.ongil.backend.domain.category.repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,6 +19,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 	List<Category> findAllParentCategoriesWithSub();
 
 	// 모든 카테고리 조회 (상위 + 하위)
+	@EntityGraph(attributePaths = {"parentCategory", "subCategories"})
 	List<Category> findAllByOrderByDisplayOrder();
 
 	// 하위 카테고리만 조회
