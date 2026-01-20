@@ -43,6 +43,10 @@ public class BrandService {
 	}
 
 	public Page<ProductSimpleResponse> getBrandProducts(Long brandId, Pageable pageable) {
+		if (!brandRepository.existsById(brandId)) {
+			throw new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND);
+		}
+
 		Page<Product> products = productRepository.findByBrandId(brandId, pageable);
 		return products.map(productConverter::toSimpleResponse);
 	}

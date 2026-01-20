@@ -2,6 +2,7 @@ package com.ongil.backend.domain.cart.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,10 +120,14 @@ public class CartService {
 		if (cartIds == null || cartIds.isEmpty()) {
 			throw new ValidationException(ErrorCode.INVALID_PARAMETER);
 		}
-		
-		int deleted = cartRepository.deleteByIdInAndUserId(cartIds, userId);
 
-		if (deleted != cartIds.size()) {
+		List<Long> distinctIds = cartIds.stream()
+			.distinct()
+			.collect(Collectors.toList());
+
+		int deleted = cartRepository.deleteByIdInAndUserId(distinctIds, userId);
+		
+		if (deleted != distinctIds.size()) {
 			throw new EntityNotFoundException(ErrorCode.CART_NOT_FOUND);
 		}
 	}
