@@ -1,13 +1,12 @@
 package com.ongil.backend.domain.brand.entity;
 
-import java.util.*;
-
-import com.ongil.backend.domain.product.entity.*;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "brands")
@@ -28,9 +27,6 @@ public class Brand extends BaseEntity {
 
 	@Column(name = "logo_image_url", length = 500)
 	private String logoImageUrl;
-
-	@OneToMany(mappedBy = "brand", fetch = FetchType.LAZY)
-	private List<Product> products = new ArrayList<>();
 
 	@Builder
 	public Brand(String name, String description, String logoImageUrl) {

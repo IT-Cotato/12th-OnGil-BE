@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,11 +45,10 @@ public class BrandController {
 	@GetMapping("/{brandId}/products")
 	public DataResponse<Page<ProductSimpleResponse>> getBrandProducts(
 		@PathVariable Long brandId,
-		@PageableDefault(size = 20, sort = "popularity", direction = Sort.Direction.DESC)
+		@PageableDefault(size = 20)
 		Pageable pageable
 	) {
 		Page<ProductSimpleResponse> products = brandService.getBrandProducts(brandId, pageable);
 		return DataResponse.from(products);
 	}
-
 }
