@@ -18,6 +18,7 @@ public class WishlistConverter {
 
 	public WishlistResponse toResponse(Wishlist wishlist) {
 		Product product = wishlist.getProduct();
+
 		if (product == null) {
 			throw new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
 		}
@@ -31,9 +32,8 @@ public class WishlistConverter {
 			.productId(product.getId())
 			.productName(product.getName())
 			.brandName(product.getBrand().getName())
-			.originalPrice(product.getPrice())
+			.price(product.getPrice())
 			.discountRate(product.getDiscountRate())
-			.discountPrice(product.getDiscountPrice())
 			.finalPrice(calculateFinalPrice(product))
 			.thumbnailImageUrl(getFirstImage(product.getImageUrls()))
 			.categoryId(getParentCategoryId(product.getCategory()))

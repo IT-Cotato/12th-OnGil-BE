@@ -32,10 +32,11 @@ public class WishlistService {
 	// 상품 찜하기
 	@Transactional
 	public WishlistResponse addWishlist(Long userId, Long productId) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
+		if (!userRepository.existsById(userId)) {
+			throw new EntityNotFoundException(ErrorCode.USER_NOT_FOUND);
+		}
 
-		Product product = productRepository.findById(productId)
+		Product product = productRepository.findWithBrandAndCategoryById(productId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
 
 		if (wishlistRepository.existsByUserIdAndProductId(userId, productId)) {
@@ -43,7 +44,7 @@ public class WishlistService {
 		}
 
 		Wishlist wishlist = Wishlist.builder()
-			.user(user)
+			.user(User.builder().id(userId).build())
 			.product(product)
 			.build();
 
@@ -55,14 +56,11 @@ public class WishlistService {
 	// 찜 삭제
 	@Transactional
 	public void removeWishlist(Long userId, Long wishlistId) {
-		Wishlist wishlist = wishlistRepository.findById(wishlistId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.WISHLIST_NOT_FOUND));
+		int deleted = wishlistRepository.deleteByIdAndUserId(wishlistId, userId);
 
-		if (!wishlist.getUser().getId().equals(userId)) {
-			throw new ValidationException(ErrorCode.WISHLIST_FORBIDDEN);
+		if (deleted == 0) {
+			throw new EntityNotFoundException(ErrorCode.WISHLIST_NOT_FOUND);
 		}
-
-		wishlistRepository.delete(wishlist);
 	}
 
 	// 내 찜 목록 조회 (카테고리 필터링 가능)
