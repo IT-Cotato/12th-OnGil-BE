@@ -33,11 +33,12 @@ public class BrandService {
 	private final ProductConverter productConverter;
 	private final RedisCacheService redisCacheService;
 
+	// 브랜드 전체 조회
 	public List<BrandResponse> getAllBrands() {
 		// Redis 캐시 확인
-		List<BrandResponse> cached = redisCacheService.get(
+		List<BrandResponse> cached = redisCacheService.getList(
 			CacheKeyConstants.BRANDS_ALL,
-			List.class
+			BrandResponse.class
 		);
 
 		if (cached != null) {
@@ -58,6 +59,7 @@ public class BrandService {
 		return response;
 	}
 
+	// 브랜드 상세 조회
 	public BrandResponse getBrandDetail(Long brandId) {
 		Brand brand = brandRepository.findById(brandId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
@@ -65,6 +67,7 @@ public class BrandService {
 		return brandConverter.toResponse(brand);
 	}
 
+	// 브랜드별 상품 조회
 	public Page<ProductSimpleResponse> getBrandProducts(Long brandId, Pageable pageable) {
 		if (!brandRepository.existsById(brandId)) {
 			throw new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND);

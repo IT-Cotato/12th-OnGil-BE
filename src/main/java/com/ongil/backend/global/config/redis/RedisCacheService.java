@@ -1,18 +1,25 @@
 package com.ongil.backend.global.config.redis;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisCacheService {
 
 	private final RedisTemplate<String, Object> redisTemplate;
 
+	// 캐시 저장
 	public void save(String key, Object value, long ttlHours) {
 		try {
 			if (ttlHours <= 0) {
@@ -21,65 +28,39 @@ public class RedisCacheService {
 				redisTemplate.opsForValue().set(key, value, ttlHours, TimeUnit.HOURS);
 			}
 		} catch (Exception e) {
-			// Redis 장애 시에도 서비스는 정상 동작
+			log.warn("Redis save 실패 - key: {}, error: {}", key, e.getMessage());
 		}
 	}
 
-	public <T> T get(String key, Class<T> clazz) {
+	// 리스트 형태의 캐시 조회
+	@SuppressWarnings("unchecked")
+	public <T> List<T> getList(String key, Class<T> elementType) {
 		try {
 			Object cached = redisTemplate.opsForValue().get(key);
-			if (cached != null) {
-				return clazz.cast(cached);
+			if (cached instanceof List) {
+				// ObjectMapper를 매번 생성 (Bean 충돌 방지)
+				ObjectMapper mapper = new ObjectMapper();
+				List<T> result = new ArrayList<>();
+
+				for (Object item : (List<?>)cached) {
+					T converted = mapper.convertValue(item, elementType);
+					result.add(converted);
+				}
+				return result;
 			}
 			return null;
 		} catch (Exception e) {
+			log.warn("Redis getList 실패 - key: {}, error: {}", key, e.getMessage());
 			return null;
 		}
 	}
 
+	// 캐시 삭제
 	public void delete(String key) {
 		try {
 			redisTemplate.delete(key);
 		} catch (Exception e) {
-			// 삭제 실패해도 TTL로 자동 삭제됨
+			log.warn("Redis delete 실패 - key: {}", key);
 		}
-	}
-
-	public boolean tryLock(String lockKey, long timeoutSeconds) {
-		try {
-			Boolean success = redisTemplate.opsForValue()
-				.setIfAbsent(lockKey, "LOCKED", timeoutSeconds, TimeUnit.SECONDS);
-			return Boolean.TRUE.equals(success);
-		} catch (Exception e) {
-			return false;
-		}
-	}
-
-	public void unlock(String lockKey) {
-		try {
-			redisTemplate.delete(lockKey);
-		} catch (Exception e) {
-			// 해제 실패해도 TTL로 자동 해제됨
-		}
-	}
-
-	public boolean waitForLock(String lockKey, long timeoutSeconds, long maxWaitSeconds) {
-		long startTime = System.currentTimeMillis();
-		long maxWaitMillis = maxWaitSeconds * 1000;
-
-		while (System.currentTimeMillis() - startTime < maxWaitMillis) {
-			if (tryLock(lockKey, timeoutSeconds)) {
-				return true;
-			}
-
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				return false;
-			}
-		}
-
-		return false;
 	}
 }

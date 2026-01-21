@@ -32,11 +32,12 @@ public class CategoryService {
 	private final CategoryConverter categoryConverter;
 	private final RedisCacheService redisCacheService;
 
+	// 모든 카테고리 조회 (상위 + 하위)
 	public List<CategoryResponse> getAllCategories() {
 		// Redis 캐시 확인
-		List<CategoryResponse> cached = redisCacheService.get(
+		List<CategoryResponse> cached = redisCacheService.getList(
 			CacheKeyConstants.CATEGORIES_ALL,
-			List.class
+			CategoryResponse.class
 		);
 
 		if (cached != null) {
@@ -57,11 +58,13 @@ public class CategoryService {
 		return response;
 	}
 
+	// 특정 상위 카테고리의 하위 카테고리 조회
 	public List<SubCategoryResponse> getSubCategories(Long parentCategoryId) {
 		List<Category> subCategories = categoryRepository.findSubCategoriesByParentId(parentCategoryId);
 		return categoryConverter.toSubCategoryResponseList(subCategories);
 	}
 
+	// 랜덤 카테고리 조회
 	public List<CategoryRandomResponse> getRandomCategories(int count) {
 		List<Category> allCategories = categoryRepository.findAllByOrderByDisplayOrder();
 
@@ -77,6 +80,7 @@ public class CategoryService {
 			.collect(Collectors.toList());
 	}
 
+	// 추천 하위 카테고리 조회
 	public List<CategorySimpleResponse> getRecommendedSubCategories(int count) {
 		List<Category> subCategories = categoryRepository.findAllSubCategories();
 
