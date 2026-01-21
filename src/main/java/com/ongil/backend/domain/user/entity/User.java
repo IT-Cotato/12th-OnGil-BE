@@ -71,6 +71,10 @@ public class User extends BaseEntity {
 	@Builder.Default
 	private Integer points = 0;
 
+	@Column(name = "ad_personalization_enabled", nullable = false)
+	@Builder.Default
+	private Boolean adPersonalizationEnabled = true;
+
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
