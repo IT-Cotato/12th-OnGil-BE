@@ -26,6 +26,8 @@ import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.config.redis.CacheKeyConstants;
+import com.ongil.backend.global.config.redis.RedisCacheService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,27 +42,62 @@ public class ProductService {
 	private final AiMaterialService aiMaterialService;
 	private final UserRepository userRepository;
 	private final SizeGuideConverter sizeGuideConverter;
+	private final RedisCacheService redisCacheService;
 
 	private static final int SIMILAR_CUSTOMERS_LIMIT = 4;
 
-	// 상품 상세 조회
 	@Transactional
 	public ProductDetailResponse getProductDetail(Long productId) {
+
 		Product product = productRepository.findById(productId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
 
 		productRepository.incrementViewCount(productId);
 
+		// AI 설명이 NULL이면 분산 락으로 중복 생성 방지
 		if (needsAiDescription(product)) {
-			generateAndSaveAiDescription(product);
+			generateAiDescriptionWithLock(productId, product);
 		}
 
 		List<ProductOption> options = productOptionRepository.findByProductId(productId);
-
 		return productConverter.toDetailResponse(product, options);
 	}
 
-	// 조건에 따른 상품 조회
+	private void generateAiDescriptionWithLock(Long productId, Product product) {
+		String lockKey = CacheKeyConstants.getProductAiLockKey(productId);
+
+		// 분산 락 획득 시도 (최대 3초 대기)
+		boolean lockAcquired = redisCacheService.waitForLock(
+			lockKey,
+			CacheKeyConstants.PRODUCT_AI_LOCK_TTL_SECONDS,
+			3
+		);
+
+		if (lockAcquired) {
+			try {
+				// 락 대기 중 다른 사용자가 이미 생성했을 수 있으니 다시 확인
+				Product refreshedProduct = productRepository.findById(productId)
+					.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+
+				if (needsAiDescription(refreshedProduct)) {
+					generateAndSaveAiDescription(refreshedProduct);
+				}
+
+			} finally {
+				redisCacheService.unlock(lockKey);
+			}
+		} else {
+			// 락 획득 실패 시 기본값 사용
+			AiMaterialDescriptionResponse defaultResponse =
+				AiMaterialDescriptionResponse.createDefault();
+			product.updateAiMaterialDescription(
+				defaultResponse.getAdvantages(),
+				defaultResponse.getDisadvantages(),
+				defaultResponse.getCare()
+			);
+		}
+	}
+
 	public Page<ProductSimpleResponse> getProducts(
 		ProductSearchCondition condition,
 		ProductSortType sortType,
@@ -70,7 +107,6 @@ public class ProductService {
 		Integer minPrice = priceRange != null ? priceRange[0] : null;
 		Integer maxPrice = priceRange != null ? priceRange[1] : null;
 
-		// 정렬 조건 생성
 		Sort sort = createSort(sortType);
 		Pageable pageableWithSort = PageRequest.of(
 			pageable.getPageNumber(),
@@ -90,7 +126,6 @@ public class ProductService {
 		return products.map(productConverter::toSimpleResponse);
 	}
 
-	// 특가 상품 조회
 	public List<ProductSimpleResponse> getSpecialSaleProducts() {
 		Pageable pageable = PageRequest.of(0, 10);
 		Page<Product> products = productRepository.findByOnSaleTrueAndProductTypeOrderByDiscountRateDesc(
@@ -100,7 +135,6 @@ public class ProductService {
 		return productConverter.toSimpleResponseList(products.getContent());
 	}
 
-	// 비슷한 상품 조회
 	public List<ProductSimpleResponse> getSimilarProducts(Long productId) {
 		Product product = productRepository.findById(productId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -121,7 +155,6 @@ public class ProductService {
 		return similarProducts.map(productConverter::toSimpleResponse).getContent();
 	}
 
-	// 키워드 검색
 	public Page<ProductSimpleResponse> searchProducts(String keyword, Pageable pageable) {
 		if (keyword == null || keyword.trim().isEmpty()) {
 			return Page.empty(pageable);
@@ -131,7 +164,6 @@ public class ProductService {
 		return products.map(productConverter::toSimpleResponse);
 	}
 
-	// 사이즈 가이드 기능
 	public SizeGuideResponse getSizeGuide(Long productId, Long userId) {
 		Product product = productRepository.findById(productId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
@@ -148,24 +180,20 @@ public class ProductService {
 		Integer minWeight = user.getWeight() - 5;
 		Integer maxWeight = user.getWeight() + 5;
 
-		// 유사 고객 구매 통계 조회
 		List<Object[]> rawStatistics = productRepository.findSizeStatisticsByProductAndUserBody(
 			productId, minHeight, maxHeight, minWeight, maxWeight
 		);
 
-		// 유사 고객이 구매한 사이즈와 그 사이즈를 구매한 횟수 조회, 없을시 >> 체형 정보만 반환
 		if (rawStatistics.isEmpty()) {
 			return buildResponseWithBodyInfoOnly(user, product);
 		}
 
-		// 해당 상품을 구매한 유사 고객의 정보(키, 몸무게, 평소 사이즈) (최대 4명)
 		Pageable pageable = PageRequest.of(0, SIMILAR_CUSTOMERS_LIMIT);
 		List<Object[]> rawCustomers = productRepository.findSimilarCustomersPurchases(
 			productId, minHeight, maxHeight, minWeight, maxWeight,
 			user.getHeight(), user.getWeight(), pageable
 		);
 
-		// 응답 데이터 변환 및 생성
 		List<SizeGuideResponse.SizeStatistic> sizeStatistics = sizeGuideConverter.toSizeStatistics(rawStatistics);
 		List<SizeGuideResponse.SimilarCustomer> similarCustomers = sizeGuideConverter.toSimilarCustomers(rawCustomers);
 		List<String> recommendedSizes = sizeGuideConverter.calculateRecommendedSizes(sizeStatistics);
@@ -177,10 +205,7 @@ public class ProductService {
 			.similarCustomers(similarCustomers)
 			.userBodyInfo(userBodyInfo)
 			.build();
-
 	}
-
-	// 헬퍼 메서드
 
 	private boolean needsAiDescription(Product product) {
 		return product.getAiMaterialAdvantages() == null
@@ -215,18 +240,18 @@ public class ProductService {
 				Sort.Order.asc("id")
 			);
 			case REVIEW -> Sort.by(
-				Sort.Order.desc("reviewCount"),   // 1차: 리뷰 많은 순
-				Sort.Order.desc("popularity"),    // 2차: 인기순
+				Sort.Order.desc("reviewCount"),
+				Sort.Order.desc("popularity"),
 				Sort.Order.asc("id")
 			);
 			case PRICE_HIGH -> Sort.by(
-				Sort.Order.desc("price"),         // 1차: 가격 높은 순
-				Sort.Order.desc("popularity"),     // 2차: 인기순
-				Sort.Order.asc("id")              // 3차: id 오름차순
+				Sort.Order.desc("price"),
+				Sort.Order.desc("popularity"),
+				Sort.Order.asc("id")
 			);
 			case PRICE_LOW -> Sort.by(
-				Sort.Order.asc("price"),          // 1차: 가격 낮은 순
-				Sort.Order.desc("popularity"),     // 2차: 인기순
+				Sort.Order.asc("price"),
+				Sort.Order.desc("popularity"),
 				Sort.Order.asc("id")
 			);
 		};

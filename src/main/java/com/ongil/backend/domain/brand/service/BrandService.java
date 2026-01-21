@@ -17,6 +17,8 @@ import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.config.redis.CacheKeyConstants;
+import com.ongil.backend.global.config.redis.RedisCacheService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,10 +31,31 @@ public class BrandService {
 	private final ProductRepository productRepository;
 	private final BrandConverter brandConverter;
 	private final ProductConverter productConverter;
+	private final RedisCacheService redisCacheService;
 
 	public List<BrandResponse> getAllBrands() {
+		// Redis 캐시 확인
+		List<BrandResponse> cached = redisCacheService.get(
+			CacheKeyConstants.BRANDS_ALL,
+			List.class
+		);
+
+		if (cached != null) {
+			return cached;
+		}
+
+		// Cache Miss → DB 조회
 		List<Brand> brands = brandRepository.findAllOrderByName();
-		return brandConverter.toResponseList(brands);
+		List<BrandResponse> response = brandConverter.toResponseList(brands);
+
+		// Redis 캐싱 (무한 TTL)
+		redisCacheService.save(
+			CacheKeyConstants.BRANDS_ALL,
+			response,
+			CacheKeyConstants.MASTER_DATA_TTL_HOURS
+		);
+
+		return response;
 	}
 
 	public BrandResponse getBrandDetail(Long brandId) {

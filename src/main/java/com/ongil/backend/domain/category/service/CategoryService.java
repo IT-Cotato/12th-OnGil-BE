@@ -17,6 +17,8 @@ import com.ongil.backend.domain.category.entity.Category;
 import com.ongil.backend.domain.category.repository.CategoryRepository;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.repository.ProductRepository;
+import com.ongil.backend.global.config.redis.CacheKeyConstants;
+import com.ongil.backend.global.config.redis.RedisCacheService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,20 +30,38 @@ public class CategoryService {
 	private final CategoryRepository categoryRepository;
 	private final ProductRepository productRepository;
 	private final CategoryConverter categoryConverter;
+	private final RedisCacheService redisCacheService;
 
-	// 모든 카테고리 조회 (상위 + 하위)
 	public List<CategoryResponse> getAllCategories() {
+		// Redis 캐시 확인
+		List<CategoryResponse> cached = redisCacheService.get(
+			CacheKeyConstants.CATEGORIES_ALL,
+			List.class
+		);
+
+		if (cached != null) {
+			return cached;
+		}
+
+		// Cache Miss → DB 조회
 		List<Category> parentCategories = categoryRepository.findAllParentCategoriesWithSub();
-		return categoryConverter.toResponseList(parentCategories);
+		List<CategoryResponse> response = categoryConverter.toResponseList(parentCategories);
+
+		// Redis 캐싱 (무한 TTL)
+		redisCacheService.save(
+			CacheKeyConstants.CATEGORIES_ALL,
+			response,
+			CacheKeyConstants.MASTER_DATA_TTL_HOURS
+		);
+
+		return response;
 	}
 
-	// 특정 상위 카테고리의 하위 카테고리 조회
 	public List<SubCategoryResponse> getSubCategories(Long parentCategoryId) {
 		List<Category> subCategories = categoryRepository.findSubCategoriesByParentId(parentCategoryId);
 		return categoryConverter.toSubCategoryResponseList(subCategories);
 	}
 
-	// 랜덤 카테고리 조회 (홈 화면용)
 	public List<CategoryRandomResponse> getRandomCategories(int count) {
 		List<Category> allCategories = categoryRepository.findAllByOrderByDisplayOrder();
 
@@ -57,7 +77,6 @@ public class CategoryService {
 			.collect(Collectors.toList());
 	}
 
-	// 추천 하위 카테고리 조회
 	public List<CategorySimpleResponse> getRecommendedSubCategories(int count) {
 		List<Category> subCategories = categoryRepository.findAllSubCategories();
 
@@ -70,18 +89,15 @@ public class CategoryService {
 	private String getTopProductThumbnail(Category category) {
 		Long targetCategoryId;
 
-		// 상위 카테고리인 경우: 첫 번째 하위 카테고리의 인기 1등
 		if (category.getParentCategory() == null) {
 			if (category.getSubCategories().isEmpty()) {
 				return null;
 			}
 			targetCategoryId = category.getSubCategories().get(0).getId();
 		} else {
-			// 하위 카테고리인 경우: 해당 카테고리의 인기 1등
 			targetCategoryId = category.getId();
 		}
 
-		// 인기순 정렬 (조회수 + 구매수)
 		Product topProduct = productRepository
 			.findTopByCategoryIdOrderByPopularity(targetCategoryId)
 			.orElse(null);
@@ -89,7 +105,6 @@ public class CategoryService {
 		return topProduct != null ? getFirstImage(topProduct.getImageUrls()) : null;
 	}
 
-	// 쉼표로 구분된 이미지 URL에서 첫 번째 추출
 	private String getFirstImage(String imageUrls) {
 		if (imageUrls == null || imageUrls.trim().isEmpty()) {
 			return null;
