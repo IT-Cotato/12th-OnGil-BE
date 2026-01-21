@@ -95,4 +95,21 @@ public class Advertisement extends BaseEntity {
 	public void updateStatus(Boolean isActive) {
 		this.isActive = isActive;
 	}
+
+	public void updateDetails(String title, String description, String imageUrl, String targetUrl,
+		AdvertisementType advertisementType, Integer displayOrder,
+		Category targetCategory, Brand targetBrand,
+		LocalDateTime startDate, LocalDateTime endDate, Boolean isActive) {
+		if (title != null) this.title = title;
+		if (description != null) this.description = description;
+		if (imageUrl != null) this.imageUrl = imageUrl;
+		if (targetUrl != null) this.targetUrl = targetUrl;
+		if (advertisementType != null) this.advertisementType = advertisementType;
+		if (displayOrder != null) this.displayOrder = displayOrder;
+		if (targetCategory != null) this.targetCategory = targetCategory;
+		if (targetBrand != null) this.targetBrand = targetBrand;
+		if (startDate != null) this.startDate = startDate;
+		if (endDate != null) this.endDate = endDate;
+		if (isActive != null) this.isActive = isActive;
+	}
 }

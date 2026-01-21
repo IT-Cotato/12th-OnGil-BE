@@ -76,26 +76,33 @@ public class AdvertisementService {
 		Advertisement advertisement = advertisementRepository.findById(advertisementId)
 			.orElseThrow(() -> new IllegalArgumentException("광고를 찾을 수 없습니다"));
 
-		// Use reflection or builder pattern to update only non-null fields
-		// For simplicity, updating directly
-		Advertisement updated = Advertisement.builder()
-			.title(request.getTitle() != null ? request.getTitle() : advertisement.getTitle())
-			.description(request.getDescription() != null ? request.getDescription() : advertisement.getDescription())
-			.imageUrl(request.getImageUrl() != null ? request.getImageUrl() : advertisement.getImageUrl())
-			.targetUrl(request.getTargetUrl() != null ? request.getTargetUrl() : advertisement.getTargetUrl())
-			.advertisementType(request.getAdvertisementType() != null ? request.getAdvertisementType() : advertisement.getAdvertisementType())
-			.displayOrder(request.getDisplayOrder() != null ? request.getDisplayOrder() : advertisement.getDisplayOrder())
-			.targetCategory(request.getTargetCategoryId() != null ? 
-				categoryRepository.findById(request.getTargetCategoryId()).orElse(null) : advertisement.getTargetCategory())
-			.targetBrand(request.getTargetBrandId() != null ? 
-				brandRepository.findById(request.getTargetBrandId()).orElse(null) : advertisement.getTargetBrand())
-			.startDate(request.getStartDate() != null ? request.getStartDate() : advertisement.getStartDate())
-			.endDate(request.getEndDate() != null ? request.getEndDate() : advertisement.getEndDate())
-			.isActive(request.getIsActive() != null ? request.getIsActive() : advertisement.getIsActive())
-			.build();
+		Category targetCategory = null;
+		if (request.getTargetCategoryId() != null) {
+			targetCategory = categoryRepository.findById(request.getTargetCategoryId())
+				.orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다"));
+		}
 
-		Advertisement saved = advertisementRepository.save(updated);
-		return AdvertisementConverter.toResponse(saved);
+		Brand targetBrand = null;
+		if (request.getTargetBrandId() != null) {
+			targetBrand = brandRepository.findById(request.getTargetBrandId())
+				.orElseThrow(() -> new IllegalArgumentException("브랜드를 찾을 수 없습니다"));
+		}
+
+		advertisement.updateDetails(
+			request.getTitle(),
+			request.getDescription(),
+			request.getImageUrl(),
+			request.getTargetUrl(),
+			request.getAdvertisementType(),
+			request.getDisplayOrder(),
+			targetCategory,
+			targetBrand,
+			request.getStartDate(),
+			request.getEndDate(),
+			request.getIsActive()
+		);
+
+		return AdvertisementConverter.toResponse(advertisement);
 	}
 
 	@Transactional

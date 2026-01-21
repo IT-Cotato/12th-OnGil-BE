@@ -18,8 +18,8 @@ public interface UserAdPreferenceRepository extends JpaRepository<UserAdPreferen
 	List<UserAdPreference> findByUserId(@Param("userId") Long userId);
 
 	@Query("SELECT p FROM UserAdPreference p WHERE p.user.id = :userId " +
-		"AND p.preferredCategory.id = :categoryId " +
-		"AND (p.preferredBrand.id = :brandId OR (:brandId IS NULL AND p.preferredBrand.id IS NULL))")
+		"AND (p.preferredCategory.id = :categoryId OR (:categoryId IS NULL AND p.preferredCategory IS NULL)) " +
+		"AND (p.preferredBrand.id = :brandId OR (:brandId IS NULL AND p.preferredBrand IS NULL))")
 	Optional<UserAdPreference> findByUserIdAndCategoryIdAndBrandId(
 		@Param("userId") Long userId,
 		@Param("categoryId") Long categoryId,
