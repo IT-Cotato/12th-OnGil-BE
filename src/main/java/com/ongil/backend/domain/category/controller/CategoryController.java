@@ -60,4 +60,13 @@ public class CategoryController {
 		List<CategorySimpleResponse> categories = categoryService.getRecommendedSubCategories(count);
 		return DataResponse.from(categories);
 	}
+
+	@Operation(summary = "오늘의 추천 카테고리 조회", description = "오늘의 추천 카테고리를 조회합니다. 매일 다른 카테고리가 추천됩니다.")
+	@GetMapping("/today-recommended")
+	public DataResponse<List<CategorySimpleResponse>> getTodayRecommendedCategories(
+		@RequestParam(defaultValue = "8") @Min(1) @Max(100) int count
+	) {
+		List<CategorySimpleResponse> categories = categoryService.getTodayRecommendedCategories(count);
+		return DataResponse.from(categories);
+	}
 }

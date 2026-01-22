@@ -1,8 +1,10 @@
 package com.ongil.backend.domain.category.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -88,6 +90,44 @@ public class CategoryService {
 			.limit(count)
 			.map(categoryConverter::toSimpleResponse)
 			.collect(Collectors.toList());
+	}
+
+	// 오늘의 추천 카테고리 조회 (매일 다른 카테고리)
+	public List<CategorySimpleResponse> getTodayRecommendedCategories(int count) {
+		// Redis 캐시 키에 날짜 포함
+		String cacheKey = CacheKeyConstants.TODAY_RECOMMENDED_CATEGORIES + ":" + LocalDate.now();
+		
+		// Redis 캐시 확인
+		List<CategorySimpleResponse> cached = redisCacheService.getList(
+			cacheKey,
+			CategorySimpleResponse.class
+		);
+
+		if (cached != null) {
+			return cached;
+		}
+
+		// Cache Miss → DB 조회 후 날짜 기반 셔플
+		List<Category> subCategories = categoryRepository.findAllSubCategories();
+		
+		// 날짜를 시드로 사용하여 매일 다른 순서로 셔플
+		List<Category> shuffledCategories = new ArrayList<>(subCategories);
+		long seed = LocalDate.now().toEpochDay(); // 날짜를 시드로 사용
+		Collections.shuffle(shuffledCategories, new Random(seed));
+
+		List<CategorySimpleResponse> response = shuffledCategories.stream()
+			.limit(count)
+			.map(categoryConverter::toSimpleResponse)
+			.collect(Collectors.toList());
+
+		// Redis 캐싱 (하루 동안 유지)
+		redisCacheService.save(
+			cacheKey,
+			response,
+			CacheKeyConstants.DAILY_TTL_HOURS
+		);
+
+		return response;
 	}
 
 	private String getTopProductThumbnail(Category category) {
