@@ -41,7 +41,7 @@ public class Review extends BaseEntity {
 	private Integer rating;
 
 	// 도움돼요 카운트
-	@Column(name = "helpful_count", nullable = false)
+	@Column(name = "helpful_count", nullable = false, columnDefinition = "INT DEFAULT 0")
 	private Integer helpfulCount = 0;
 
 	// 후기 내용
