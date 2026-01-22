@@ -94,8 +94,9 @@ public class CategoryService {
 
 	// 오늘의 추천 카테고리 조회 (매일 다른 카테고리)
 	public List<CategorySimpleResponse> getTodayRecommendedCategories(int count) {
+		LocalDate today = LocalDate.now();
 		// Redis 캐시 키에 날짜 포함
-		String cacheKey = CacheKeyConstants.TODAY_RECOMMENDED_CATEGORIES + ":" + LocalDate.now();
+		String cacheKey = CacheKeyConstants.TODAY_RECOMMENDED_CATEGORIES + ":" + today;
 		
 		// Redis 캐시 확인
 		List<CategorySimpleResponse> cached = redisCacheService.getList(
@@ -103,8 +104,10 @@ public class CategoryService {
 			CategorySimpleResponse.class
 		);
 
-		if (cached != null) {
-			return cached;
+		if (cached != null && cached.size() >= count) {
+			return cached.stream()
+				.limit(count)
+				.collect(Collectors.toList());
 		}
 
 		// Cache Miss → DB 조회 후 날짜 기반 셔플
@@ -112,7 +115,7 @@ public class CategoryService {
 		
 		// 날짜를 시드로 사용하여 매일 다른 순서로 셔플
 		List<Category> shuffledCategories = new ArrayList<>(subCategories);
-		long seed = LocalDate.now().toEpochDay(); // 날짜를 시드로 사용
+		long seed = today.toEpochDay(); // 날짜를 시드로 사용
 		Collections.shuffle(shuffledCategories, new Random(seed));
 
 		List<CategorySimpleResponse> response = shuffledCategories.stream()
