@@ -40,9 +40,11 @@ jobs:
 
       - name: Create deployment package
         run: |
-          mkdir -p deploy
+          mkdir -p deploy/nginx
+          
           cp docker-compose.yml deploy/
           cp nginx/nginx.conf deploy/nginx/
+          
           tar -czvf deploy.tar.gz -C deploy .
 
       - name: Upload artifact
