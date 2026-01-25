@@ -42,6 +42,7 @@ jobs:
         run: |
           mkdir -p deploy
           cp docker-compose.yml deploy/
+          cp nginx/nginx.conf deploy/nginx/
           tar -czvf deploy.tar.gz -C deploy .
 
       - name: Upload artifact
@@ -91,6 +92,10 @@ jobs:
             set -e
 
             cd /home/ubuntu/ongil-backend/deploy
+            
+            rm -rf nginx
+            rm -rf nginx.conf
+            
             tar -xzvf deploy.tar.gz
             rm -f deploy.tar.gz
 
