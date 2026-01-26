@@ -9,9 +9,11 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RecentSearchService {
 
 	private final RedisTemplate<String, String> redisTemplate;
@@ -20,14 +22,19 @@ public class RecentSearchService {
 
 	@Async("taskExecutor")
 	public void saveRecentSearch(Long userId, String keyword) {
-		String key = RECENT_SEARCH_KEY + userId;
-		double score = System.currentTimeMillis();
+		try {
+			String key = RECENT_SEARCH_KEY + userId;
+			double score = System.currentTimeMillis();
 
-		redisTemplate.opsForZSet().add(key, keyword, score);
+			redisTemplate.opsForZSet().add(key, keyword, score);
 
-		Long size = redisTemplate.opsForZSet().size(key);
-		if (size != null && size > MAX_RECENT_COUNT) {
-			redisTemplate.opsForZSet().removeRange(key, 0, size - MAX_RECENT_COUNT - 1);
+			Long size = redisTemplate.opsForZSet().size(key);
+			if (size != null && size > MAX_RECENT_COUNT) {
+				redisTemplate.opsForZSet().removeRange(key, 0, size - MAX_RECENT_COUNT - 1);
+			}
+		} catch (Exception e) {
+			log.error("Redis 최근 검색어 저장 중 예외 발생 (UserId: {}, Keyword: {}): {}",
+				userId, keyword, e.getMessage());
 		}
 	}
 
