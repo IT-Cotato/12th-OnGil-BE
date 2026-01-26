@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
+import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.enums.ProductSortType;
@@ -41,15 +42,27 @@ public class ProductController {
 		return DataResponse.from(productDetail);
 	}
 
-	@Operation(summary = "상품 목록 조회", description = "조건에 맞는 상품들의 목록을 조회합니다.")
+	@Operation(
+		summary = "상품 목록 조회 (검색 포함)",
+		description = """
+    조건에 맞는 상품 목록을 조회합니다.
+    - query가 없는 경우: 일반 상품 목록 조회(카테고리/브랜드/가격/사이즈 필터 + 정렬 + 페이징)
+    - query가 있는 경우: Elasticsearch로 검색어에 매칭되는 상품 ID를 먼저 조회한 뒤,
+      해당 ID 범위 내에서 필터/정렬/페이징을 적용하여 '검색 결과 목록'을 반환합니다.
+    - 검색 결과가 0개인 경우: products는 빈 페이지로 반환하고, alternatives(최대 4개 대체 검색어)를 함께 반환합니다.
+    - 로그인 사용자(userId 존재)인 경우: 검색 성공 시 최근검색어/검색 로그가 저장됩니다.
+  """
+	)
 	@GetMapping
-	public DataResponse<Page<ProductSimpleResponse>> getProducts(
+	public DataResponse<ProductSearchPageResDto> getProducts(
+		@RequestParam(required = false) String query,
 		@RequestParam(required = false) Long categoryId,
 		@RequestParam(required = false) Long brandId,
 		@RequestParam(required = false) String priceRange,
 		@RequestParam(required = false) String clothingSize,
 		@RequestParam(required = false, defaultValue = "POPULAR") ProductSortType sortType,
-		@PageableDefault(size = 20) Pageable pageable
+		@PageableDefault(size = 20) Pageable pageable,
+		@AuthenticationPrincipal Long userId
 	) {
 		ProductSearchCondition condition = ProductSearchCondition.builder()
 			.categoryId(categoryId)
@@ -58,9 +71,8 @@ public class ProductController {
 			.size(clothingSize)
 			.build();
 
-		Page<ProductSimpleResponse> products = productService.getProducts(condition, sortType, pageable);
-
-		return DataResponse.from(products);
+		ProductSearchPageResDto res = productService.getProducts(condition, sortType, pageable, query, userId);
+		return DataResponse.from(res);
 	}
 
 	@Operation(summary = "특가 상품 조회", description = "할인율이 높은 특가 상품 TOP 10을 조회합니다.")

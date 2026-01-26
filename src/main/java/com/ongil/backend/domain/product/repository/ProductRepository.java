@@ -28,15 +28,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	// 조건에 따른 상품 조회
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("""
-		SELECT p FROM Product p
-		WHERE (:categoryId IS NULL OR p.category.id = :categoryId)
-		  AND (:brandId IS NULL OR p.brand.id = :brandId)
-		  AND (:minPrice IS NULL OR p.price >= :minPrice)
-		  AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-		  AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
-		  AND p.onSale = true
-		""")
+    SELECT p FROM Product p
+    WHERE (:targetIds IS NULL OR p.id IN :targetIds)
+      AND (:categoryId IS NULL OR p.category.id = :categoryId)
+      AND (:brandId IS NULL OR p.brand.id = :brandId)
+      AND (:minPrice IS NULL OR p.price >= :minPrice)
+      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+      AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
+      AND p.onSale = true
+    """)
 	Page<Product> findAllByCondition(
+		@Param("targetIds") List<Long> targetIds,
 		@Param("categoryId") Long categoryId,
 		@Param("brandId") Long brandId,
 		@Param("minPrice") Integer minPrice,

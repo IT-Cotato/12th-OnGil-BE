@@ -1,71 +1,92 @@
 package com.ongil.backend.domain.search.controller;
 
-import com.ongil.backend.domain.search.dto.response.SearchAutocompleteResponse;
-import com.ongil.backend.domain.search.dto.response.SearchLogResponse;
+import java.util.Collections;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.ongil.backend.domain.search.service.RecentSearchService;
+import com.ongil.backend.domain.search.service.SearchIndexingService;
 import com.ongil.backend.domain.search.service.SearchService;
-import com.ongil.backend.global.common.dto.DataResponse; // DataResponse 사용
+import com.ongil.backend.global.common.dto.DataResponse;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-@Slf4j
-@Tag(name = "Search", description = "검색 관련 API")
-@Validated
 @RestController
-@RequestMapping("/api/v1/search")
 @RequiredArgsConstructor
+@RequestMapping("/api/search")
+@Tag(name = "Search", description = "검색 API")
 public class SearchController {
 
-    private final SearchService searchService;
+	private final SearchService searchService;
+	private final SearchIndexingService searchIndexingService;
+	private final RecentSearchService recentSearchService;
 
-    @Operation(summary = "검색 초기 화면 데이터", description = "로그인: 최근 검색어(7개) / 비로그인: 추천 검색어(5개)")
-    @GetMapping("/logs")
-    public DataResponse<List<SearchLogResponse>> getSearchLogs(
-            @AuthenticationPrincipal Long userId) { // UserDetails 대신 Long userId 바로 사용
+	// 자동 완성
+	@GetMapping("/autocomplete")
+	public ResponseEntity<DataResponse<List<String>>> autocomplete(
+		@RequestParam String query) {
+		List<String> suggestions = searchService.getAutocomplete(query);
+		return ResponseEntity.ok(DataResponse.from(suggestions));
+	}
 
-        List<SearchLogResponse> response = searchService.getInitialSearchLog(userId);
-        return DataResponse.from(response);
-    }
+	// 추천 검색어
+	@GetMapping("/recommend")
+	public ResponseEntity<DataResponse<List<String>>> getRecommend() {
+		return ResponseEntity.ok(DataResponse.from(searchService.getTopKeywords()));
+	}
 
-    @Operation(summary = "검색어 기록 저장", description = "검색 버튼 클릭 시 호출 (상품 목록 이동 전)")
-    @PostMapping("/log")
-    public DataResponse<Void> saveSearchLog(
-            @AuthenticationPrincipal Long userId,
-            @RequestParam String keyword) {
+	// 최근 검색어
+	@GetMapping("/recent")
+	public ResponseEntity<DataResponse<List<String>>> getRecent(
+		@AuthenticationPrincipal Long userId) {
+		if (userId == null) {
+			return ResponseEntity.ok(DataResponse.from(Collections.emptyList()));
+		}
+		List<String> recentSearches = recentSearchService.getRecentSearches(userId);
+		return ResponseEntity.ok(DataResponse.from(recentSearches));
+	}
 
-        searchService.saveSearchLog(userId, keyword);
-        return DataResponse.from(null);
-    }
+	// 최근 검색어 개별 삭제
+	@DeleteMapping("/recent")
+	public ResponseEntity<DataResponse<Void>> removeRecent(
+		@AuthenticationPrincipal Long userId,
+		@RequestParam String keyword) {
+		if (userId != null) {
+			recentSearchService.removeRecentSearch(userId, keyword);
+		}
+		return ResponseEntity.ok(DataResponse.from(null));
+	}
 
-    @Operation(summary = "최근 검색어 개별 삭제")
-    @DeleteMapping("/log")
-    public DataResponse<Void> deleteSearchLog(
-            @AuthenticationPrincipal Long userId,
-            @RequestParam String keyword) {
+	// 최근 검색어 전체 삭제
+	@DeleteMapping("/recent/all")
+	public ResponseEntity<DataResponse<Void>> clearAllRecent(
+		@AuthenticationPrincipal Long userId) {
+		if (userId != null) {
+			recentSearchService.clearRecentSearches(userId);
+		}
+		return ResponseEntity.ok(DataResponse.from(null));
+	}
 
-        searchService.deleteRecentSearch(userId, keyword);
-        return DataResponse.from(null);
-    }
-
-    @Operation(summary = "최근 검색어 전체 삭제")
-    @DeleteMapping("/logs")
-    public DataResponse<Void> deleteAllSearchLogs(
-            @AuthenticationPrincipal Long userId) {
-
-        searchService.deleteAllRecentSearch(userId);
-        return DataResponse.from(null);
-    }
-
-    @Operation(summary = "실시간 자동완성", description = "카테고리 & 브랜드 검색 (우선순위: 카테고리)")
-    @GetMapping("/autocomplete")
-    public DataResponse<List<SearchAutocompleteResponse>> getAutocomplete(@RequestParam String keyword) {
-        List<SearchAutocompleteResponse> response = searchService.getAutocomplete(keyword);
-        return DataResponse.from(response);
-    }
+	/**
+	 * [관리자용] 데이터 전체 동기화 API
+	 */
+	@PostMapping("/admin/reindex")
+	@Operation(
+		summary = "데이터 전체 동기화 (관리자용)",
+		description = "데이터베이스의 모든 상품 정보를 Elasticsearch로 다시 색인합니다."
+	)
+	public ResponseEntity<String> reindex() {
+		searchIndexingService.indexAllProducts();
+		return ResponseEntity.ok("전체 데이터 색인이 완료되었습니다.");
+	}
 }

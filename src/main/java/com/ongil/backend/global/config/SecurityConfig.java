@@ -44,7 +44,7 @@ public class SecurityConfig {
 				.requestMatchers("/auth/oauth/kakao", "/auth/oauth/google", "/auth/token/refresh").permitAll()
 				.requestMatchers("/auth/**").permitAll()
 
-				// ⭐️ [4] 하단 네비게이션 및 주요 도메인 (수정된 부분) ⭐️
+				// [4] 하단 네비게이션 및 주요 도메인
 				.requestMatchers("/home").permitAll()          // 홈 화면 (로그인 없이 접근 가능하게 변경)
 				.requestMatchers("/magazines/**").permitAll()  // 매거진 (추후 구현 시 로그인 없이 목록 조회 가능하도록 미리 추가)
 
@@ -53,9 +53,9 @@ public class SecurityConfig {
 				.requestMatchers("/api/products/**").permitAll()
 				.requestMatchers("/api/brands/**").permitAll()
 				.requestMatchers("/api/categories/**").permitAll()
+				.requestMatchers("/api/search/**").permitAll()
 
 				// [6] 그 외 모든 요청은 로그인(인증) 필요
-				// (마이페이지 /user/me, 찜하기 /wishlist 등은 여기에 걸려서 보호됩니다)
 				.anyRequest().authenticated()
 			)
 
