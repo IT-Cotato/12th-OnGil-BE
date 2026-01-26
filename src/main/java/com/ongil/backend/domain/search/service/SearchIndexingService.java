@@ -20,7 +20,7 @@ public class SearchIndexingService {
 	private final ProductSearchRepository productSearchRepository;
 
 	// 초기 데이터 전체 동기화
-	@Transactional(readOnly = true)
+	@Transactional
 	public void indexAllProducts() {
 		List<Product> products = productRepository.findAll();
 
@@ -32,7 +32,7 @@ public class SearchIndexingService {
 	}
 
 	// 개별 상품 동기화 (관리자 페이지가 없으므로 현재는 사용 X)
-	@Transactional(readOnly = true)
+	@Transactional
 	public void indexProduct(Product product) {
 		productSearchRepository.save(toDocument(product));
 	}
