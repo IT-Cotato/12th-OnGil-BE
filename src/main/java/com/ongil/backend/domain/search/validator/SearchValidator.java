@@ -11,6 +11,7 @@ public class SearchValidator {
 	}
 
 	public static boolean isNoiseKeyword(String keyword) {
+		if (keyword == null) return true;
 		return keyword.isEmpty() || keyword.matches("^[ㄱ-ㅎㅏ-ㅣ]$");
 	}
 }
