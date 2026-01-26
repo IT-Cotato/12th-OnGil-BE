@@ -18,7 +18,7 @@ public class RecentSearchService {
 	private static final String RECENT_SEARCH_KEY = "recent_search:";
 	private static final int MAX_RECENT_COUNT = 7;
 
-	@Async
+	@Async("taskExecutor")
 	public void saveRecentSearch(Long userId, String keyword) {
 		String key = RECENT_SEARCH_KEY + userId;
 		double score = System.currentTimeMillis();
