@@ -74,4 +74,9 @@ public class User extends BaseEntity {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
+
+	// 프로필 이미지 수정 비즈니스 로직
+	public void updateProfileImage(String newProfileImgUrl) {
+		this.profileImg = newProfileImgUrl;
+	}
 }

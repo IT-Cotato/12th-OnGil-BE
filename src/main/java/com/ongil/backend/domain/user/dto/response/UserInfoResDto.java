@@ -38,8 +38,11 @@ public record UserInfoResDto(
 	@Schema(description = "평소 착용 신발 사이즈", example = "245")
 	String usualShoeSize,
 
-	@Schema(description = "포인트")
-	Integer points
+	//Integer -> String으로 변경 (쉼표 포맷팅 적용 위해)
+	@Schema(description = "포인트", example = "20,000")
+	String points
+
+
 ) {
 }
 

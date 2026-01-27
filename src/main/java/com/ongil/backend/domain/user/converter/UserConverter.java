@@ -1,5 +1,8 @@
 package com.ongil.backend.domain.user.converter;
 
+import java.text.NumberFormat;
+import java.util.Locale;
+
 import com.ongil.backend.domain.user.dto.response.UserInfoResDto;
 import com.ongil.backend.domain.user.entity.User;
 
@@ -20,7 +23,14 @@ public class UserConverter {
 			.usualTopSize(user.getUsualTopSize())
 			.usualBottomSize(user.getUsualBottomSize())
 			.usualShoeSize(user.getUsualShoeSize())
-			.points(user.getPoints())
+			.points(formatPoints(user.getPoints()))
 			.build();
+	}
+
+	private static String formatPoints(Integer points) {
+		if (points == null) {
+			return "0";
+		}
+		return NumberFormat.getNumberInstance(Locale.KOREA).format(points);
 	}
 }

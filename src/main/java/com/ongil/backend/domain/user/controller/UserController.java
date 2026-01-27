@@ -4,9 +4,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.ongil.backend.domain.user.dto.request.UserUpdateProfileRequest;
 
 import com.ongil.backend.domain.user.dto.response.UserInfoResDto;
 import com.ongil.backend.domain.user.service.UserService;
@@ -38,6 +42,16 @@ public class UserController {
 		@PathVariable(name = "userId") Long userId
 	) {
 		UserInfoResDto res = userService.getUserInfo(userId);
+		return ResponseEntity.ok(DataResponse.from(res));
+	}
+
+	@PatchMapping("/me/profile-image")
+	@Operation(summary = "프로필 이미지 수정 API", description = "현재 로그인한 사용자의 프로필 이미지를 수정")
+	public ResponseEntity<DataResponse<UserInfoResDto>> updateProfileImage(
+		@AuthenticationPrincipal Long userId,
+		@RequestBody UserUpdateProfileRequest request
+	) {
+		UserInfoResDto res = userService.updateProfileImage(userId, request.profileImageUrl());
 		return ResponseEntity.ok(DataResponse.from(res));
 	}
 
