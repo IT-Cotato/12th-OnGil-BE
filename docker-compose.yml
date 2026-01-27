@@ -16,6 +16,8 @@ services:
     image: neibler/ongil-backend:latest
     container_name: ongil-backend
     restart: always
+    ports:
+      - "8080:8080"
     env_file:
       - /home/ubuntu/ongil-backend/.env
     environment:
