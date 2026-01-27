@@ -55,6 +55,10 @@ public class SecurityConfig {
 				.requestMatchers("/api/categories/**").permitAll()
 				.requestMatchers("/api/search/**").permitAll()
 
+				.requestMatchers("/api/reviews/*/details").permitAll()  // 리뷰 상세 조회 (비로그인 가능)
+				.requestMatchers("/api/reviews/*/helpful").authenticated()  // 도움돼요 토글 (로그인 필수)
+				.requestMatchers("/api/users/me/reviews/**").authenticated()  // 내 리뷰 관련 (로그인 필수)
+
 				// [6] 그 외 모든 요청은 로그인(인증) 필요
 				.anyRequest().authenticated()
 			)
