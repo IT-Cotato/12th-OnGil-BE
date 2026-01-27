@@ -1,192 +1,213 @@
 package com.ongil.backend.domain.search.service;
 
-import com.ongil.backend.domain.search.converter.SearchConverter;
-import com.ongil.backend.domain.search.dto.response.SearchAutocompleteResponse;
-import com.ongil.backend.domain.search.dto.response.SearchLogResponse;
-import com.ongil.backend.domain.search.repository.SearchRepository;
-import com.ongil.backend.domain.search.util.SynonymProvider;
+import static com.ongil.backend.domain.search.validator.SearchValidator.*;
 
+import com.ongil.backend.domain.search.document.ProductDocument;
+import com.ongil.backend.domain.search.document.SearchLogDocument;
+import com.ongil.backend.domain.search.dto.response.SearchResDto;
+import com.ongil.backend.domain.search.repository.SearchLogRepository;
+import com.ongil.backend.domain.search.validator.SearchValidator;
+
+import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-/**
- * 검색 관련 비즈니스 로직을 처리하는 서비스
- * - Redis를 활용한 최근 검색어/인기 검색어 관리
- * - DB를 활용한 카테고리/브랜드/상품 자동완성 기능 제공
- */
+import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregation;
+import org.springframework.data.elasticsearch.client.elc.ElasticsearchAggregations;
+
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Slf4j
 public class SearchService {
 
-    private final RedisTemplate<String, String> redisTemplate;
-    private final SearchRepository searchRepository;
-    private final SynonymProvider synonymProvider;
-    private final SearchConverter searchConverter;
+	private final ElasticsearchOperations elasticsearchOperations;
+	private final SearchLogRepository searchLogRepository;
+	private final RecentSearchService recentSearchService;
 
-    // [Refactor] Redis Key 상수로 추출
-    private static final String RECENT_KEY_PREFIX = "search:recent:";
-    private static final String POPULAR_KEY = "search:popular";
+	// 통합 검색 (현재는 사용X, product에서 처리)
+	public SearchResDto search(String query, Long userId) {
+		String keyword = SearchValidator.normalize(query);
+		if (keyword.isEmpty()) return SearchResDto.of(List.of(), List.of());
 
-    // [Refactor] 매직 넘버 상수로 추출
-    private static final int MAX_RECENT_LOG_SIZE = 7;      // 최근 검색어 최대 저장 개수
-    private static final int MAX_POPULAR_LOG_SIZE = 5;     // 인기 검색어 최대 노출 개수
-    private static final int MAX_AUTOCOMPLETE_SIZE = 12;   // 자동완성 최대 노출 개수
+		NativeQuery nativeQuery = buildSearchQuery(keyword);
+		SearchHits<ProductDocument> searchHits = elasticsearchOperations.search(nativeQuery, ProductDocument.class);
 
-    /**
-     * 검색어 기록 저장
-     * 1. 전역 인기 검색어 점수 증가 (ZSet)
-     * 2. 로그인 유저의 경우 최근 검색어 저장 및 개수 제한 관리 (Sliding Window)
-     *
-     * @param userId  로그인한 사용자 ID (비로그인 시 null)
-     * @param keyword 검색 키워드
-     */
-    @Transactional
-    public void saveSearchLog(Long userId, String keyword) {
-        if (keyword == null || keyword.isBlank()) return;
+		List<ProductDocument> products = searchHits.getSearchHits().stream()
+			.map(SearchHit::getContent)
+			.toList();
 
-        // 1. 인기 검색어 점수 증가
-        redisTemplate.opsForZSet().incrementScore(POPULAR_KEY, keyword, 1.0);
+		if (!products.isEmpty()) {
+			saveSearchLog(keyword, userId);
+			if (userId != null) {
+				try {
+					recentSearchService.saveRecentSearch(userId, keyword);
+				} catch (Exception e) {
+					log.error("Redis 최근 검색어 저장 실패: {}", e.getMessage());
+				}
+			}
+			return SearchResDto.of(products, List.of());
+		}
 
-        // 2. 로그인 유저의 경우 최근 검색어 관리
-        if (userId != null) {
-            String key = RECENT_KEY_PREFIX + userId;
-            // 최신순 정렬을 위해 현재 시간을 Score로 사용
-            redisTemplate.opsForZSet().add(key, keyword, System.currentTimeMillis());
+		List<String> alternatives = recommendAlternatives(keyword, 4);
+		return SearchResDto.of(List.of(), alternatives);
+	}
 
-            // 개수 제한 로직 (오래된 검색어 삭제)
-            Long size = redisTemplate.opsForZSet().size(key);
-            if (size != null && size > MAX_RECENT_LOG_SIZE) {
-                // 0부터 (현재개수 - 유지개수 - 1) 까지 삭제
-                redisTemplate.opsForZSet().removeRange(key, 0, size - MAX_RECENT_LOG_SIZE - 1);
-            }
-        }
-    }
+	public List<String> recommendAlternatives(String keyword, int limit) {
+		NativeQuery nativeQuery = NativeQuery.builder()
+			.withQuery(q -> q.fuzzy(f -> f
+				.field("keyword")
+				.value(keyword)
+				.fuzziness("2")
+				.prefixLength(1)
+			))
+			.withMinScore(0.1f)
+			.withMaxResults(limit * 2)
+			.build();
 
-    /**
-     * 검색 초기 화면 데이터 조회
-     * - 로그인 유저 & 기록 있음: 최근 검색어 반환
-     * - 그 외: 인기 검색어 반환
-     *
-     * @param userId 로그인한 사용자 ID
-     * @return 검색어 리스트 응답 DTO
-     */
-    public List<SearchLogResponse> getInitialSearchLog(Long userId) {
-        // 1. 로그인 유저의 최근 검색어 조회
-        if (userId != null) {
-            String key = RECENT_KEY_PREFIX + userId;
-            Set<String> recentKeywords = redisTemplate.opsForZSet().reverseRange(key, 0, MAX_RECENT_LOG_SIZE - 1);
+		SearchHits<SearchLogDocument> hits = elasticsearchOperations.search(nativeQuery, SearchLogDocument.class);
 
-            if (recentKeywords != null && !recentKeywords.isEmpty()) {
-                return recentKeywords.stream()
-                        .map(searchConverter::toSearchLogResponse)
-                        .collect(Collectors.toList());
-            }
-        }
+		return hits.getSearchHits().stream()
+			.map(hit -> hit.getContent().getKeyword())
+			.filter(k -> !k.equals(keyword))
+			.distinct()
+			.limit(limit)
+			.toList();
+	}
 
-        // 2. 최근 검색어가 없거나 비로그인 시 인기 검색어 조회
-        Set<String> popularKeywords = redisTemplate.opsForZSet().reverseRange(POPULAR_KEY, 0, MAX_POPULAR_LOG_SIZE - 1);
-        if (popularKeywords == null) return Collections.emptyList();
+	public void saveSearchLog(String keyword, Long userId) {
+		if (isNoiseKeyword(keyword)) return;
 
-        return popularKeywords.stream()
-                .map(searchConverter::toSearchLogResponse)
-                .collect(Collectors.toList());
-    }
+		SearchLogDocument log = SearchLogDocument.builder()
+			.id(UUID.randomUUID().toString())
+			.keyword(keyword)
+			.timestamp(LocalDateTime.now())
+			.userId(userId)
+			.build();
 
-    /**
-     * 특정 최근 검색어 개별 삭제
-     *
-     * @param userId  사용자 ID
-     * @param keyword 삭제할 키워드
-     */
-    @Transactional
-    public void deleteRecentSearch(Long userId, String keyword) {
-        if (userId == null) return;
-        redisTemplate.opsForZSet().remove(RECENT_KEY_PREFIX + userId, keyword);
-    }
+		searchLogRepository.save(log);
+	}
 
-    /**
-     * 최근 검색어 전체 삭제
-     *
-     * @param userId 사용자 ID
-     */
-    @Transactional
-    public void deleteAllRecentSearch(Long userId) {
-        if (userId == null) return;
-        redisTemplate.delete(RECENT_KEY_PREFIX + userId);
-    }
+	// 실시간 자동완성
+	public List<String> getAutocomplete(String query) {
+		NativeQuery nativeQuery = NativeQuery.builder()
+			.withQuery(q -> q.bool(b -> b
+				.should(s -> s.match(m -> m.field("name.autocomplete").query(query).boost(3.0f)))
+				.should(s -> s.match(m -> m.field("categoryName.autocomplete").query(query).boost(2.0f)))
+				.should(s -> s.match(m -> m.field("brandName.autocomplete").query(query).boost(1.0f)))
+			))
+			.withMaxResults(20)
+			.build();
 
-    /**
-     * 실시간 검색어 자동완성
-     * - 우선순위: 카테고리 > 브랜드 > 상품(상품명, 색상)
-     * - 최대 개수 제한(MAX_AUTOCOMPLETE_SIZE)에 맞춰 순차적으로 채움
-     *
-     * @param keyword 사용자 입력 키워드
-     * @return 자동완성 결과 리스트
-     */
-    public List<SearchAutocompleteResponse> getAutocomplete(String keyword) {
-        // [Critical Fix] 빈 검색어 방어 로직 (CodeRabbit 지적 반영)
-        if (keyword == null || keyword.isBlank()) {
-            return Collections.emptyList();
-        }
+		SearchHits<ProductDocument> hits = elasticsearchOperations.search(nativeQuery, ProductDocument.class);
 
-        // 1. 검색어 정제 (동의어 처리 & 공백 제거)
-        String refinedKeyword = synonymProvider.getRefinedKeyword(keyword);
+		LinkedHashSet<String> categorySet = new LinkedHashSet<>();
+		LinkedHashSet<String> brandSet = new LinkedHashSet<>();
 
-        // 정제 후에도 비어있을 수 있으므로 재검사
-        if (refinedKeyword == null || refinedKeyword.isBlank()) {
-            return Collections.emptyList();
-        }
+		for (SearchHit<ProductDocument> hit : hits) {
+			ProductDocument doc = hit.getContent();
 
-        String searchKeyword = refinedKeyword.replaceAll("\\s+", "");
-        if (searchKeyword.isBlank()) {
-            return Collections.emptyList();
-        }
+			if (doc.getCategoryName() != null) categorySet.add(doc.getCategoryName());
+			if (doc.getBrandName() != null) brandSet.add(doc.getBrandName());
+		}
 
-        List<SearchAutocompleteResponse> result = new ArrayList<>();
+		List<String> suggestions = new ArrayList<>(categorySet);
+		suggestions.addAll(brandSet);
 
-        // 2. 카테고리 검색
-        List<Object[]> categoryResults = searchRepository.searchCategories(searchKeyword, MAX_AUTOCOMPLETE_SIZE);
-        for (Object[] row : categoryResults) {
-            result.add(SearchAutocompleteResponse.builder()
-                    .id(((Number) row[0]).longValue())
-                    .name((String) row[1])
-                    .type("CATEGORY")
-                    .build());
-        }
-        if (result.size() >= MAX_AUTOCOMPLETE_SIZE) return result;
+		return suggestions.stream()
+			.limit(12)
+			.toList();
+	}
 
-        // 3. 브랜드 검색 (남은 개수만큼)
-        int remainForBrand = MAX_AUTOCOMPLETE_SIZE - result.size();
-        List<Object[]> brandResults = searchRepository.searchBrands(searchKeyword, remainForBrand);
-        for (Object[] row : brandResults) {
-            result.add(SearchAutocompleteResponse.builder()
-                    .id(((Number) row[0]).longValue())
-                    .name((String) row[1])
-                    .type("BRAND")
-                    .build());
-        }
-        if (result.size() >= MAX_AUTOCOMPLETE_SIZE) return result;
+	public List<String> getTopKeywords() {
+		NativeQuery query = NativeQuery.builder()
+			.withMaxResults(0)
+			.withAggregation("top_keywords", Aggregation.of(a -> a
+				.terms(t -> t
+					.field("keyword.keyword")
+					.size(50)
+				)
+			))
+			.build();
 
-        // 4. 상품 & 색상 검색 (남은 개수만큼)
-        int remainForProduct = MAX_AUTOCOMPLETE_SIZE - result.size();
-        List<Object[]> productResults = searchRepository.searchProducts(searchKeyword, remainForProduct);
-        for (Object[] row : productResults) {
-            result.add(SearchAutocompleteResponse.builder()
-                    .id(((Number) row[0]).longValue())
-                    .name((String) row[1])
-                    .type("PRODUCT")
-                    .build());
-        }
+		SearchHits<SearchLogDocument> hits = elasticsearchOperations.search(query, SearchLogDocument.class);
+		if (hits.getAggregations() == null) return List.of();
 
-        return result;
-    }
+		ElasticsearchAggregations aggregations = (ElasticsearchAggregations) hits.getAggregations();
+		ElasticsearchAggregation aggregation = aggregations.get("top_keywords");
+		if (aggregation == null) return List.of();
+
+		var aggregate = aggregation.aggregation().getAggregate();
+		if (aggregate != null && aggregate.isSterms()) {
+			StringTermsAggregate terms = aggregate.sterms();
+			List<String> rawKeywords = terms.buckets().array().stream()
+				.map(bucket -> bucket.key().stringValue())
+				.toList();
+
+			return rawKeywords.stream()
+				.filter(k -> k.length() >= 2) // 1글자 제거
+				.filter(k -> {
+					// 리스트 전체를 뒤져서 더 긴 단어가 있는지 확인
+					return rawKeywords.stream()
+						.noneMatch(other -> !k.equals(other) && other.startsWith(k));
+				})
+				.limit(5)
+				.toList();
+		}
+		return List.of();
+	}
+
+	// 검색어에 따른 상품 ID 목록 추출
+	public List<Long> getProductIdsByQuery(String query) {
+		String keyword = normalize(query);
+		if (keyword.isEmpty()) return List.of();
+
+		NativeQuery nativeQuery = buildSearchQuery(keyword);
+
+		SearchHits<ProductDocument> searchHits = elasticsearchOperations.search(nativeQuery, ProductDocument.class);
+		return searchHits.getSearchHits().stream()
+			.map(hit -> hit.getContent().getId())
+			.collect(Collectors.toList());
+	}
+
+	// 공통 쿼리 생성 로직
+	private NativeQuery buildSearchQuery(String keyword) {
+		return NativeQuery.builder()
+			.withQuery(q -> q.bool(b -> b
+				// 형태소 분석 기반 검색
+				.should(s -> s.multiMatch(mm -> mm
+					.query(keyword)
+					.fields("name^5", "brandName^3", "categoryName^2", "colors^1")
+					.operator(Operator.Or)
+				))
+				// 자동완성 필드 매칭
+				.should(s -> s.match(m -> m
+					.field("name.autocomplete")
+					.query(keyword)
+					.boost(2.0f)
+				))
+				// 부분 일치 검색
+				.should(s -> s.wildcard(w -> w
+					.field("name.autocomplete")
+					.value("*" + keyword + "*")
+					.boost(0.8f)
+				))
+			))
+			.withMinScore(0.2f)
+			.build();
+	}
 }

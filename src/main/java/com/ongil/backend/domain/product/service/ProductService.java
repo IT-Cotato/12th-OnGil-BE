@@ -14,6 +14,7 @@ import com.ongil.backend.domain.product.converter.SizeGuideConverter;
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.AiMaterialDescriptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
+import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.entity.Product;
@@ -22,16 +23,21 @@ import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
+import com.ongil.backend.domain.search.service.RecentSearchService;
+import com.ongil.backend.domain.search.service.SearchService;
+import com.ongil.backend.domain.search.validator.SearchValidator;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
 	private final ProductRepository productRepository;
@@ -40,6 +46,8 @@ public class ProductService {
 	private final AiMaterialService aiMaterialService;
 	private final UserRepository userRepository;
 	private final SizeGuideConverter sizeGuideConverter;
+	private final SearchService searchService;
+	private final RecentSearchService recentSearchService;
 
 	private static final int SIMILAR_CUSTOMERS_LIMIT = 4;
 
@@ -61,16 +69,28 @@ public class ProductService {
 	}
 
 	// 조건에 따른 상품 조회
-	public Page<ProductSimpleResponse> getProducts(
+	public ProductSearchPageResDto getProducts(
 		ProductSearchCondition condition,
 		ProductSortType sortType,
-		Pageable pageable
+		Pageable pageable,
+		String query,
+		Long userId
 	) {
+
+		// 검색어(query)가 있을 시 Elasticsearch 관련 동작
+		boolean hasQuery = query != null && !query.isBlank();
+		List<Long> targetIds = hasQuery ? searchService.getProductIdsByQuery(query) : null;
+
+		if (hasQuery && targetIds.isEmpty()) {
+			String keyword = SearchValidator.normalize(query);
+			List<String> alternatives = searchService.recommendAlternatives(keyword, 4);
+			return ProductSearchPageResDto.of(Page.empty(pageable), alternatives);
+		}
+
 		Integer[] priceRange = condition.parsePriceRange();
 		Integer minPrice = priceRange != null ? priceRange[0] : null;
 		Integer maxPrice = priceRange != null ? priceRange[1] : null;
 
-		// 정렬 조건 생성
 		Sort sort = createSort(sortType);
 		Pageable pageableWithSort = PageRequest.of(
 			pageable.getPageNumber(),
@@ -79,6 +99,7 @@ public class ProductService {
 		);
 
 		Page<Product> products = productRepository.findAllByCondition(
+			targetIds,
 			condition.getCategoryId(),
 			condition.getBrandId(),
 			minPrice,
@@ -87,7 +108,40 @@ public class ProductService {
 			pageableWithSort
 		);
 
-		return products.map(productConverter::toSimpleResponse);
+		// 추천 검색어에 이용하기 위한 과정
+		if (hasQuery && !products.isEmpty()) {
+			Product firstProduct = products.getContent().get(0);
+			String savedKeyword = null;
+
+			if (firstProduct.getBrand() != null && firstProduct.getBrand().getName() != null) {
+				savedKeyword = firstProduct.getBrand().getName();
+			}
+			else if (firstProduct.getCategory() != null && firstProduct.getCategory().getName() != null) {
+				savedKeyword = firstProduct.getCategory().getName();
+			}
+
+			if (savedKeyword != null && !savedKeyword.isBlank()) {
+				recordSearchSideEffects(savedKeyword, userId);
+			}
+		}
+
+		Page<ProductSimpleResponse> pageRes = products.map(productConverter::toSimpleResponse);
+		return ProductSearchPageResDto.of(pageRes, List.of());
+	}
+
+	// 로그인 유저) 최근 검색어 저장
+	private void recordSearchSideEffects(String query, Long userId) {
+		String keyword = SearchValidator.normalize(query);
+		if (keyword.isEmpty()) return;
+
+		searchService.saveSearchLog(keyword, userId);
+		if (userId != null) {
+			try {
+				recentSearchService.saveRecentSearch(userId, keyword);
+			} catch (Exception e) {
+				log.error("Redis 최근 검색어 저장 실패: {}", e.getMessage());
+			}
+		}
 	}
 
 	// 특가 상품 조회
