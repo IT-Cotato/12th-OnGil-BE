@@ -43,4 +43,7 @@ public class ProductSimpleResponse {
 
 	@Schema(description = "리뷰 개수")
 	private Integer reviewCount;
+
+	@Schema(description = "리뷰 평균 평점")
+	private Double reviewRating;
 }
