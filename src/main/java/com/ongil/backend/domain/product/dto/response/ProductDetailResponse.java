@@ -67,6 +67,13 @@ public class ProductDetailResponse {
 	@Schema(description = "상품 타입 (NORMAL: 일반 상품, SPECIAL_SALE: 특가 상품)")
 	private ProductType productType;
 
+	// 리뷰 정보
+	@Schema(description = "리뷰 개수")
+	private Integer reviewCount;
+
+	@Schema(description = "리뷰 평균 평점")
+	private Double reviewRating;
+
 	// 소재 설명 내부 클래스
 	@Getter
 	@Builder

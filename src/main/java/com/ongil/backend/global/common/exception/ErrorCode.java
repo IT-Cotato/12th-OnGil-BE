@@ -44,6 +44,14 @@ public enum ErrorCode {
 	// CART
 	CART_NOT_FOUND(HttpStatus.NOT_FOUND, "장바구니를 찾을 수 없습니다.", "CART-001"),
 	CART_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 장바구니만 수정/삭제할 수 있습니다.", "CART-002"),
+
+	// REVIEW
+	REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다.", "REVIEW-001"),
+	REVIEW_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 리뷰만 수정/삭제할 수 있습니다.", "REVIEW-002"),
+
+	// ORDER
+	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.", "ORDER-001"),
+	ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 상품을 찾을 수 없습니다.", "ORDER-002"),
 	;
 
 	private final HttpStatus httpStatus;

@@ -2,6 +2,7 @@ package com.ongil.backend.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -55,6 +56,9 @@ public class SecurityConfig {
 				.requestMatchers("/api/categories/**").permitAll()
 				.requestMatchers("/api/search/**").permitAll()
 
+				.requestMatchers(HttpMethod.GET, "/api/reviews/*/details").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/reviews/*/helpful").authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/users/me/reviews/**").authenticated()
 				// [6] 그 외 모든 요청은 로그인(인증) 필요
 				.anyRequest().authenticated()
 			)

@@ -40,6 +40,8 @@ public class ProductConverter {
 			.categoryName(product.getCategory().getName())
 			.onSale(product.getOnSale())
 			.productType(product.getProductType())
+			.reviewCount(product.getReviewCount())
+			.reviewRating(product.getReviewRating())
 			.build();
 	}
 
@@ -62,6 +64,7 @@ public class ProductConverter {
 			.viewCount(product.getViewCount())
 			.purchaseCount(product.getPurchaseCount())
 			.reviewCount(product.getReviewCount())
+			.reviewRating(product.getReviewRating())
 			.build();
 	}
 
