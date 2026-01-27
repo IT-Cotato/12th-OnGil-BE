@@ -18,7 +18,7 @@ public class MyPagePopupConverter {
                 .build();
     }
 
-    // Mock data를 위한 임시 메서드
+    // Temporary method for creating response from mock data
     public MyPagePopupResponse toResponse(Long id, String title, String description, String imageUrl, String actionUrl, Integer priority) {
         return MyPagePopupResponse.builder()
                 .id(id)

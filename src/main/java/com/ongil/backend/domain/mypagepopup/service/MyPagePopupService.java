@@ -17,12 +17,12 @@ public class MyPagePopupService {
     private final MyPagePopupRepository myPagePopupRepository;
     private final MyPagePopupConverter myPagePopupConverter;
 
-    // 마이페이지 팝업 목록 조회 (Mock Data)
+    // Get mypage popup list (Mock Data)
     public List<MyPagePopupResponse> getMyPagePopups(Long userId) {
-        // 실제 DB 조회 대신 목데이터 생성
-        // 추후 실제 DB 연동 시:
+        // TODO: Replace mock data with actual DB query
+        // When implementing DB integration:
         // LocalDateTime now = LocalDateTime.now();
-        // String userType = determineUserType(userId); // 사용자 타입 결정 로직
+        // String userType = determineUserType(userId); // Determine user type based on userId
         // List<MyPagePopup> popups = myPagePopupRepository.findActivePopups(now, userType);
         // return popups.stream().map(myPagePopupConverter::toResponse).toList();
         
