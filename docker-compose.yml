@@ -50,6 +50,8 @@ services:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    command: >
+      bash -c "bin/elasticsearch-plugin install analysis-nori || true && /usr/local/bin/docker-entrypoint.sh"
     ports:
       - "9200:9200"
     volumes:
