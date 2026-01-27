@@ -147,7 +147,6 @@ public class ReviewService {
 
 	// 5. 작성 가능한 리뷰 목록 조회
 	public List<PendingReviewResponse> getPendingReviews(Long userId) {
-		User user = findUserById(userId);
 		List<PendingReviewResponse> pendingReviews = new ArrayList<>();
 
 		// 사용자의 주문 상품 중 리뷰 작성 가능한 항목 조회
@@ -175,7 +174,8 @@ public class ReviewService {
 	// 6. 리뷰 도움돼요 토글
 	@Transactional
 	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {
-		Review review = reviewRepository.findById(reviewId)
+		// 리뷰에 대한 PESSIMISTIC WRITE 락 획득
+		Review review = reviewRepository.findByIdWithLock(reviewId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND));
 
 		User user = findUserById(userId);
@@ -183,11 +183,9 @@ public class ReviewService {
 		boolean exists = reviewHelpfulRepository.existsByReviewIdAndUserId(reviewId, userId);
 
 		if (exists) {
-			// 이미 눌렀으면 취소(악의적으로 중복으로 누르는 경우 방지)
 			reviewHelpfulRepository.deleteByReviewIdAndUserId(reviewId, userId);
 			review.decrementHelpfulCount();
 		} else {
-			// 안 눌렀으면 추가
 			ReviewHelpful helpful = ReviewHelpful.builder()
 				.review(review)
 				.user(user)

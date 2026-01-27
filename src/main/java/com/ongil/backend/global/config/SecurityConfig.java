@@ -2,6 +2,7 @@ package com.ongil.backend.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -55,10 +56,9 @@ public class SecurityConfig {
 				.requestMatchers("/api/categories/**").permitAll()
 				.requestMatchers("/api/search/**").permitAll()
 
-				.requestMatchers("/api/reviews/*/details").permitAll()  // 리뷰 상세 조회 (비로그인 가능)
-				.requestMatchers("/api/reviews/*/helpful").authenticated()  // 도움돼요 토글 (로그인 필수)
-				.requestMatchers("/api/users/me/reviews/**").authenticated()  // 내 리뷰 관련 (로그인 필수)
-
+				.requestMatchers(HttpMethod.GET, "/api/reviews/*/details").permitAll()
+				.requestMatchers(HttpMethod.POST, "/api/reviews/*/helpful").authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/users/me/reviews/**").authenticated()
 				// [6] 그 외 모든 요청은 로그인(인증) 필요
 				.anyRequest().authenticated()
 			)

@@ -1,17 +1,21 @@
 package com.ongil.backend.domain.review.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.ongil.backend.domain.review.entity.Review;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
+
+import jakarta.persistence.LockModeType;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -142,7 +146,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	);
 
 	// 상품별 평균 별점
-	@Query("SELECT AVG(r.rating) FROM Review r " +
+	@Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r " +
 		"WHERE r.product.id = :productId " +
 		"AND r.reviewStatus = 'COMPLETED'")
 	Double getAverageRating(@Param("productId") Long productId);
@@ -173,4 +177,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	// OrderItem에 대해 이미 작성된 리뷰 타입 확인
 	boolean existsByOrderItemIdAndReviewType(Long orderItemId, ReviewType reviewType);
 
+	// ReviewRepository.java
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT r FROM Review r WHERE r.id = :reviewId")
+	Optional<Review> findByIdWithLock(@Param("reviewId") Long reviewId);
 }
