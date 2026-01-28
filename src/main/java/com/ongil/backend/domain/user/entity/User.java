@@ -79,4 +79,24 @@ public class User extends BaseEntity {
 	public void updateProfileImage(String newProfileImgUrl) {
 		this.profileImg = newProfileImgUrl;
 	}
+
+	// 체형 정보 수정 비즈니스 로직
+	public void updateBodyInfo(Integer height, Integer weight, String usualTopSize, 
+	                           String usualBottomSize, String usualShoeSize) {
+		if (height != null) {
+			this.height = height;
+		}
+		if (weight != null) {
+			this.weight = weight;
+		}
+		if (usualTopSize != null) {
+			this.usualTopSize = usualTopSize;
+		}
+		if (usualBottomSize != null) {
+			this.usualBottomSize = usualBottomSize;
+		}
+		if (usualShoeSize != null) {
+			this.usualShoeSize = usualShoeSize;
+		}
+	}
 }

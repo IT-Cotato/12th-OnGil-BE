@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ongil.backend.domain.user.dto.request.UserUpdateBodyInfoRequest;
 import com.ongil.backend.domain.user.dto.request.UserUpdateProfileRequest;
 
 import com.ongil.backend.domain.user.dto.response.UserInfoResDto;
@@ -52,6 +53,16 @@ public class UserController {
 		@RequestBody UserUpdateProfileRequest request
 	) {
 		UserInfoResDto res = userService.updateProfileImage(userId, request.profileImageUrl());
+		return ResponseEntity.ok(DataResponse.from(res));
+	}
+
+	@PatchMapping("/me/body-info")
+	@Operation(summary = "체형 정보 수정 API", description = "현재 로그인한 사용자의 체형 정보를 수정")
+	public ResponseEntity<DataResponse<UserInfoResDto>> updateBodyInfo(
+		@AuthenticationPrincipal Long userId,
+		@RequestBody @Validated UserUpdateBodyInfoRequest request
+	) {
+		UserInfoResDto res = userService.updateBodyInfo(userId, request);
 		return ResponseEntity.ok(DataResponse.from(res));
 	}
 

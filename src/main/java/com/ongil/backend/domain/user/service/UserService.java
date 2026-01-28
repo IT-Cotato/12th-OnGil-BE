@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.user.converter.UserConverter;
+import com.ongil.backend.domain.user.dto.request.UserUpdateBodyInfoRequest;
 import com.ongil.backend.domain.user.dto.response.UserInfoResDto;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
@@ -31,6 +32,22 @@ public class UserService {
 		User user = findUser(userId);
 
 		user.updateProfileImage(newImageUrl);
+
+		return UserConverter.toUserInfoResDto(user);
+	}
+
+	// 3. 체형 정보 변경
+	@Transactional // 쓰기 권한 부여
+	public UserInfoResDto updateBodyInfo(Long userId, UserUpdateBodyInfoRequest request) {
+		User user = findUser(userId);
+
+		user.updateBodyInfo(
+			request.height(),
+			request.weight(),
+			request.usualTopSize(),
+			request.usualBottomSize(),
+			request.usualShoeSize()
+		);
 
 		return UserConverter.toUserInfoResDto(user);
 	}
