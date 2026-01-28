@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Wishlist", description = "찜 API")
+@Tag(name = "Wishlist", description = "찜 API (토큰 필요)")
 @RestController
 @RequestMapping("/api/wishlists")
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ public class WishlistController {
 
 	private final WishlistService wishlistService;
 
-	@Operation(summary = "상품 찜하기", description = "특정 상품을 찜 목록에 추가합니다.(토큰 필요)")
+	@Operation(summary = "상품 찜하기", description = "특정 상품을 찜 목록에 추가합니다.")
 	@PostMapping("/products/{productId}")
 	public DataResponse<WishlistResponse> addWishlist(
 		@AuthenticationPrincipal Long userId,
@@ -31,7 +31,7 @@ public class WishlistController {
 		return DataResponse.from(response);
 	}
 
-	@Operation(summary = "찜 취소", description = "찜 목록에서 특정 상품을 삭제합니다.(토큰 필요)")
+	@Operation(summary = "찜 취소", description = "찜 목록에서 특정 상품을 삭제합니다.")
 	@DeleteMapping("/{wishlistId}")
 	public DataResponse<String> removeWishlist(
 		@AuthenticationPrincipal Long userId,
@@ -41,7 +41,7 @@ public class WishlistController {
 		return DataResponse.from("찜 목록에서 삭제되었습니다.");
 	}
 
-	@Operation(summary = "내 찜 목록 조회", description = "로그인한 사용자의 찜 목록을 조회합니다. 카테고리별 필터링 가능합니다.(토큰 필요)")
+	@Operation(summary = "내 찜 목록 조회", description = "로그인한 사용자의 찜 목록을 조회합니다. 카테고리별 필터링 가능합니다.")
 	@GetMapping
 	public DataResponse<List<WishlistResponse>> getMyWishlists(
 		@AuthenticationPrincipal Long userId,
