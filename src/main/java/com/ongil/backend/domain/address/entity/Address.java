@@ -58,4 +58,25 @@ public class Address extends BaseEntity {
 		this.isDefault = isDefault;
 		this.user = user;
 	}
+
+	// 배송지 정보 수정
+	public void updateAddress(String recipientName, String recipientPhone, String baseAddress,
+		String detailAddress, String postalCode, String deliveryRequest) {
+		this.recipientName = recipientName;
+		this.recipientPhone = recipientPhone;
+		this.baseAddress = baseAddress;
+		this.detailAddress = detailAddress;
+		this.postalCode = postalCode;
+		this.deliveryRequest = deliveryRequest;
+	}
+
+	// 기본 배송지 설정
+	public void setAsDefault() {
+		this.isDefault = true;
+	}
+
+	// 일반 배송지로 변경
+	public void unsetDefault() {
+		this.isDefault = false;
+	}
 }
