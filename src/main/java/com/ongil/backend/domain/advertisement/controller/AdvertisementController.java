@@ -15,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/advertisements")
+@RequestMapping("/api/advertisements")
 @Tag(name = "Advertisement", description = "광고/배너 관련 API")
 public class AdvertisementController {
 
