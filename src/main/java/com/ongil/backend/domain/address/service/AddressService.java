@@ -1,6 +1,5 @@
 package com.ongil.backend.domain.address.service;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -29,7 +28,7 @@ public class AddressService {
 	private final UserRepository userRepository;
 
 	public ShippingInfoResDto getShippingInfo(Long userId) {
-		Optional<Address> address = addressRepository.findByUserId(userId);
+		Optional<Address> address = addressRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
 
 		if (address.isEmpty()) {
 			return ShippingInfoResDto.builder()
@@ -46,9 +45,8 @@ public class AddressService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-		// 기존 배송지 삭제
-		List<Address> existingAddresses = addressRepository.findAllByUserId(userId);
-		addressRepository.deleteAll(existingAddresses);
+		// 기존 배송지 벌크 삭제
+		addressRepository.deleteAllByUserId(userId);
 
 		// 새 배송지 등록
 		Address address = AddressConverter.toEntity(user, request);
