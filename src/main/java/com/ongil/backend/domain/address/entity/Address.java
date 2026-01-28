@@ -39,7 +39,7 @@ public class Address extends BaseEntity {
 	private String deliveryRequest;
 
 	@Column(name = "is_default", nullable = false)
-	private Boolean isDefault = false;
+	private boolean isDefault = false;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
@@ -48,7 +48,7 @@ public class Address extends BaseEntity {
 	@Builder
 	public Address(String recipientName, String recipientPhone, String baseAddress,
 		String detailAddress, String postalCode, String deliveryRequest,
-		Boolean isDefault, User user) {
+		boolean isDefault, User user) {
 		this.recipientName = recipientName;
 		this.recipientPhone = recipientPhone;
 		this.baseAddress = baseAddress;
@@ -57,5 +57,35 @@ public class Address extends BaseEntity {
 		this.deliveryRequest = deliveryRequest;
 		this.isDefault = isDefault;
 		this.user = user;
+	}
+
+	public void update(String recipientName, String recipientPhone, String baseAddress,
+		String detailAddress, String postalCode, String deliveryRequest) {
+		if (hasText(recipientName)) {
+			this.recipientName = recipientName;
+		}
+		if (hasText(recipientPhone)) {
+			this.recipientPhone = recipientPhone;
+		}
+		if (hasText(baseAddress)) {
+			this.baseAddress = baseAddress;
+		}
+		if (detailAddress != null) {
+			this.detailAddress = detailAddress;
+		}
+		if (hasText(postalCode)) {
+			this.postalCode = postalCode;
+		}
+		if (deliveryRequest != null) {
+			this.deliveryRequest = deliveryRequest;
+		}
+	}
+
+	public void setDefault(boolean isDefault) {
+		this.isDefault = isDefault;
+	}
+
+	private boolean hasText(String value) {
+		return value != null && !value.isBlank();
 	}
 }
