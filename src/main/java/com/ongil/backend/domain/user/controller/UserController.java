@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.user.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -60,7 +61,7 @@ public class UserController {
 	@Operation(summary = "체형 정보 수정 API", description = "현재 로그인한 사용자의 체형 정보를 수정")
 	public ResponseEntity<DataResponse<UserInfoResDto>> updateBodyInfo(
 		@AuthenticationPrincipal Long userId,
-		@RequestBody @Validated UserUpdateBodyInfoRequest request
+		@RequestBody @Valid UserUpdateBodyInfoRequest request
 	) {
 		UserInfoResDto res = userService.updateBodyInfo(userId, request);
 		return ResponseEntity.ok(DataResponse.from(res));

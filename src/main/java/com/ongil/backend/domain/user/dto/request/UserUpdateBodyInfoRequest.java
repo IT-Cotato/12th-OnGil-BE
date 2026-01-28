@@ -3,6 +3,7 @@ package com.ongil.backend.domain.user.dto.request;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 
 public record UserUpdateBodyInfoRequest(
         @Schema(description = "키 (cm)", example = "165")
@@ -16,12 +17,15 @@ public record UserUpdateBodyInfoRequest(
         Integer weight,
 
         @Schema(description = "평소 착용 상의 사이즈", example = "M")
+        @Size(max = 10, message = "평소 착용 상의 사이즈는 10자 이하여야 합니다.")
         String usualTopSize,
 
         @Schema(description = "평소 착용 하의 사이즈", example = "L")
+        @Size(max = 10, message = "평소 착용 하의 사이즈는 10자 이하여야 합니다.")
         String usualBottomSize,
 
         @Schema(description = "평소 착용 신발 사이즈", example = "245")
+        @Size(max = 10, message = "평소 착용 신발 사이즈는 10자 이하여야 합니다.")
         String usualShoeSize
 ) {
 }
