@@ -76,6 +76,18 @@ public class ReviewController {
 		return DataResponse.from(pendingReviews);
 	}
 
+	@Operation(summary = "미작성 리뷰 개수 조회", description = "토큰 필요. 마이페이지 리뷰관리 뱃지에 표시할 미작성 리뷰 개수를 조회합니다.")
+	@GetMapping("/api/users/me/reviews/pending/count")
+	public DataResponse<PendingReviewCountResponse> getPendingReviewCount(
+		@AuthenticationPrincipal Long userId
+	) {
+		int count = reviewService.getPendingReviewCount(userId);
+		PendingReviewCountResponse response = PendingReviewCountResponse.builder()
+			.pendingReviewCount(count)
+			.build();
+		return DataResponse.from(response);
+	}
+
 	@Operation(summary = "리뷰 도움돼요 토글", description = "리뷰의 도움돼요를 토글합니다. 이미 눌렀으면 취소, 안 눌렀으면 추가됩니다.")
 	@PostMapping("/api/reviews/{reviewId}/helpful")
 	public DataResponse<ReviewHelpfulResponse> toggleHelpful(
