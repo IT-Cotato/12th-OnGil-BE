@@ -1,7 +1,6 @@
 package com.ongil.backend.domain.address.converter;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
@@ -27,6 +26,6 @@ public class AddressConverter {
 	public List<AddressResponse> toResponseList(List<Address> addresses) {
 		return addresses.stream()
 			.map(this::toResponse)
-			.collect(Collectors.toList());
+			.toList();
 	}
 }

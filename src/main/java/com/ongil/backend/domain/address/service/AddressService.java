@@ -50,10 +50,9 @@ public class AddressService {
 	// 배송지 추가
 	@Transactional
 	public AddressResponse createAddress(Long userId, AddressCreateRequest request) {
-		// 사용자 존재 여부 확인
-		if (!userRepository.existsById(userId)) {
-			throw new EntityNotFoundException(ErrorCode.USER_NOT_FOUND);
-		}
+		// 사용자 조회
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
 		// 기본 배송지로 설정하는 경우, 기존 기본 배송지를 일반 배송지로 변경
 		if (Boolean.TRUE.equals(request.isDefault())) {
@@ -62,7 +61,7 @@ public class AddressService {
 
 		// 배송지 생성
 		Address address = Address.builder()
-			.user(User.builder().id(userId).build())
+			.user(user)
 			.recipientName(request.recipientName())
 			.recipientPhone(request.recipientPhone())
 			.baseAddress(request.baseAddress())

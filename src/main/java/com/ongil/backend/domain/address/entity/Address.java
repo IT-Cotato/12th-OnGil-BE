@@ -74,9 +74,4 @@ public class Address extends BaseEntity {
 	public void setAsDefault() {
 		this.isDefault = true;
 	}
-
-	// 일반 배송지로 변경
-	public void unsetDefault() {
-		this.isDefault = false;
-	}
 }
