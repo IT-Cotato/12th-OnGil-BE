@@ -52,6 +52,10 @@ public enum ErrorCode {
 	// ORDER
 	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.", "ORDER-001"),
 	ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 상품을 찾을 수 없습니다.", "ORDER-002"),
+
+	// ADDRESS
+	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),
+	ADDRESS_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 배송지만 수정/삭제할 수 있습니다.", "ADDRESS-002"),
 	;
 
 	private final HttpStatus httpStatus;
