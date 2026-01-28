@@ -35,31 +35,48 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 
 			.authorizeHttpRequests(auth -> auth
-				// [1] 시스템 및 문서화 관련 (Swagger 등)
+				// [1] 시스템 및 문서화 관련 (Swagger, H2 Console)
 				.requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-				// [2] 인증이 꼭 필요한 기능 (로그아웃, 회원탈퇴)
-				.requestMatchers("/auth/logout", "/auth/withdraw").authenticated()
+				// [2] 인증 관련 - 인증 필요
+				.requestMatchers("/api/auth/logout", "/api/auth/withdraw").authenticated()
 
-				// [3] 로그인/회원가입 관련 (모두 허용)
-				.requestMatchers("/auth/oauth/kakao", "/auth/oauth/google", "/auth/token/refresh").permitAll()
-				.requestMatchers("/auth/**").permitAll()
+				// [3] 인증 관련 - 인증 불필요 (로그인, 소셜로그인, 토큰갱신)
+				.requestMatchers("/api/auth/login").permitAll()
+				.requestMatchers("/api/auth/oauth/**").permitAll()
+				.requestMatchers("/api/auth/token/refresh").permitAll()
 
-				// [4] 하단 네비게이션 및 주요 도메인
-				.requestMatchers("/home").permitAll()          // 홈 화면 (로그인 없이 접근 가능하게 변경)
-				.requestMatchers("/magazines/**").permitAll()  // 매거진 (추후 구현 시 로그인 없이 목록 조회 가능하도록 미리 추가)
+				// [4] 홈 & 광고
+				.requestMatchers("/api/home").permitAll()
+				.requestMatchers("/api/advertisements/**").permitAll()
 
-				// [5] 기존 API 설정
-				.requestMatchers("/api/products/*/size-guide").authenticated()
-				.requestMatchers("/api/products/**").permitAll()
+				// [5] 상품 관련
+				.requestMatchers("/api/products/*/size-guide").authenticated()  // 사이즈 가이드는 인증 필요
+				.requestMatchers("/api/products/**").permitAll()  // 나머지는 인증 불필요
+
+				// [6] 브랜드 & 카테고리
 				.requestMatchers("/api/brands/**").permitAll()
 				.requestMatchers("/api/categories/**").permitAll()
+
+				// [7] 검색
 				.requestMatchers("/api/search/**").permitAll()
 
+				// [8] 리뷰 - 조회는 permitAll, 작성/수정/삭제는 authenticated
+				.requestMatchers(HttpMethod.GET, "/api/products/*/reviews").permitAll()
+				.requestMatchers(HttpMethod.GET, "/api/products/*/reviews/summary").permitAll()
 				.requestMatchers(HttpMethod.GET, "/api/reviews/*/details").permitAll()
 				.requestMatchers(HttpMethod.POST, "/api/reviews/*/helpful").authenticated()
-				.requestMatchers(HttpMethod.GET, "/api/users/me/reviews/**").authenticated()
-				// [6] 그 외 모든 요청은 로그인(인증) 필요
+				.requestMatchers("/api/users/me/reviews/**").authenticated()
+
+				// [9] 장바구니 & 찜 - 전체 인증 필요
+				.requestMatchers("/api/carts/**").authenticated()
+				.requestMatchers("/api/wishlists/**").authenticated()
+
+				// [10] 사용자 관련 - 전체 인증 필요
+				.requestMatchers("/api/users/me/**").authenticated()
+				.requestMatchers("/api/users/**").authenticated()
+
+				// [11] 그 외 모든 요청은 인증 필요
 				.anyRequest().authenticated()
 			)
 
