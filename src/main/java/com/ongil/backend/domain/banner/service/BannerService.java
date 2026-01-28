@@ -83,7 +83,7 @@ public class BannerService {
 						"구매하신 상품은 어떠셨나요?",
 						"작성하러 가기",
 						"/review/write",
-						order.getId(),
+						item.getId(),
 						true
 					);
 				}
@@ -131,7 +131,7 @@ public class BannerService {
 						"한달 후기를 작성해주세요!",
 						"작성하러 가기",
 						"/review/monthly/write",
-						order.getId(),
+						item.getId(),
 						true
 					);
 				}
