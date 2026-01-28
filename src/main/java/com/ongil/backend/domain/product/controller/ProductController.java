@@ -115,7 +115,7 @@ public class ProductController {
 		return DataResponse.from(products);
 	}
 
-	@Operation(summary = "사이즈 가이드 조회", description = "유사 체형 고객의 구매 데이터를 기반으로 사이즈를 추천합니다.")
+	@Operation(summary = "사이즈 가이드 조회", description = "유사 체형 고객의 구매 데이터를 기반으로 사이즈를 추천합니다. (토큰 필요)")
 	@GetMapping("/{productId}/size-guide")
 	public DataResponse<SizeGuideResponse> getSizeGuide(
 		@PathVariable Long productId, @AuthenticationPrincipal Long userId) {

@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Cart", description = "장바구니 API")
+@Tag(name = "Cart", description = "장바구니 API (토큰 필요)")
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor

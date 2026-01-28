@@ -47,6 +47,7 @@ public class SearchController {
 
 	// 최근 검색어
 	@GetMapping("/recent")
+	@Operation(description = "토큰 필요")
 	public ResponseEntity<DataResponse<List<String>>> getRecent(
 		@AuthenticationPrincipal Long userId) {
 		if (userId == null) {
@@ -58,6 +59,7 @@ public class SearchController {
 
 	// 최근 검색어 개별 삭제
 	@DeleteMapping("/recent")
+	@Operation(description = "토큰 필요")
 	public ResponseEntity<DataResponse<Void>> removeRecent(
 		@AuthenticationPrincipal Long userId,
 		@RequestParam String keyword) {
@@ -69,6 +71,7 @@ public class SearchController {
 
 	// 최근 검색어 전체 삭제
 	@DeleteMapping("/recent/all")
+	@Operation(description = "토큰 필요")
 	public ResponseEntity<DataResponse<Void>> clearAllRecent(
 		@AuthenticationPrincipal Long userId) {
 		if (userId != null) {

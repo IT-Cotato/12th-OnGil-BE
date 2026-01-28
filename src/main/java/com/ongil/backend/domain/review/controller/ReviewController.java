@@ -17,7 +17,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Review", description = "리뷰 API")
+@Tag(name = "Review", description = "리뷰 API (토큰 필요)")
 @RestController
 @RequiredArgsConstructor
 public class ReviewController {

@@ -24,7 +24,6 @@ public class AdvertisementController {
     @Operation(summary = "홈 화면 할인 광고 목록 조회", description = "메인 배너에 노출될 5개의 광고 목록을 반환합니다.")
     @GetMapping("/home")
     public DataResponse<List<AdvertisementResponse>> getHomeAdvertisements(
-            @AuthenticationPrincipal Long userId
     ) {
         List<AdvertisementResponse> result = advertisementService.getHomeAdvertisements();
         return DataResponse.from(result);
