@@ -177,6 +177,15 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	// OrderItem에 대해 이미 작성된 리뷰 타입 확인
 	boolean existsByOrderItemIdAndReviewType(Long orderItemId, ReviewType reviewType);
 
+	// N+1 문제 해결: 여러 OrderItem에 대해 리뷰 작성된 ID 목록 한번에 조회
+	@Query("SELECT r.orderItem.id FROM Review r " +
+		"WHERE r.orderItem.id IN :orderItemIds " +
+		"AND r.reviewType = :reviewType")
+	List<Long> findReviewedOrderItemIds(
+		@Param("orderItemIds") List<Long> orderItemIds,
+		@Param("reviewType") ReviewType reviewType
+	);
+
 	// ReviewRepository.java
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
