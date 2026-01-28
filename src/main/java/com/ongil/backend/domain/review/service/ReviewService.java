@@ -171,6 +171,46 @@ public class ReviewService {
 		return pendingReviews;
 	}
 
+	// 5-1. 작성 가능한 리뷰 개수만 조회 (마이페이지 메뉴 뱃지용)
+	public int getPendingReviewCount(Long userId) {
+		int count = 0;
+
+		// 사용자의 주문 상품 중 리뷰 작성 가능한 항목 조회
+		List<OrderItem> orderItems = orderItemRepository.findByOrderUserIdWithProduct(userId);
+		List<Long> orderItemIds = orderItems.stream()
+			.map(OrderItem::getId)
+			.collect(Collectors.toList());
+
+		if (orderItemIds.isEmpty()) {
+			return 0;
+		}
+
+		// 일반 리뷰가 작성된 주문 아이템 ID 조회
+		List<Long> initialReviewedIds = reviewRepository.findReviewedOrderItemIds(orderItemIds, ReviewType.INITIAL);
+
+		// 한달 후 리뷰가 작성된 주문 아이템 ID 조회
+		List<Long> oneMonthReviewedIds = reviewRepository.findReviewedOrderItemIds(orderItemIds, ReviewType.ONE_MONTH);
+
+		LocalDateTime now = LocalDateTime.now();
+
+		for (OrderItem orderItem : orderItems) {
+			// 일반 리뷰 작성 가능 여부 확인
+			if (!initialReviewedIds.contains(orderItem.getId())) {
+				count++;
+			}
+
+			// 한달 후 리뷰 작성 가능 여부 확인 (주문 완료 5일 후)
+			LocalDateTime orderDate = orderItem.getOrder().getCreatedAt();
+			if (orderDate.plusDays(ONE_MONTH_REVIEW_AVAILABLE_DAYS).isBefore(now)) {
+				if (!oneMonthReviewedIds.contains(orderItem.getId())) {
+					count++;
+				}
+			}
+		}
+
+		return count;
+	}
+
 	// 6. 리뷰 도움돼요 토글
 	@Transactional
 	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {

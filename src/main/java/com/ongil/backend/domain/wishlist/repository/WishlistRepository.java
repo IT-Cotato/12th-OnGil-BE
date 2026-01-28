@@ -15,6 +15,9 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 	// 중복 찜 확인
 	boolean existsByUserIdAndProductId(Long userId, Long productId);
 
+	// 사용자별 찜 개수 조회
+	long countByUserId(Long userId);
+
 	// 사용자별 전체 찜 목록 조회
 	@EntityGraph(attributePaths = {"product", "product.brand", "product.category", "product.category.parentCategory"})
 	List<Wishlist> findByUserIdOrderByCreatedAtDesc(Long userId);
