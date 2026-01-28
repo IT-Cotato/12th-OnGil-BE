@@ -2,6 +2,8 @@ package com.ongil.backend.domain.banner.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class BannerService {
 
+	private static final int MONTHLY_REVIEW_AVAILABLE_DAYS = 5;
+
 	private final OrderRepository orderRepository;
 	private final ReviewRepository reviewRepository;
 	private final BannerConverter bannerConverter;
@@ -34,7 +38,7 @@ public class BannerService {
 			return initialReviewBanner;
 		}
 
-		// 2순위: 한달 후 후기 미작성
+		// 2순위: 한달 후기 미작성 (5일 경과 후 활성화)
 		BannerResponse monthlyReviewBanner = checkMonthlyReviewBanner(userId);
 		if (monthlyReviewBanner != null) {
 			return monthlyReviewBanner;
@@ -50,17 +54,39 @@ public class BannerService {
 			OrderStatus.CONFIRMED
 		);
 
+		if (confirmedOrders.isEmpty()) {
+			return null;
+		}
+
+		// 모든 OrderItem ID 수집
+		List<Long> allOrderItemIds = confirmedOrders.stream()
+			.flatMap(order -> order.getOrderItems().stream())
+			.map(OrderItem::getId)
+			.collect(Collectors.toList());
+
+		if (allOrderItemIds.isEmpty()) {
+			return null;
+		}
+
+		// 한번의 쿼리로 초기 리뷰 작성된 OrderItem ID 목록 조회
+		Set<Long> reviewedOrderItemIds = reviewRepository
+			.findReviewedOrderItemIds(allOrderItemIds, ReviewType.INITIAL)
+			.stream()
+			.collect(Collectors.toSet());
+
+		// 미작성 주문 찾기
 		for (Order order : confirmedOrders) {
-			OrderItem pendingItem = findPendingInitialReviewItem(order);
-			if (pendingItem != null) {
-				return bannerConverter.toResponse(
-					BannerType.REVIEW_PROMPT,
-					"구매하신 상품은 어떠셨나요?",
-					"작성하러 가기",
-					"/review/write",
-					order.getId(),
-					true
-				);
+			for (OrderItem item : order.getOrderItems()) {
+				if (!reviewedOrderItemIds.contains(item.getId())) {
+					return bannerConverter.toResponse(
+						BannerType.REVIEW_PROMPT,
+						"구매하신 상품은 어떠셨나요?",
+						"작성하러 가기",
+						"/review/write",
+						order.getId(),
+						true
+					);
+				}
 			}
 		}
 
@@ -68,25 +94,47 @@ public class BannerService {
 	}
 
 	private BannerResponse checkMonthlyReviewBanner(Long userId) {
-		LocalDateTime fiveDaysAgo = LocalDateTime.now().minusDays(5);
+		LocalDateTime availableDate = LocalDateTime.now().minusDays(MONTHLY_REVIEW_AVAILABLE_DAYS);
 
 		List<Order> orders = orderRepository.findByUserIdAndStatusAndConfirmedAtBefore(
 			userId,
 			OrderStatus.CONFIRMED,
-			fiveDaysAgo
+			availableDate
 		);
 
+		if (orders.isEmpty()) {
+			return null;
+		}
+
+		// 모든 OrderItem ID 수집
+		List<Long> allOrderItemIds = orders.stream()
+			.flatMap(order -> order.getOrderItems().stream())
+			.map(OrderItem::getId)
+			.collect(Collectors.toList());
+
+		if (allOrderItemIds.isEmpty()) {
+			return null;
+		}
+
+		// 한번의 쿼리로 한달 후기 작성된 OrderItem ID 목록 조회
+		Set<Long> reviewedOrderItemIds = reviewRepository
+			.findReviewedOrderItemIds(allOrderItemIds, ReviewType.ONE_MONTH)
+			.stream()
+			.collect(Collectors.toSet());
+
+		// 미작성 주문 찾기
 		for (Order order : orders) {
-			OrderItem pendingItem = findPendingMonthlyReviewItem(order);
-			if (pendingItem != null) {
-				return bannerConverter.toResponse(
-					BannerType.MONTHLY_REVIEW_PROMPT,
-					"한달 후기를 작성해주세요!",
-					"작성하러 가기",
-					"/review/monthly/write",
-					order.getId(),
-					true
-				);
+			for (OrderItem item : order.getOrderItems()) {
+				if (!reviewedOrderItemIds.contains(item.getId())) {
+					return bannerConverter.toResponse(
+						BannerType.MONTHLY_REVIEW_PROMPT,
+						"한달 후기를 작성해주세요!",
+						"작성하러 가기",
+						"/review/monthly/write",
+						order.getId(),
+						true
+					);
+				}
 			}
 		}
 
@@ -102,31 +150,5 @@ public class BannerService {
 			null,
 			true
 		);
-	}
-
-	private OrderItem findPendingInitialReviewItem(Order order) {
-		for (OrderItem item : order.getOrderItems()) {
-			boolean hasInitialReview = reviewRepository.existsByOrderItemIdAndReviewType(
-				item.getId(),
-				ReviewType.INITIAL
-			);
-			if (!hasInitialReview) {
-				return item;
-			}
-		}
-		return null;
-	}
-
-	private OrderItem findPendingMonthlyReviewItem(Order order) {
-		for (OrderItem item : order.getOrderItems()) {
-			boolean hasMonthlyReview = reviewRepository.existsByOrderItemIdAndReviewType(
-				item.getId(),
-				ReviewType.ONE_MONTH
-			);
-			if (!hasMonthlyReview) {
-				return item;
-			}
-		}
-		return null;
 	}
 }
