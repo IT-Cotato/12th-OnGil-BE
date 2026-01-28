@@ -171,6 +171,42 @@ public class ReviewService {
 		return pendingReviews;
 	}
 
+	// 5-1. 작성 가능한 리뷰 개수 조회 (마이페이지 뱃지용)
+	public int getPendingReviewCount(Long userId) {
+		int count = 0;
+
+		List<OrderItem> orderItems = orderItemRepository.findByOrderUserIdWithProduct(userId);
+		List<Long> orderItemIds = orderItems.stream()
+			.map(OrderItem::getId)
+			.toList();
+
+		if (orderItemIds.isEmpty()) {
+			return 0;
+		}
+
+		// 이미 작성된 리뷰의 orderItemId 목록을 한 번에 조회 (N+1 방지)
+		List<Long> initialReviewedIds = reviewRepository.findReviewedOrderItemIds(orderItemIds, ReviewType.INITIAL);
+		List<Long> oneMonthReviewedIds = reviewRepository.findReviewedOrderItemIds(orderItemIds, ReviewType.ONE_MONTH);
+
+		for (OrderItem orderItem : orderItems) {
+			LocalDateTime orderDate = orderItem.getOrder().getCreatedAt();
+
+			// 일반 리뷰 미작성 확인
+			if (!initialReviewedIds.contains(orderItem.getId())) {
+				count++;
+			}
+
+			// 한달 후 리뷰 미작성 확인 (주문 완료 5일 후부터 작성 가능)
+			if (orderDate.plusDays(ONE_MONTH_REVIEW_AVAILABLE_DAYS).isBefore(LocalDateTime.now())) {
+				if (!oneMonthReviewedIds.contains(orderItem.getId())) {
+					count++;
+				}
+			}
+		}
+
+		return count;
+	}
+
 	// 6. 리뷰 도움돼요 토글
 	@Transactional
 	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {
