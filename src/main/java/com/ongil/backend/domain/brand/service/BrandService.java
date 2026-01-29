@@ -1,6 +1,7 @@
 package com.ongil.backend.domain.brand.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.brand.converter.BrandConverter;
+import com.ongil.backend.domain.brand.dto.response.BrandRecommendResponse;
 import com.ongil.backend.domain.brand.dto.response.BrandResponse;
 import com.ongil.backend.domain.brand.entity.Brand;
 import com.ongil.backend.domain.brand.repository.BrandRepository;
@@ -75,5 +77,26 @@ public class BrandService {
 
 		Page<Product> products = productRepository.findByBrandId(brandId, pageable);
 		return products.map(productConverter::toSimpleResponse);
+	}
+
+	// 추천 브랜드 조회 (랜덤 3개 브랜드 + 각 브랜드별 6개 상품)
+	public List<BrandRecommendResponse> getRecommendBrands() {
+		List<Brand> randomBrands = brandRepository.findRandomBrands();
+
+		return randomBrands.stream()
+			.map(brand -> {
+				List<Product> products = productRepository.findRandomProductsByBrandId(brand.getId(), 6);
+				List<ProductSimpleResponse> productResponses = products.stream()
+					.map(productConverter::toSimpleResponse)
+					.collect(Collectors.toList());
+
+				return BrandRecommendResponse.builder()
+					.id(brand.getId())
+					.name(brand.getName())
+					.logoImageUrl(brand.getLogoImageUrl())
+					.products(productResponses)
+					.build();
+			})
+			.collect(Collectors.toList());
 	}
 }

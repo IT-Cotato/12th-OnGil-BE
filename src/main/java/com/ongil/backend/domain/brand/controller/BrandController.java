@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ongil.backend.domain.brand.dto.response.BrandRecommendResponse;
 import com.ongil.backend.domain.brand.dto.response.BrandResponse;
 import com.ongil.backend.domain.brand.service.BrandService;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
@@ -33,6 +34,13 @@ public class BrandController {
 	public DataResponse<List<BrandResponse>> getAllBrands() {
 		List<BrandResponse> brands = brandService.getAllBrands();
 		return DataResponse.from(brands);
+	}
+
+	@Operation(summary = "홈 화면 추천 브랜드 조회", description = "랜덤 브랜드 3개와 각 브랜드 상품 6개를 반환합니다.")
+	@GetMapping("/recommend")
+	public DataResponse<List<BrandRecommendResponse>> getRecommendBrands() {
+		List<BrandRecommendResponse> recommendBrands = brandService.getRecommendBrands();
+		return DataResponse.from(recommendBrands);
 	}
 
 	@Operation(summary = "브랜드 상세 조회", description = "특정 브랜드의 상세 정보를 조회합니다.")
