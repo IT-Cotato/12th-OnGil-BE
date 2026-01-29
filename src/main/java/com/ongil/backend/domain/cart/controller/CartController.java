@@ -1,7 +1,7 @@
 package com.ongil.backend.domain.cart.controller;
 
 import java.util.List;
-
+import java.util.Map;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Cart", description = "장바구니 API")
+@Tag(name = "Cart", description = "장바구니 API (토큰 필요)")
 @RestController
 @RequestMapping("/api/carts")
 @RequiredArgsConstructor
@@ -72,5 +72,17 @@ public class CartController {
 	) {
 		cartService.deleteCarts(userId, ids);
 		return DataResponse.from("선택한 상품이 삭제되었습니다.");
+	}
+
+	@Operation(summary = "장바구니 담긴 개수 조회 (홈 화면 뱃지용)",
+			description = "로그인한 유저의 장바구니에 담긴 상품 종류의 수(Count)를 반환합니다. 0개면 0을 반환합니다.")
+	@GetMapping("/count")
+	public DataResponse<Map<String, Long>> getCartCount(
+			@AuthenticationPrincipal Long userId
+	) {
+		long count = cartService.getCartCount(userId);
+
+		// JSON 결과: { "count": 3 } 형태
+		return DataResponse.from(Map.of("count", count));
 	}
 }

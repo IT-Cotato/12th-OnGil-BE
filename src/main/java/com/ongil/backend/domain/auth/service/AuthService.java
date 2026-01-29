@@ -19,7 +19,6 @@ import com.ongil.backend.global.common.exception.ErrorCode;
 import com.ongil.backend.global.config.redis.RedisRefreshTokenStore;
 import com.ongil.backend.global.security.jwt.JwtTokenProvider;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Service

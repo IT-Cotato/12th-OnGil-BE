@@ -1,12 +1,25 @@
 version: "3.8"
 
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: ongil-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: always
+
   backend:
-    image: neibler/ongil-backend:latest      # 또는 chj78/ongil-backend:latest
+    image: neibler/ongil-backend:latest
     container_name: ongil-backend
     restart: always
+    ports:
+      - "8080:8080"
     env_file:
-      - .env
+      - /home/ubuntu/ongil-backend/.env
     environment:
       SPRING_PROFILES_ACTIVE: prod
       PROD_DB_URL: ${PROD_DB_URL}
@@ -14,10 +27,11 @@ services:
       PROD_DB_PASSWORD: ${PROD_DB_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-    ports:
-      - "8080:8080"
+      SPRING_ELASTICSEARCH_URIS: ${SPRING_ELASTICSEARCH_URIS}
+      JAVA_TOOL_OPTIONS: "-Xms256m -Xmx350m -XX:+UseSerialGC"
     depends_on:
       - redis
+      - elasticsearch
 
   redis:
     image: redis:7-alpine
@@ -26,5 +40,20 @@ services:
       - "6379:6379"
     restart: always
     volumes:
-      - ./redis_data:/data
+      - /home/ubuntu/ongil-backend/redis_data:/data
     command: ["redis-server", "--appendonly", "yes"]
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.2
+    container_name: ongil-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    command: >
+      bash -c "bin/elasticsearch-plugin install analysis-nori || true && /usr/local/bin/docker-entrypoint.sh"
+    ports:
+      - "9200:9200"
+    volumes:
+      - /home/ubuntu/ongil-backend/es_data:/usr/share/elasticsearch/data
+    restart: always

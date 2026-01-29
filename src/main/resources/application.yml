@@ -5,6 +5,8 @@ spring:
     name: OnGil
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  elasticsearch:
+    uris: ${SPRING_ELASTICSEARCH_URIS:http://localhost:9200}
   data:
     redis:
       host: ${SPRING_DATA_REDIS_HOST:localhost}

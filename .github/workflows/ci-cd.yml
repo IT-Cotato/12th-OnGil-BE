@@ -38,22 +38,51 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/ongil-backend:latest .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/ongil-backend:latest
 
+      - name: Create deployment package
+        run: |
+          mkdir -p deploy/nginx
+          
+          cp docker-compose.yml deploy/
+          cp nginx/nginx.conf deploy/nginx/
+          
+          tar -czvf deploy.tar.gz -C deploy .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-package
+          path: deploy.tar.gz
+
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-package
+          path: .
 
-      - name: Copy docker-compose.yml to EC2
+      - name: Prepare deploy directory on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu/ongil-backend/deploy
+
+      - name: Copy deployment package to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.yml"
-          target: "~/ongil-backend"
+          source: "deploy.tar.gz"
+          target: "/home/ubuntu/ongil-backend/deploy/"
+          overwrite: true
+          debug: true
 
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -62,8 +91,21 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/ongil-backend
+            set -e
+
+            cd /home/ubuntu/ongil-backend/deploy
+            
+            rm -rf nginx
+            rm -rf nginx.conf
+            
+            tar -xzvf deploy.tar.gz
+            rm -f deploy.tar.gz
+
+            cd /home/ubuntu/ongil-backend
             echo "${{ secrets.ENV_FILE }}" > .env
+            cp .env deploy/
+
+            cd /home/ubuntu/ongil-backend/deploy
             docker-compose down --remove-orphans
             docker-compose up -d --pull always
             docker system prune -f

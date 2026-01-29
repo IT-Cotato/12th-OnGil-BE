@@ -10,30 +10,46 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.product.converter.ProductConverter;
+import com.ongil.backend.domain.product.converter.SizeGuideConverter;
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.AiMaterialDescriptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
+import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
+import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.entity.ProductOption;
 import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
+import com.ongil.backend.domain.search.service.RecentSearchService;
+import com.ongil.backend.domain.search.service.SearchService;
+import com.ongil.backend.domain.search.validator.SearchValidator;
+import com.ongil.backend.domain.user.entity.User;
+import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProductService {
 
 	private final ProductRepository productRepository;
 	private final ProductOptionRepository productOptionRepository;
 	private final ProductConverter productConverter;
 	private final AiMaterialService aiMaterialService;
+	private final UserRepository userRepository;
+	private final SizeGuideConverter sizeGuideConverter;
+	private final SearchService searchService;
+	private final RecentSearchService recentSearchService;
+
+	private static final int SIMILAR_CUSTOMERS_LIMIT = 4;
 
 	// 상품 상세 조회
 	@Transactional
@@ -53,16 +69,28 @@ public class ProductService {
 	}
 
 	// 조건에 따른 상품 조회
-	public Page<ProductSimpleResponse> getProducts(
+	public ProductSearchPageResDto getProducts(
 		ProductSearchCondition condition,
 		ProductSortType sortType,
-		Pageable pageable
+		Pageable pageable,
+		String query,
+		Long userId
 	) {
+
+		// 검색어(query)가 있을 시 Elasticsearch 관련 동작
+		boolean hasQuery = query != null && !query.isBlank();
+		List<Long> targetIds = hasQuery ? searchService.getProductIdsByQuery(query) : null;
+
+		if (hasQuery && targetIds.isEmpty()) {
+			String keyword = SearchValidator.normalize(query);
+			List<String> alternatives = searchService.recommendAlternatives(keyword, 4);
+			return ProductSearchPageResDto.of(Page.empty(pageable), alternatives);
+		}
+
 		Integer[] priceRange = condition.parsePriceRange();
 		Integer minPrice = priceRange != null ? priceRange[0] : null;
 		Integer maxPrice = priceRange != null ? priceRange[1] : null;
 
-		// 정렬 조건 생성
 		Sort sort = createSort(sortType);
 		Pageable pageableWithSort = PageRequest.of(
 			pageable.getPageNumber(),
@@ -71,6 +99,7 @@ public class ProductService {
 		);
 
 		Page<Product> products = productRepository.findAllByCondition(
+			targetIds,
 			condition.getCategoryId(),
 			condition.getBrandId(),
 			minPrice,
@@ -79,12 +108,45 @@ public class ProductService {
 			pageableWithSort
 		);
 
-		return products.map(productConverter::toSimpleResponse);
+		// 추천 검색어에 이용하기 위한 과정
+		if (hasQuery && !products.isEmpty()) {
+			Product firstProduct = products.getContent().get(0);
+			String savedKeyword = null;
+
+			if (firstProduct.getBrand() != null && firstProduct.getBrand().getName() != null) {
+				savedKeyword = firstProduct.getBrand().getName();
+			}
+			else if (firstProduct.getCategory() != null && firstProduct.getCategory().getName() != null) {
+				savedKeyword = firstProduct.getCategory().getName();
+			}
+
+			if (savedKeyword != null && !savedKeyword.isBlank()) {
+				recordSearchSideEffects(savedKeyword, userId);
+			}
+		}
+
+		Page<ProductSimpleResponse> pageRes = products.map(productConverter::toSimpleResponse);
+		return ProductSearchPageResDto.of(pageRes, List.of());
+	}
+
+	// 로그인 유저) 최근 검색어 저장
+	private void recordSearchSideEffects(String query, Long userId) {
+		String keyword = SearchValidator.normalize(query);
+		if (keyword.isEmpty()) return;
+
+		searchService.saveSearchLog(keyword, userId);
+		if (userId != null) {
+			try {
+				recentSearchService.saveRecentSearch(userId, keyword);
+			} catch (Exception e) {
+				log.error("Redis 최근 검색어 저장 실패: {}", e.getMessage());
+			}
+		}
 	}
 
 	// 특가 상품 조회
 	public List<ProductSimpleResponse> getSpecialSaleProducts() {
-		Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "discountRate"));
+		Pageable pageable = PageRequest.of(0, 10);
 		Page<Product> products = productRepository.findByOnSaleTrueAndProductTypeOrderByDiscountRateDesc(
 			ProductType.SPECIAL_SALE,
 			pageable
@@ -122,6 +184,57 @@ public class ProductService {
 		Page<Product> products = productRepository.searchByKeyword(keyword.trim(), pageable);
 		return products.map(productConverter::toSimpleResponse);
 	}
+
+	// 사이즈 가이드 기능
+	public SizeGuideResponse getSizeGuide(Long productId, Long userId) {
+		Product product = productRepository.findById(productId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+		if (!hasBodyInfo(user)) {
+			return buildEmptyResponse();
+		}
+
+		Integer minHeight = user.getHeight() - 5;
+		Integer maxHeight = user.getHeight() + 5;
+		Integer minWeight = user.getWeight() - 5;
+		Integer maxWeight = user.getWeight() + 5;
+
+		// 유사 고객 구매 통계 조회
+		List<Object[]> rawStatistics = productRepository.findSizeStatisticsByProductAndUserBody(
+			productId, minHeight, maxHeight, minWeight, maxWeight
+		);
+
+		// 유사 고객이 구매한 사이즈와 그 사이즈를 구매한 횟수 조회, 없을시 >> 체형 정보만 반환
+		if (rawStatistics.isEmpty()) {
+			return buildResponseWithBodyInfoOnly(user, product);
+		}
+
+		// 해당 상품을 구매한 유사 고객의 정보(키, 몸무게, 평소 사이즈) (최대 4명)
+		Pageable pageable = PageRequest.of(0, SIMILAR_CUSTOMERS_LIMIT);
+		List<Object[]> rawCustomers = productRepository.findSimilarCustomersPurchases(
+			productId, minHeight, maxHeight, minWeight, maxWeight,
+			user.getHeight(), user.getWeight(), pageable
+		);
+
+		// 응답 데이터 변환 및 생성
+		List<SizeGuideResponse.SizeStatistic> sizeStatistics = sizeGuideConverter.toSizeStatistics(rawStatistics);
+		List<SizeGuideResponse.SimilarCustomer> similarCustomers = sizeGuideConverter.toSimilarCustomers(rawCustomers);
+		List<String> recommendedSizes = sizeGuideConverter.calculateRecommendedSizes(sizeStatistics);
+		SizeGuideResponse.UserBodyInfo userBodyInfo = sizeGuideConverter.toUserBodyInfo(user, product);
+
+		return SizeGuideResponse.builder()
+			.recommendedSizes(recommendedSizes)
+			.sizeStatistics(sizeStatistics)
+			.similarCustomers(similarCustomers)
+			.userBodyInfo(userBodyInfo)
+			.build();
+
+	}
+
+	// 헬퍼 메서드
 
 	private boolean needsAiDescription(Product product) {
 		return product.getAiMaterialAdvantages() == null
@@ -171,5 +284,29 @@ public class ProductService {
 				Sort.Order.asc("id")
 			);
 		};
+	}
+
+	private boolean hasBodyInfo(User user) {
+		return user.getHeight() != null && user.getWeight() != null;
+	}
+
+	private SizeGuideResponse buildEmptyResponse() {
+		return SizeGuideResponse.builder()
+			.recommendedSizes(null)
+			.sizeStatistics(null)
+			.similarCustomers(null)
+			.userBodyInfo(null)
+			.build();
+	}
+
+	private SizeGuideResponse buildResponseWithBodyInfoOnly(User user, Product product) {
+		SizeGuideResponse.UserBodyInfo userBodyInfo = sizeGuideConverter.toUserBodyInfo(user, product);
+
+		return SizeGuideResponse.builder()
+			.recommendedSizes(null)
+			.sizeStatistics(null)
+			.similarCustomers(null)
+			.userBodyInfo(userBodyInfo)
+			.build();
 	}
 }

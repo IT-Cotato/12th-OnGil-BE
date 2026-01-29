@@ -40,12 +40,21 @@ public class Review extends BaseEntity {
 	@Column(nullable = false)
 	private Integer rating;
 
+	// 도움돼요 카운트
+	@Column(name = "helpful_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+	private Integer helpfulCount = 0;
+
+	// 후기 내용
+	@Column(name = "ai_generated_review", columnDefinition = "TEXT")
+	private String aiGeneratedReview;
+
 	@Column(name = "text_review", columnDefinition = "TEXT")
 	private String textReview;
 
 	@Column(name = "review_image_urls", columnDefinition = "TEXT")
 	private String reviewImageUrls;
 
+	// 구매 직후 리뷰 - 1차 질문
 	@Column(name = "size_answer", columnDefinition = "TEXT")
 	private String sizeAnswer;
 
@@ -55,20 +64,19 @@ public class Review extends BaseEntity {
 	@Column(name = "material_answer", columnDefinition = "TEXT")
 	private String materialAnswer;
 
-	@Column(name = "length_answer", columnDefinition = "TEXT")
-	private String lengthAnswer;
+	// 구매 직후 리뷰 - 2차 질문
+	@Column(name = "fit_issue_parts", columnDefinition = "TEXT")
+	private String fitIssueParts;
 
-	@Column(name = "value_answer", columnDefinition = "TEXT")
-	private String valueAnswer;
+	@Column(name = "material_features", columnDefinition = "TEXT")
+	private String materialFeatures;
 
-	@Column(name = "color_change", length = 50)
-	private String colorChange;
+	// 한달 후 리뷰
+	@Column(name = "one_month_overall", length = 50)
+	private String oneMonthOverall;  // 전체 평가
 
-	@Column(name = "washing_deformation", length = 50)
-	private String washingDeformation;
-
-	@Column(name = "material_stretching", length = 50)
-	private String materialStretching;
+	@Column(name = "one_month_changes", columnDefinition = "TEXT")
+	private String oneMonthChanges;  // 변화 항목
 
 	@Column(name = "earned_points")
 	private Integer earnedPoints;
@@ -90,27 +98,44 @@ public class Review extends BaseEntity {
 
 	@Builder
 	public Review(ReviewType reviewType, ReviewStatus reviewStatus, Integer currentStep,
-		Integer rating, String textReview, String reviewImageUrls,
+		Integer rating, String aiGeneratedReview, String textReview, String reviewImageUrls,
 		String sizeAnswer, String colorAnswer, String materialAnswer,
-		String lengthAnswer, String valueAnswer, String colorChange,
-		String washingDeformation, String materialStretching,
+		String fitIssueParts, String materialFeatures,
+		String oneMonthOverall, String oneMonthChanges,
 		User user, OrderItem orderItem, Product product) {
 		this.reviewType = reviewType;
-		this.reviewStatus = reviewStatus;
-		this.currentStep = currentStep;
+		this.reviewStatus = reviewStatus != null ? reviewStatus : ReviewStatus.DRAFT;
+		this.currentStep = currentStep != null ? currentStep : 0;
 		this.rating = rating;
+		this.helpfulCount = 0;
+		this.aiGeneratedReview = aiGeneratedReview;
 		this.textReview = textReview;
 		this.reviewImageUrls = reviewImageUrls;
 		this.sizeAnswer = sizeAnswer;
 		this.colorAnswer = colorAnswer;
 		this.materialAnswer = materialAnswer;
-		this.lengthAnswer = lengthAnswer;
-		this.valueAnswer = valueAnswer;
-		this.colorChange = colorChange;
-		this.washingDeformation = washingDeformation;
-		this.materialStretching = materialStretching;
+		this.fitIssueParts = fitIssueParts;
+		this.materialFeatures = materialFeatures;
+		this.oneMonthOverall = oneMonthOverall;
+		this.oneMonthChanges = oneMonthChanges;
 		this.user = user;
 		this.orderItem = orderItem;
 		this.product = product;
+	}
+
+	public void incrementHelpfulCount() {
+		this.helpfulCount++;
+	}
+
+	public void decrementHelpfulCount() {
+		if (this.helpfulCount > 0) {
+			this.helpfulCount--;
+		}
+	}
+
+	public void complete(Integer points) {
+		this.reviewStatus = ReviewStatus.COMPLETED;
+		this.completedAt = LocalDateTime.now();
+		this.earnedPoints = points;
 	}
 }

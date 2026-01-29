@@ -46,9 +46,6 @@ public class Product extends BaseEntity {
 	@Column(name = "ai_material_care", columnDefinition = "TEXT")
 	private String aiMaterialCare;
 
-	@Column(name = "washing_method", length = 500)
-	private String washingMethod;
-
 	@Column(name = "image_urls", columnDefinition = "TEXT")
 	private String imageUrls;
 
@@ -72,6 +69,9 @@ public class Product extends BaseEntity {
 
 	@Column(name = "review_count")
 	private Integer reviewCount = 0;
+
+	@Column(name = "review_rating", nullable = false)
+	private Double reviewRating = 0.0;
 
 	@Formula("coalesce(view_count, 0) + coalesce(purchase_count, 0)")
 	private Integer popularity;
@@ -97,7 +97,7 @@ public class Product extends BaseEntity {
 		String aiMaterialAdvantages,
 		String aiMaterialDisadvantages,
 		String aiMaterialCare,
-		String washingMethod, String imageUrls,
+		String imageUrls,
 		String sizes, String colors, Integer discountRate,
 		Integer discountPrice, ProductType productType,
 		Brand brand, Category category) {
@@ -108,7 +108,6 @@ public class Product extends BaseEntity {
 		this.aiMaterialAdvantages = aiMaterialAdvantages;
 		this.aiMaterialDisadvantages = aiMaterialDisadvantages;
 		this.aiMaterialCare = aiMaterialCare;
-		this.washingMethod = washingMethod;
 		this.imageUrls = imageUrls;
 		this.sizes = sizes;
 		this.colors = colors;

@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
-@Tag(name = "Wishlist", description = "찜 API")
+@Tag(name = "Wishlist", description = "찜 API (토큰 필요)")
 @RestController
 @RequestMapping("/api/wishlists")
 @RequiredArgsConstructor

@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.product.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -9,7 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import java.util.List;
+
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.enums.ProductType;
 
@@ -20,18 +21,24 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.id = :productId")
 	void incrementViewCount(@Param("productId") Long productId);
 
+	// 상품 단건 조회 (브랜드, 카테고리 정보 포함)
+	@EntityGraph(attributePaths = {"brand", "category", "category.parentCategory"})
+	Optional<Product> findWithBrandAndCategoryById(Long id);
+
 	// 조건에 따른 상품 조회
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("""
-		SELECT p FROM Product p
-		WHERE (:categoryId IS NULL OR p.category.id = :categoryId)
-		  AND (:brandId IS NULL OR p.brand.id = :brandId)
-		  AND (:minPrice IS NULL OR p.price >= :minPrice)
-		  AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-		  AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
-		  AND p.onSale = true
-		""")
+    SELECT p FROM Product p
+    WHERE (:targetIds IS NULL OR p.id IN :targetIds)
+      AND (:categoryId IS NULL OR p.category.id = :categoryId)
+      AND (:brandId IS NULL OR p.brand.id = :brandId)
+      AND (:minPrice IS NULL OR p.price >= :minPrice)
+      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+      AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
+      AND p.onSale = true
+    """)
 	Page<Product> findAllByCondition(
+		@Param("targetIds") List<Long> targetIds,
 		@Param("categoryId") Long categoryId,
 		@Param("brandId") Long brandId,
 		@Param("minPrice") Integer minPrice,
@@ -82,7 +89,73 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		"LIMIT 1")
 	Optional<Product> findTopByCategoryIdOrderByPopularity(@Param("categoryId") Long categoryId);
 
-	// 특정 브랜드 상품 랜덤 6개 조회
-	@Query(value = "SELECT * FROM products WHERE brand_id = :brandId ORDER BY RAND() LIMIT 6", nativeQuery = true)
-	List<Product> findRandomProductsByBrand(@Param("brandId") Long brandId);
+	/**
+	 * 사이즈 가이드 - 유사 고객 집단의 사이즈별 구매 횟수 집계
+	 *
+	 * @param productId 상품 ID
+	 * @param minHeight 최소 키 (사용자 키 - 5cm)
+	 * @param maxHeight 최대 키 (사용자 키 + 5cm)
+	 * @param minWeight 최소 몸무게 (사용자 몸무게 - 5kg)
+	 * @param maxWeight 최대 몸무게 (사용자 몸무게 + 5kg)
+	 * @return List<Object [ ]> - [0]: String selectedSize, [1]: Long count
+	 */
+	@Query("""
+		SELECT oi.selectedSize, COUNT(oi)
+		FROM OrderItem oi
+		JOIN oi.order o
+		JOIN o.user u
+		WHERE oi.product.id = :productId
+		  AND u.height BETWEEN :minHeight AND :maxHeight
+		  AND u.weight BETWEEN :minWeight AND :maxWeight
+		  AND u.height IS NOT NULL
+		  AND u.weight IS NOT NULL
+		  AND oi.selectedSize IS NOT NULL
+		GROUP BY oi.selectedSize
+		ORDER BY COUNT(oi) DESC
+		""")
+	List<Object[]> findSizeStatisticsByProductAndUserBody(
+		@Param("productId") Long productId,
+		@Param("minHeight") Integer minHeight,
+		@Param("maxHeight") Integer maxHeight,
+		@Param("minWeight") Integer minWeight,
+		@Param("maxWeight") Integer maxWeight
+	);
+
+	/**
+	 * 사이즈 가이드 - 유사 고객의 구체적인 구매 정보 조회 (표 형식용)
+	 *
+	 * @param productId  상품 ID
+	 * @param minHeight  최소 키
+	 * @param maxHeight  최대 키
+	 * @param minWeight  최소 몸무게
+	 * @param maxWeight  최대 몸무게
+	 * @param userHeight 사용자 키 (정렬 기준)
+	 * @param userWeight 사용자 몸무게 (정렬 기준)
+	 * @param pageable   페이징 (최대 4개)
+	 * @return List<Object [ ]> - [0]: Integer height, [1]: Integer weight, [2]: String purchasedSize
+	 */
+	@Query("""
+		SELECT u.height, u.weight, oi.selectedSize
+		FROM OrderItem oi
+		JOIN oi.order o
+		JOIN o.user u
+		WHERE oi.product.id = :productId
+		  AND u.height BETWEEN :minHeight AND :maxHeight
+		  AND u.weight BETWEEN :minWeight AND :maxWeight
+		  AND u.height IS NOT NULL
+		  AND u.weight IS NOT NULL
+		  AND oi.selectedSize IS NOT NULL
+		ORDER BY ABS(u.height - :userHeight) ASC,
+		         ABS(u.weight - :userWeight) ASC
+		""")
+	List<Object[]> findSimilarCustomersPurchases(
+		@Param("productId") Long productId,
+		@Param("minHeight") Integer minHeight,
+		@Param("maxHeight") Integer maxHeight,
+		@Param("minWeight") Integer minWeight,
+		@Param("maxWeight") Integer maxWeight,
+		@Param("userHeight") Integer userHeight,
+		@Param("userWeight") Integer userWeight,
+		Pageable pageable
+	);
 }

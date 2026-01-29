@@ -1,13 +1,13 @@
 package com.ongil.backend.domain.user.entity;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-import com.ongil.backend.domain.address.entity.*;
+import com.ongil.backend.domain.address.entity.Address;
 import com.ongil.backend.domain.auth.entity.LoginType;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
@@ -58,8 +58,18 @@ public class User extends BaseEntity {
 
 	private Integer weight;
 
-	@Column(name = "usual_size", length = 10)
-	private String usualSize;
+	@Column(name = "usual_top_size", length = 10)
+	private String usualTopSize;
+
+	@Column(name = "usual_bottom_size", length = 10)
+	private String usualBottomSize;
+
+	@Column(name = "usual_shoe_size", length = 10)
+	private String usualShoeSize;
+
+	@Column(name = "body_info_agreed", nullable = false)
+	@Builder.Default
+	private Boolean bodyInfoAgreed = false;
 
 	@Column(nullable = false)
 	@Builder.Default
@@ -68,4 +78,21 @@ public class User extends BaseEntity {
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	@Builder.Default
 	private List<Address> addresses = new ArrayList<>();
+
+	// 프로필 이미지 수정 비즈니스 로직
+	public void updateProfileImage(String newProfileImgUrl) {
+		this.profileImg = newProfileImgUrl;
+	}
+
+	// 체형 정보 수정 비즈니스 로직
+	public void updateBodyInfo(Integer height, Integer weight,
+							   String topSize, String bottomSize,
+							   String shoeSize, Boolean agreed) {
+		this.height = height;
+		this.weight = weight;
+		this.usualTopSize = topSize;
+		this.usualBottomSize = bottomSize;
+		this.usualShoeSize = shoeSize;
+		this.bodyInfoAgreed = agreed;
+	}
 }

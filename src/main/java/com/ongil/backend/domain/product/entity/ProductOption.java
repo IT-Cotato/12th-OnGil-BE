@@ -24,54 +24,29 @@ public class ProductOption extends BaseEntity {
 	private Product product;
 
 	@Column(name = "size", length = 10, nullable = false)
-	private String size;  // XS, S, M, L, XL
+	private String size;
 
 	@Column(name = "color", length = 50, nullable = false)
-	private String color;  // 블랙, 베이지, 네이비 등
+	private String color;
 
 	@Column(name = "stock", nullable = false)
-	private Integer stock = 0;  // 옵션별 재고
-
-	@Column(name = "additional_price")
-	private Integer additionalPrice = 0;  // 추가 금액 (기본 0)
+	private Integer stock = 0;
 
 	@Builder
-	public ProductOption(Product product, String size, String color,
-		Integer stock, Integer additionalPrice) {
+	public ProductOption(Product product, String size, String color, Integer stock) {
 		this.product = product;
 		this.size = size;
 		this.color = color;
 		this.stock = stock != null ? stock : 0;
-		this.additionalPrice = additionalPrice != null ? additionalPrice : 0;
 	}
 
-	// 재고 감소
-	public void decreaseStock(int quantity) {
-		if (this.stock < quantity) {
-			throw new IllegalStateException(
-				String.format("재고가 부족합니다. (요청: %d, 현재: %d)", quantity, this.stock)
-			);
-		}
-		this.stock -= quantity;
+	// 재고 상태 반환
+	public StockStatus getStockStatus() {
+		return this.stock == 0 ? StockStatus.SOLD_OUT : StockStatus.AVAILABLE;
 	}
 
-	// 재고 증가
-	public void increaseStock(int quantity) {
-		this.stock += quantity;
-	}
-
-	// 재고 있음 (1개 이상)
-	public boolean isInStock() {
-		return this.stock > 0;
-	}
-
-	// 재고 부족 (1~5개)
-	public boolean isLowStock() {
-		return this.stock > 0 && this.stock <= 5;
-	}
-
-	// 품절 (재고 0)
-	public boolean isSoldOut() {
-		return this.stock == 0;
+	public enum StockStatus {
+		AVAILABLE,    // 구매 가능
+		SOLD_OUT      // 품절
 	}
 }

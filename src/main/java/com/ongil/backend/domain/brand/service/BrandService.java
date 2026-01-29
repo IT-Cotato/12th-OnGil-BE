@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ongil.backend.domain.brand.dto.response.BrandRecommendResponse;
 import com.ongil.backend.domain.brand.converter.BrandConverter;
 import com.ongil.backend.domain.brand.dto.response.BrandResponse;
 import com.ongil.backend.domain.brand.entity.Brand;
@@ -18,6 +17,8 @@ import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.config.redis.CacheKeyConstants;
+import com.ongil.backend.global.config.redis.RedisCacheService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,12 +31,35 @@ public class BrandService {
 	private final ProductRepository productRepository;
 	private final BrandConverter brandConverter;
 	private final ProductConverter productConverter;
+	private final RedisCacheService redisCacheService;
 
+	// 브랜드 전체 조회
 	public List<BrandResponse> getAllBrands() {
+		// Redis 캐시 확인
+		List<BrandResponse> cached = redisCacheService.getList(
+			CacheKeyConstants.BRANDS_ALL,
+			BrandResponse.class
+		);
+
+		if (cached != null) {
+			return cached;
+		}
+
+		// Cache Miss → DB 조회
 		List<Brand> brands = brandRepository.findAllOrderByName();
-		return brandConverter.toResponseList(brands);
+		List<BrandResponse> response = brandConverter.toResponseList(brands);
+
+		// Redis 캐싱 (무한 TTL)
+		redisCacheService.save(
+			CacheKeyConstants.BRANDS_ALL,
+			response,
+			CacheKeyConstants.MASTER_DATA_TTL_HOURS
+		);
+
+		return response;
 	}
 
+	// 브랜드 상세 조회
 	public BrandResponse getBrandDetail(Long brandId) {
 		Brand brand = brandRepository.findById(brandId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
@@ -43,37 +67,13 @@ public class BrandService {
 		return brandConverter.toResponse(brand);
 	}
 
+	// 브랜드별 상품 조회
 	public Page<ProductSimpleResponse> getBrandProducts(Long brandId, Pageable pageable) {
-		Brand brand = brandRepository.findById(brandId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
+		if (!brandRepository.existsById(brandId)) {
+			throw new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND);
+		}
 
-		Page<Product> products = productRepository.findByBrandId(brand.getId(), pageable);
-
+		Page<Product> products = productRepository.findByBrandId(brandId, pageable);
 		return products.map(productConverter::toSimpleResponse);
-	}
-
-	public List<BrandRecommendResponse> getRecommendBrands() {
-		// 1. 랜덤 브랜드 3개 가져오기
-		List<Brand> randomBrands = brandRepository.findRandomBrands();
-
-		// 2. 각 브랜드별로 상품 6개 가져와서 DTO로 변환
-		return randomBrands.stream().map(brand -> {
-
-			// 2-1. 해당 브랜드의 랜덤 상품 6개 조회
-			List<Product> randomProducts = productRepository.findRandomProductsByBrand(brand.getId());
-
-			// 2-2. 상품들을 DTO로 변환 (ProductConverter 활용)
-			List<ProductSimpleResponse> productDtos = randomProducts.stream()
-					.map(productConverter::toSimpleResponse)
-					.toList();
-
-			// 2-3. 최종 추천 응답 DTO 생성
-			return BrandRecommendResponse.builder()
-					.id(brand.getId())
-					.name(brand.getName())
-					.logoImageUrl(brand.getLogoImageUrl()) // ※ Entity 변수명(logoUrl vs logoImageUrl) 확인 필요!
-					.products(productDtos)
-					.build();
-		}).toList();
 	}
 }

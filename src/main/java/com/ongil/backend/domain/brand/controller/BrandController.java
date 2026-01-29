@@ -54,11 +54,10 @@ public class BrandController {
 	@GetMapping("/{brandId}/products")
 	public DataResponse<Page<ProductSimpleResponse>> getBrandProducts(
 		@PathVariable Long brandId,
-		@PageableDefault(size = 20, sort = "popularity", direction = Sort.Direction.DESC)
+		@PageableDefault(size = 20, sort = "id", direction = Sort.Direction.DESC)
 		Pageable pageable
 	) {
 		Page<ProductSimpleResponse> products = brandService.getBrandProducts(brandId, pageable);
 		return DataResponse.from(products);
 	}
-
 }
