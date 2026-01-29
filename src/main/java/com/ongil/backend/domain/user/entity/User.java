@@ -67,7 +67,7 @@ public class User extends BaseEntity {
 	@Column(name = "usual_shoe_size", length = 10)
 	private String usualShoeSize;
 
-	@Column(name = "body_info_agreed")
+	@Column(name = "body_info_agreed", nullable = false)
 	@Builder.Default
 	private Boolean bodyInfoAgreed = false;
 

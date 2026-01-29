@@ -14,14 +14,15 @@ public class BodyInfoConverter {
 
 	/**
 	 * User 엔티티를 BodyInfoResponse로 변환
-	 * 5개 필드 중 하나라도 null이면 hasBodyInfo = false
+	 * 5개 필드 중 하나라도 null이거나 동의하지 않은 경우 hasBodyInfo = false
 	 */
 	public static BodyInfoResponse toResponse(User user) {
 		boolean hasBodyInfo = user.getHeight() != null
 			&& user.getWeight() != null
 			&& user.getUsualTopSize() != null
 			&& user.getUsualBottomSize() != null
-			&& user.getUsualShoeSize() != null;
+			&& user.getUsualShoeSize() != null
+			&& Boolean.TRUE.equals(user.getBodyInfoAgreed());
 
 		return BodyInfoResponse.builder()
 			.hasBodyInfo(hasBodyInfo)
