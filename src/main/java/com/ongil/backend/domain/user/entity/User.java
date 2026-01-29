@@ -67,6 +67,10 @@ public class User extends BaseEntity {
 	@Column(name = "usual_shoe_size", length = 10)
 	private String usualShoeSize;
 
+	@Column(name = "body_info_agreed")
+	@Builder.Default
+	private Boolean bodyInfoAgreed = false;
+
 	@Column(nullable = false)
 	@Builder.Default
 	private Integer points = 0;
@@ -78,5 +82,17 @@ public class User extends BaseEntity {
 	// 프로필 이미지 수정 비즈니스 로직
 	public void updateProfileImage(String newProfileImgUrl) {
 		this.profileImg = newProfileImgUrl;
+	}
+
+	// 체형 정보 수정 비즈니스 로직
+	public void updateBodyInfo(Integer height, Integer weight,
+							   String topSize, String bottomSize,
+							   String shoeSize, Boolean agreed) {
+		this.height = height;
+		this.weight = weight;
+		this.usualTopSize = topSize;
+		this.usualBottomSize = bottomSize;
+		this.usualShoeSize = shoeSize;
+		this.bodyInfoAgreed = agreed;
 	}
 }
