@@ -3,6 +3,8 @@ package com.ongil.backend.domain.search.controller;
 import java.util.Collections;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -12,6 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
+import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
+import com.ongil.backend.domain.product.enums.ProductSortType;
+import com.ongil.backend.domain.product.service.ProductService;
+import com.ongil.backend.domain.search.dto.response.VoiceSearchResDto;
+import com.ongil.backend.domain.search.service.AiSearchService;
 import com.ongil.backend.domain.search.service.RecentSearchService;
 import com.ongil.backend.domain.search.service.SearchIndexingService;
 import com.ongil.backend.domain.search.service.SearchService;
@@ -30,6 +38,8 @@ public class SearchController {
 	private final SearchService searchService;
 	private final SearchIndexingService searchIndexingService;
 	private final RecentSearchService recentSearchService;
+	private final ProductService productService; // 기존 검색 로직 재사용을 위해 주입
+	private final AiSearchService aiSearchService;           // NLP 처리를 위한 가상의 서비스
 
 	// 자동 완성
 	@GetMapping("/autocomplete")
@@ -78,6 +88,28 @@ public class SearchController {
 			recentSearchService.clearRecentSearches(userId);
 		}
 		return ResponseEntity.ok(DataResponse.from(null));
+	}
+
+	@PostMapping("/voice")
+	@Operation(summary = "음성 검색", description = "음성 문장에서 키워드를 추출하여 상품을 검색합니다."
+	)
+	public ResponseEntity<DataResponse<VoiceSearchResDto>> voiceSearch(
+		@RequestParam String speechText,
+		@PageableDefault(size = 20) Pageable pageable
+	) {
+		String extractedKeyword = aiSearchService.extractKeywords(speechText);
+
+		ProductSearchPageResDto searchResult = productService.getProducts(
+			ProductSearchCondition.builder().build(),
+			ProductSortType.POPULAR,
+			pageable,
+			extractedKeyword,
+			null
+		);
+
+		return ResponseEntity.ok(DataResponse.from(
+			new VoiceSearchResDto(extractedKeyword, searchResult)
+		));
 	}
 
 	/**
