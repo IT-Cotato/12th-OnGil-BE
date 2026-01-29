@@ -89,6 +89,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		"LIMIT 1")
 	Optional<Product> findTopByCategoryIdOrderByPopularity(@Param("categoryId") Long categoryId);
 
+	// 브랜드별 랜덤 상품 조회 (추천 브랜드용)
+	@Query(value = "SELECT *, (COALESCE(view_count, 0) + COALESCE(purchase_count, 0)) AS popularity FROM products WHERE brand_id = :brandId AND on_sale = true ORDER BY RAND() LIMIT :limit", nativeQuery = true)
+	List<Product> findRandomProductsByBrandId(@Param("brandId") Long brandId, @Param("limit") int limit);
+
 	/**
 	 * 사이즈 가이드 - 유사 고객 집단의 사이즈별 구매 횟수 집계
 	 *
