@@ -72,7 +72,8 @@ public class SecurityConfig {
 				.requestMatchers("/api/carts/**").authenticated()
 				.requestMatchers("/api/wishlists/**").authenticated()
 
-				// [10] 사용자 관련 - 전체 인증 필요
+				// [10] 사용자 관련
+				.requestMatchers(HttpMethod.GET, "/api/users/body-info/**").permitAll()  // 사이즈 옵션, 약관 조회는 인증 불필요
 				.requestMatchers("/api/users/me/**").authenticated()
 				.requestMatchers("/api/users/**").authenticated()
 

@@ -26,6 +26,7 @@ public enum ErrorCode {
 
 	// USER
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다.", "USER-001"),
+	INVALID_SIZE(HttpStatus.BAD_REQUEST, "유효하지 않은 사이즈입니다.", "USER-002"),
 
 	// PRODUCT
 	PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.", "PRODUCT-001"),
