@@ -38,26 +38,25 @@ public class SearchController {
 	private final SearchService searchService;
 	private final SearchIndexingService searchIndexingService;
 	private final RecentSearchService recentSearchService;
-	private final ProductService productService; // 기존 검색 로직 재사용을 위해 주입
-	private final AiSearchService aiSearchService;           // NLP 처리를 위한 가상의 서비스
+	private final ProductService productService;
+	private final AiSearchService aiSearchService;
 
-	// 자동 완성
 	@GetMapping("/autocomplete")
+	@Operation(summary = "검색어 자동 완성", description = "사용자가 입력 중인 검색어에 대한 연관 검색어를 반환합니다.(브랜드, 카테고리)")
 	public ResponseEntity<DataResponse<List<String>>> autocomplete(
 		@RequestParam String query) {
 		List<String> suggestions = searchService.getAutocomplete(query);
 		return ResponseEntity.ok(DataResponse.from(suggestions));
 	}
 
-	// 추천 검색어
 	@GetMapping("/recommend")
+	@Operation(summary = "추천 검색어 조회", description = "현재 쇼핑몰의 인기 검색어 리스트를 반환합니다.")
 	public ResponseEntity<DataResponse<List<String>>> getRecommend() {
 		return ResponseEntity.ok(DataResponse.from(searchService.getTopKeywords()));
 	}
 
-	// 최근 검색어
 	@GetMapping("/recent")
-	@Operation(description = "토큰 필요")
+	@Operation(summary = "최근 검색어 조회", description = "로그인한 사용자의 최근 검색어 목록을 반환합니다. (토큰 필요)")
 	public ResponseEntity<DataResponse<List<String>>> getRecent(
 		@AuthenticationPrincipal Long userId) {
 		if (userId == null) {
@@ -67,9 +66,8 @@ public class SearchController {
 		return ResponseEntity.ok(DataResponse.from(recentSearches));
 	}
 
-	// 최근 검색어 개별 삭제
 	@DeleteMapping("/recent")
-	@Operation(description = "토큰 필요")
+	@Operation(summary = "최근 검색어 개별 삭제", description = "목록에서 특정 키워드를 삭제합니다. (토큰 필요)")
 	public ResponseEntity<DataResponse<Void>> removeRecent(
 		@AuthenticationPrincipal Long userId,
 		@RequestParam String keyword) {
@@ -79,9 +77,8 @@ public class SearchController {
 		return ResponseEntity.ok(DataResponse.from(null));
 	}
 
-	// 최근 검색어 전체 삭제
 	@DeleteMapping("/recent/all")
-	@Operation(description = "토큰 필요")
+	@Operation(summary = "최근 검색어 전체 삭제", description = "사용자의 최근 검색어 기록을 모두 초기화합니다. (토큰 필요)")
 	public ResponseEntity<DataResponse<Void>> clearAllRecent(
 		@AuthenticationPrincipal Long userId) {
 		if (userId != null) {
