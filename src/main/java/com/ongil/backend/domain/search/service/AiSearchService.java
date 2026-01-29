@@ -47,9 +47,16 @@ public class AiSearchService {
 				return fallbackExtract(speechText);
 			}
 
-			String result = normalize(response.choices().get(0).message().content());
+			OpenAiResponse.Choice firstChoice = response.choices().get(0);
+			if (firstChoice.message() == null || firstChoice.message().content() == null) {
+				log.warn("OpenAI 응답 본문이 비어있습니다. fallback을 실행합니다.");
+				return fallbackExtract(speechText);
+			}
+
+			String result = normalize(firstChoice.message().content());
 			log.info("추출 키워드: [{}] <- 원문: [{}]", result, speechText);
 			return result;
+
 		} catch (Exception e) {
 			log.warn("OpenAI 호출 실패 ({}ms 소요). fallback 실행", (System.currentTimeMillis() - startTime), e);
 			return fallbackExtract(speechText);
