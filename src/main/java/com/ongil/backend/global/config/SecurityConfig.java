@@ -77,7 +77,12 @@ public class SecurityConfig {
 				.requestMatchers("/api/users/me/**").authenticated()
 				.requestMatchers("/api/users/**").authenticated()
 
-				// [11] 그 외 모든 요청은 인증 필요
+				//[11] 매거진
+				.requestMatchers(HttpMethod.POST, "/api/magazines/**/bookmark").authenticated()
+				.requestMatchers(HttpMethod.POST, "/api/magazines/comments/**").authenticated()
+				.requestMatchers(HttpMethod.POST, "/api/magazines/**/like").authenticated()
+				.requestMatchers(HttpMethod.GET, "/api/magazines/**").permitAll()
+
 				.anyRequest().authenticated()
 			)
 

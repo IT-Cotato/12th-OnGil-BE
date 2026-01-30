@@ -57,6 +57,10 @@ public enum ErrorCode {
 	// ADDRESS
 	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),
 	ADDRESS_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 배송지만 수정/삭제할 수 있습니다.", "ADDRESS-002"),
+
+	// MAGAZINE
+	MAGAZINE_NOT_FOUND(HttpStatus.NOT_FOUND, "매거진을 찾을 수 없습니다.", "MAG-001"),
+	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다.", "COMM-002"),
 	;
 
 	private final HttpStatus httpStatus;
