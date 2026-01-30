@@ -6,6 +6,8 @@ import java.util.List;
 import com.ongil.backend.domain.address.entity.Address;
 import com.ongil.backend.domain.auth.entity.LoginType;
 import com.ongil.backend.global.common.entity.BaseEntity;
+import com.ongil.backend.global.common.exception.AppException;
+import com.ongil.backend.global.common.exception.ErrorCode;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -95,4 +97,20 @@ public class User extends BaseEntity {
 		this.usualShoeSize = shoeSize;
 		this.bodyInfoAgreed = agreed;
 	}
+
+	// 적립금 차감 비즈니스 로직
+	public void decreasePoints(Integer amount) {
+		if (amount == null || amount == 0) return;
+
+		if (amount < 0) {
+			throw new AppException(ErrorCode.INVALID_AMOUNT);
+		}
+
+		if (this.points < amount) {
+			throw new AppException(ErrorCode.INSUFFICIENT_POINTS);
+		}
+
+		this.points -= amount;
+	}
+
 }

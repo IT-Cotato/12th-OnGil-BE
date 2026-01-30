@@ -16,6 +16,7 @@ public enum ErrorCode {
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "서버 내부에서 에러가 발생하였습니다.", "COMMON-004"),
 	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.", "COMMON-005"),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.", "COMMON-006"),
+	INVALID_AMOUNT(HttpStatus.BAD_REQUEST, "유효하지 않은 금액 또는 수량입니다.", "COMMON-007"),
 
 	// AUTH
 	INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 리프레시 토큰입니다.", "AUTH-001"),
@@ -45,6 +46,7 @@ public enum ErrorCode {
 	// CART
 	CART_NOT_FOUND(HttpStatus.NOT_FOUND, "장바구니를 찾을 수 없습니다.", "CART-001"),
 	CART_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 장바구니만 수정/삭제할 수 있습니다.", "CART-002"),
+	CART_EMPTY(HttpStatus.BAD_REQUEST, "장바구니가 비어 있어 주문을 진행할 수 없습니다.", "CART-003"),
 
 	// REVIEW
 	REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다.", "REVIEW-001"),
@@ -53,6 +55,8 @@ public enum ErrorCode {
 	// ORDER
 	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.", "ORDER-001"),
 	ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 상품을 찾을 수 없습니다.", "ORDER-002"),
+	INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "적립금이 부족합니다.", "ORDER-003"),
+	INVALID_POINT_USAGE(HttpStatus.BAD_REQUEST, "포인트 사용 금액이 유효하지 않습니다. (0 미만 혹은 결제 금액 초과)", "ORDER-004"),
 
 	// ADDRESS
 	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),
