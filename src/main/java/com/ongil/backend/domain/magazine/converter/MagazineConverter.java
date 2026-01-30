@@ -16,7 +16,7 @@ public class MagazineConverter {
 			.thumbnailUrl(magazine.getThumbnailImageUrl())
 			.originalUrl(magazine.getUrl())
 			.press(magazine.getPress())
-			.publishedAt(magazine.getPublishedAt().toString())
+			.publishedAt(magazine.getPublishedAt() != null ? magazine.getPublishedAt().toString() : "")
 			.build();
 	}
 }

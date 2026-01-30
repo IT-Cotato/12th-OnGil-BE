@@ -8,7 +8,15 @@ import jakarta.persistence.Table;
 import lombok.*;
 
 @Entity
-@Table(name = "magazine_bookmarks")
+@Table(
+	name = "magazine_bookmarks",
+	uniqueConstraints = {
+		@UniqueConstraint(
+			name = "uk_magazine_bookmark_user_magazine",
+			columnNames = {"user_id", "magazine_id"}
+		)
+	}
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
