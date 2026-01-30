@@ -77,6 +77,8 @@ public class SecurityConfig {
 				.requestMatchers("/api/users/me/**").authenticated()
 				.requestMatchers("/api/users/**").authenticated()
 
+				.requestMatchers("/api/magazines/**").permitAll()
+
 				// [11] 그 외 모든 요청은 인증 필요
 				.anyRequest().authenticated()
 			)
