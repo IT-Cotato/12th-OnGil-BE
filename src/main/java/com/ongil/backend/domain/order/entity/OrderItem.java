@@ -9,6 +9,7 @@ import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,10 +18,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "order_items")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@AllArgsConstructor
+@Builder
 public class OrderItem extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "order_item_id")
 	private Long id;
 
 	@Column(name = "selected_size", length = 20)
@@ -45,15 +49,4 @@ public class OrderItem extends BaseEntity {
 
 	@OneToMany(mappedBy = "orderItem")
 	private List<Review> reviews = new ArrayList<>();
-
-	@Builder
-	public OrderItem(String selectedSize, String selectedColor, Integer quantity,
-		Integer priceAtOrder, Order order, Product product) {
-		this.selectedSize = selectedSize;
-		this.selectedColor = selectedColor;
-		this.quantity = quantity;
-		this.priceAtOrder = priceAtOrder;
-		this.order = order;
-		this.product = product;
-	}
 }

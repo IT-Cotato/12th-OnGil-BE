@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ser.Serializers;
 import com.ongil.backend.domain.order.enums.OrderStatus;
 import com.ongil.backend.domain.payment.entity.Payment;
 import com.ongil.backend.domain.user.entity.User;
@@ -12,6 +11,7 @@ import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +20,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "orders")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@AllArgsConstructor
+@Builder
 public class Order extends BaseEntity {
 
 	@Id
@@ -71,26 +73,14 @@ public class Order extends BaseEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@OneToMany(mappedBy = "order")
+	@Builder.Default
+	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> orderItems = new ArrayList<>();
 
 	@OneToOne(mappedBy = "order")
 	private Payment payment;
 
-	@Builder
-	public Order(String orderNumber, Integer totalAmount, String recipient,
-		String recipientPhone, String deliveryAddress, String detailAddress,
-		String postalCode, String deliveryMessage, OrderStatus orderStatus,
-		User user) {
-		this.orderNumber = orderNumber;
-		this.totalAmount = totalAmount;
-		this.recipient = recipient;
-		this.recipientPhone = recipientPhone;
-		this.deliveryAddress = deliveryAddress;
-		this.detailAddress = detailAddress;
-		this.postalCode = postalCode;
-		this.deliveryMessage = deliveryMessage;
-		this.orderStatus = orderStatus;
-		this.user = user;
+	public void addOrderItem(OrderItem orderItem) {
+		this.orderItems.add(orderItem);
 	}
 }

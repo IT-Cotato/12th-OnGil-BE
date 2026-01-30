@@ -45,6 +45,7 @@ public enum ErrorCode {
 	// CART
 	CART_NOT_FOUND(HttpStatus.NOT_FOUND, "장바구니를 찾을 수 없습니다.", "CART-001"),
 	CART_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 장바구니만 수정/삭제할 수 있습니다.", "CART-002"),
+	CART_EMPTY(HttpStatus.BAD_REQUEST, "장바구니가 비어 있어 주문을 진행할 수 없습니다.", "CART-003"),
 
 	// REVIEW
 	REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다.", "REVIEW-001"),
@@ -53,6 +54,7 @@ public enum ErrorCode {
 	// ORDER
 	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.", "ORDER-001"),
 	ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 상품을 찾을 수 없습니다.", "ORDER-002"),
+	INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "적립금이 부족합니다.", "ORDER-003"),
 
 	// ADDRESS
 	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),
