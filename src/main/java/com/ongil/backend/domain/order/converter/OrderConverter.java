@@ -46,6 +46,7 @@ public class OrderConverter {
 	public OrderItem toOrderItem(OrderItemRequest itemRequest, Product product) {
 		return OrderItem.builder()
 			.product(product)
+			.priceAtOrder(product.getPrice())
 			.selectedSize(itemRequest.selectedSize())
 			.selectedColor(itemRequest.selectedColor())
 			.quantity(itemRequest.quantity())
