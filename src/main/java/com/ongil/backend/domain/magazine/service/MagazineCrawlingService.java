@@ -29,7 +29,8 @@ public class MagazineCrawlingService {
 	private final MagazineRepository magazineRepository;
 	private final MagazineArticleParser articleParser;
 
-	private static final int MAX_PAGES = 3;
+	private static final int MAX_PAGES = 1;
+	private static final int MAX_SAVE_PER_CATEGORY = 20;
 	private static final String SEARCH_URL =
 		"https://search.naver.com/search.naver?where=news&query=%s&sort=0&start=%d";
 
@@ -76,6 +77,7 @@ public class MagazineCrawlingService {
 
 		List<Magazine> newMagazines = candidates.stream()
 			.filter(m -> !existUrls.contains(m.getUrl()))
+			.limit(MAX_SAVE_PER_CATEGORY)
 			.toList();
 
 		log.info("후보군 개수: {} | DB 중복 제외 후 신규 개수: {}", candidates.size(), newMagazines.size());
@@ -87,10 +89,10 @@ public class MagazineCrawlingService {
 
 	private List<String> getSearchQueriesByCategory(MagazineCategory category) {
 		return switch (category) {
-			case BODY_TYPE -> List.of("체형별 코디", "체형 보완 스타일링", "체형별 패션 팁");
-			case COLOR -> List.of("2026 패션 컬러", "퍼스널컬러 코디", "트렌드 색상 스타일링");
-			case MATERIAL -> List.of("의류 소재 특징", "패션 원단 트렌드", "고급 소재 의류");
-			case PRICE -> List.of("가성비 패션", "아이템 세일", "세일 추천");
+			case BODY_TYPE -> List.of("체형별 코디", "체형 보완 스타일링");
+			case COLOR -> List.of("2026 패션 컬러", "트렌드 색상 스타일링");
+			case MATERIAL -> List.of("의류 소재 특징", "패션 원단 트렌드");
+			case PRICE -> List.of("가성비 패션", "아이템 세일");
 		};
 	}
 
