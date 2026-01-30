@@ -5,6 +5,7 @@ import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,10 +14,13 @@ import lombok.NoArgsConstructor;
 @Table(name = "magazine_comments")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@Builder
+@AllArgsConstructor
 public class MagazineComment extends BaseEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Column(name = "magazine_comment_id")
 	private Long id;
 
 	@Column(nullable = false, length = 500)
@@ -30,11 +34,11 @@ public class MagazineComment extends BaseEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@Builder
-	public MagazineComment(String content, Magazine magazine, User user) {
-		this.content = content;
-		this.magazine = magazine;
-		this.user = user;
-	}
+	@Builder.Default
+	@Column(name = "like_count", nullable = false)
+	private Integer likeCount = 0;
+
+	public void increaseLikeCount() { this.likeCount++; }
+	public void decreaseLikeCount() { if(this.likeCount > 0) this.likeCount--; }
 }
 
