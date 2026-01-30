@@ -73,14 +73,25 @@ public class OrderService {
 		}
 
 		List<OrderItemDto> itemDtos = order.getOrderItems().stream()
-			.map(item -> new OrderItemDto(
-				item.getProduct().getBrand() != null ? item.getProduct().getBrand().getName() : "일반 브랜드",
-				item.getProduct().getName(),
-				item.getSelectedSize(),
-				item.getSelectedColor(),
-				item.getQuantity(),
-				item.getPriceAtOrder()
-			))
+			.map(item -> {
+				Product product = item.getProduct();
+
+				String firstImageUrl = "default-image-url";
+				if (product.getImageUrls() != null && !product.getImageUrls().isBlank()) {
+					firstImageUrl = product.getImageUrls().split(",")[0].trim();
+				}
+
+				return new OrderItemDto(
+					product.getId(),
+					product.getBrand() != null ? product.getBrand().getName() : "일반 브랜드",
+					product.getName(),
+					firstImageUrl,
+					item.getSelectedSize(),
+					item.getSelectedColor(),
+					item.getQuantity(),
+					item.getPriceAtOrder()
+				);
+			})
 			.toList();
 
 		return orderConverter.toDetailResponse(order, itemDtos);
