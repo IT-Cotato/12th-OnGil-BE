@@ -4,6 +4,5 @@ public record OrderItemRequest(
 	Long productId,
 	String selectedSize,
 	String selectedColor,
-	Integer quantity,
-	Integer priceAtOrder
+	Integer quantity
 ) {}

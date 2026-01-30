@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.order.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -44,22 +45,29 @@ public class OrderService {
 
 		user.decreasePoints(request.usedPoints());
 
-		int totalProductPrice = request.items().stream()
-			.mapToInt(item -> item.priceAtOrder() * item.quantity())
-			.sum();
-		int finalAmount = totalProductPrice - request.usedPoints();
-
-		Order order = orderConverter.toOrder(request, user, finalAmount);
+		int totalProductPrice = 0;
+		List<OrderItem> orderItems = new ArrayList<>();
 
 		for (OrderItemRequest itemRequest : request.items()) {
 			Product product = productRepository.findById(itemRequest.productId())
 				.orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-			OrderItem orderItem = orderConverter.toOrderItem(itemRequest, product, order);
-			order.addOrderItem(orderItem);
+			totalProductPrice += product.getPrice() * itemRequest.quantity();
+
+			OrderItem orderItem = orderConverter.toOrderItem(itemRequest, product);
+			orderItems.add(orderItem);
 		}
 
+		if (request.usedPoints() < 0 || request.usedPoints() > totalProductPrice) {
+			throw new AppException(ErrorCode.INVALID_POINT_USAGE);
+		}
+
+		int finalAmount = totalProductPrice - request.usedPoints();
+		Order order = orderConverter.toOrder(request, user, finalAmount);
+
+		orderItems.forEach(order::addOrderItem);
 		orderRepository.save(order);
+
 		return order.getId();
 	}
 

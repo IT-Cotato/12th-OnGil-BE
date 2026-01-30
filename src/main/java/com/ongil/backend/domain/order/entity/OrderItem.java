@@ -49,4 +49,8 @@ public class OrderItem extends BaseEntity {
 
 	@OneToMany(mappedBy = "orderItem")
 	private List<Review> reviews = new ArrayList<>();
+
+	public void setOrder(Order order) {
+		this.order = order;
+	}
 }

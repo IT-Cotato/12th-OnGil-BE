@@ -4,7 +4,6 @@ import java.util.List;
 
 public record OrderCreateRequest(
 	List<OrderItemRequest> items,
-	Integer totalAmount,
 	Integer usedPoints,
 	String recipient,
 	String recipientPhone,

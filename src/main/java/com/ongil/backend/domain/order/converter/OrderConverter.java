@@ -1,6 +1,9 @@
 package com.ongil.backend.domain.order.converter;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -21,8 +24,12 @@ public class OrderConverter {
 
 	// Request -> Order 엔티티
 	public Order toOrder(OrderCreateRequest request, User user, int finalAmount) {
+		String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+		String randomPart = UUID.randomUUID().toString().substring(0, 8);
+		String orderNumber = "ORD-" + datePart + "-" + randomPart;
+
 		return Order.builder()
-			.orderNumber("ORD-" + System.currentTimeMillis())
+			.orderNumber(orderNumber)
 			.totalAmount(finalAmount)
 			.recipient(request.recipient())
 			.recipientPhone(request.recipientPhone())
@@ -36,14 +43,12 @@ public class OrderConverter {
 	}
 
 	// RequestItem -> OrderItem 엔티티
-	public OrderItem toOrderItem(OrderItemRequest itemRequest, Product product, Order order) {
+	public OrderItem toOrderItem(OrderItemRequest itemRequest, Product product) {
 		return OrderItem.builder()
 			.product(product)
-			.order(order)
 			.selectedSize(itemRequest.selectedSize())
 			.selectedColor(itemRequest.selectedColor())
 			.quantity(itemRequest.quantity())
-			.priceAtOrder(itemRequest.priceAtOrder())
 			.build();
 	}
 
@@ -64,26 +69,17 @@ public class OrderConverter {
 
 	// CartItem 리스트 -> OrderCreateRequest
 	public OrderCreateRequest toOrderCreateRequest(List<Cart> cartItems, CartOrderRequest request) {
-		// 1. OrderItemRequest 리스트 생성
 		List<OrderItemRequest> orderItemRequests = cartItems.stream()
 			.map(cartItem -> new OrderItemRequest(
 				cartItem.getProduct().getId(),
 				cartItem.getSelectedSize(),
 				cartItem.getSelectedColor(),
-				cartItem.getQuantity(),
-				cartItem.getProduct().getPrice()
+				cartItem.getQuantity()
 			))
 			.toList();
 
-		// 2. 총 상품 금액 계산
-		int totalProductPrice = cartItems.stream()
-			.mapToInt(ci -> ci.getProduct().getPrice() * ci.getQuantity())
-			.sum();
-
-		// 3. 최종 결제 요청 객체 생성
 		return new OrderCreateRequest(
 			orderItemRequests,
-			totalProductPrice - request.usedPoints(),
 			request.usedPoints(),
 			request.recipient(),
 			request.recipientPhone(),
