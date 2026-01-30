@@ -102,9 +102,14 @@ public class User extends BaseEntity {
 	public void decreasePoints(Integer amount) {
 		if (amount == null || amount == 0) return;
 
-		if (this.points < amount) {
-			throw new AppException(ErrorCode.INSUFFICIENT_POINTS); // "적립금이 부족합니다" 예외 발생
+		if (amount < 0) {
+			throw new AppException(ErrorCode.INVALID_AMOUNT);
 		}
+
+		if (this.points < amount) {
+			throw new AppException(ErrorCode.INSUFFICIENT_POINTS);
+		}
+
 		this.points -= amount;
 	}
 

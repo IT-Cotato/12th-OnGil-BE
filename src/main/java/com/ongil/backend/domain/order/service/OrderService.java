@@ -109,8 +109,8 @@ public class OrderService {
 	public Long createOrderFromCart(Long userId, CartOrderRequest request) {
 		List<Cart> cartItems = cartRepository.findAllById(request.cartItemIds());
 
-		if (cartItems.isEmpty()) {
-			throw new AppException(ErrorCode.CART_EMPTY);
+		if (cartItems.size() != request.cartItemIds().size()) {
+			throw new AppException(ErrorCode.CART_NOT_FOUND);
 		}
 
 		boolean isNotOwner = cartItems.stream()
