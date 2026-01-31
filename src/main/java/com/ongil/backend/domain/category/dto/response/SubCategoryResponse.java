@@ -19,4 +19,7 @@ public class SubCategoryResponse {
 
 	@Schema(description = "표시 순서")
 	private Integer displayOrder;
+
+	@Schema(description = "상위 카테고리명")
+	private String parentCategoryName;
 }

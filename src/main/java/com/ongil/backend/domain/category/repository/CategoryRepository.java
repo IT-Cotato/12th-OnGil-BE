@@ -29,6 +29,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 	List<Category> findAllSubCategories();
 
 	// 특정 상위 카테고리의 하위 카테고리 조회
+	@EntityGraph(attributePaths = {"parentCategory"})
 	@Query("SELECT c FROM Category c " +
 		"WHERE c.parentCategory.id = :parentCategoryId " +
 		"ORDER BY c.displayOrder")

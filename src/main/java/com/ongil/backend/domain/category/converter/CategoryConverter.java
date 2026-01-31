@@ -45,6 +45,9 @@ public class CategoryConverter {
 			.name(category.getName())
 			.iconUrl(category.getIconUrl())
 			.displayOrder(category.getDisplayOrder())
+			.parentCategoryName(category.getParentCategory() != null
+				? category.getParentCategory().getName()
+				: null)
 			.build();
 	}
 
