@@ -1,6 +1,8 @@
 package com.ongil.backend.domain.admin.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,12 +11,14 @@ import lombok.NoArgsConstructor;
 @Schema(description = "카테고리 등록 요청")
 public class AdminCategoryCreateRequest {
 
+	@NotBlank(message = "카테고리명은 필수입니다.")
 	@Schema(description = "카테고리명", example = "상의")
 	private String name;
 
 	@Schema(description = "아이콘 URL", example = "https://example.com/icon.png")
 	private String iconUrl;
 
+	@NotNull(message = "정렬 순서는 필수입니다.")
 	@Schema(description = "정렬 순서", example = "1")
 	private Integer displayOrder;
 

@@ -19,6 +19,7 @@ import com.ongil.backend.domain.product.converter.ProductConverter;
 import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.entity.Product;
+import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.entity.ProductOption;
 import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
@@ -77,7 +78,7 @@ public class AdminService {
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
 
 		Integer discountPrice = null;
-		if (request.getDiscountRate() != null && request.getDiscountRate() > 0) {
+		if (request.getPrice() != null && request.getDiscountRate() != null && request.getDiscountRate() > 0) {
 			discountPrice = request.getPrice() - (request.getPrice() * request.getDiscountRate() / 100);
 		}
 
@@ -91,7 +92,7 @@ public class AdminService {
 			.colors(request.getColors())
 			.discountRate(request.getDiscountRate())
 			.discountPrice(discountPrice)
-			.productType(request.getProductType())
+			.productType(request.getProductType() != null ? request.getProductType() : ProductType.NORMAL)
 			.brand(brand)
 			.category(category)
 			.build();
