@@ -1,5 +1,7 @@
 package com.ongil.backend.domain.product.websocket.controller;
 
+import java.util.Map;
+
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
@@ -35,9 +37,6 @@ public class ProductViewerController {
 	 * 상품 상세 페이지 입장 처리
 	 * <p>
 	 * 클라이언트가 /app/products/{productId}/enter 로 메시지를 보내면 호출됩니다.
-	 *
-	 * @param productId      상품 ID (URL path에서 추출)
-	 * @param headerAccessor WebSocket 세션 정보 접근용
 	 */
 	@MessageMapping("/products/{productId}/enter")
 	public void enterProduct(
@@ -47,10 +46,13 @@ public class ProductViewerController {
 		String sessionId = headerAccessor.getSessionId();
 
 		// 세션에 현재 보고 있는 상품 ID 저장 (비정상 종료 시 정리용)
-		headerAccessor.getSessionAttributes().put("productId", productId);
+		Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
+		if (sessionAttributes != null) {
+			sessionAttributes.put("productId", productId);
+		}
 
 		productViewerService.addViewer(productId, sessionId);
-		log.info("상품 입장: productId={}, sessionId={}", productId, sessionId);
+		log.debug("상품 입장: productId={}, sessionId={}", productId, sessionId);
 	}
 
 	/**
@@ -58,9 +60,6 @@ public class ProductViewerController {
 	 * <p>
 	 * 클라이언트가 /app/products/{productId}/leave 로 메시지를 보내면 호출됩니다.
 	 * 정상적인 페이지 이탈 시 호출됩니다.
-	 *
-	 * @param productId      상품 ID (URL path에서 추출)
-	 * @param headerAccessor WebSocket 세션 정보 접근용
 	 */
 	@MessageMapping("/products/{productId}/leave")
 	public void leaveProduct(
@@ -69,10 +68,12 @@ public class ProductViewerController {
 	) {
 		String sessionId = headerAccessor.getSessionId();
 
-		// 세션에서 상품 ID 제거
-		headerAccessor.getSessionAttributes().remove("productId");
+		Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
+		if (sessionAttributes != null) {
+			sessionAttributes.remove("productId");
+		}
 
 		productViewerService.removeViewer(productId, sessionId);
-		log.info("상품 퇴장: productId={}, sessionId={}", productId, sessionId);
+		log.debug("상품 퇴장: productId={}, sessionId={}", productId, sessionId);
 	}
 }

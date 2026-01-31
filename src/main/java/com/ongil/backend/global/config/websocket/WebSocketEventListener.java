@@ -1,5 +1,7 @@
 package com.ongil.backend.global.config.websocket;
 
+import java.util.Map;
+
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Component;
@@ -42,12 +44,16 @@ public class WebSocketEventListener {
 		String sessionId = headerAccessor.getSessionId();
 
 		// 세션에 저장된 productId가 있으면 조회 인원에서 제거
-		Long productId = (Long)headerAccessor.getSessionAttributes().get("productId");
+		Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
+		if (sessionAttributes == null) {
+			log.debug("Session attributes is null. sessionId={}", sessionId);
+			return;
+		}
+
+		Long productId = (Long)sessionAttributes.get("productId");
 		if (productId != null) {
 			productViewerService.removeViewer(productId, sessionId);
 			log.debug("비정상 종료로 인한 viewer 제거: productId={}, sessionId={}", productId, sessionId);
 		}
-
-		log.debug("WebSocket 연결 해제: sessionId={}", sessionId);
 	}
 }
