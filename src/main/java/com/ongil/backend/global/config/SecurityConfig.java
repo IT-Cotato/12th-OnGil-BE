@@ -38,6 +38,9 @@ public class SecurityConfig {
 				// [1] 시스템 및 문서화 관련 (Swagger, H2 Console)
 				.requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
+				// WebSocket
+				.requestMatchers("/ws/**").permitAll()
+
 				// [2] 인증 관련 - 인증 필요
 				.requestMatchers("/api/auth/logout", "/api/auth/withdraw").authenticated()
 
