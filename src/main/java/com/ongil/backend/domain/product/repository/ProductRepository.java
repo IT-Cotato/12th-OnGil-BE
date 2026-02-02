@@ -25,7 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@EntityGraph(attributePaths = {"brand", "category", "category.parentCategory"})
 	Optional<Product> findWithBrandAndCategoryById(Long id);
 
-	// 조건에 따른 상품 조회
+	// 조건에 따른 상품 조회 (하위 카테고리)
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("""
     SELECT p FROM Product p
@@ -40,6 +40,28 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	Page<Product> findAllByCondition(
 		@Param("targetIds") List<Long> targetIds,
 		@Param("categoryId") Long categoryId,
+		@Param("brandId") Long brandId,
+		@Param("minPrice") Integer minPrice,
+		@Param("maxPrice") Integer maxPrice,
+		@Param("size") String size,
+		Pageable pageable
+	);
+
+	// 조건에 따른 상품 조회 (상위 카테고리 - 하위 카테고리들의 상품 전체 조회)
+	@EntityGraph(attributePaths = {"brand", "category"})
+	@Query("""
+    SELECT p FROM Product p
+    WHERE (:targetIds IS NULL OR p.id IN :targetIds)
+      AND p.category.parentCategory.id = :parentCategoryId
+      AND (:brandId IS NULL OR p.brand.id = :brandId)
+      AND (:minPrice IS NULL OR p.price >= :minPrice)
+      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
+      AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
+      AND p.onSale = true
+    """)
+	Page<Product> findAllByParentCategoryCondition(
+		@Param("targetIds") List<Long> targetIds,
+		@Param("parentCategoryId") Long parentCategoryId,
 		@Param("brandId") Long brandId,
 		@Param("minPrice") Integer minPrice,
 		@Param("maxPrice") Integer maxPrice,
