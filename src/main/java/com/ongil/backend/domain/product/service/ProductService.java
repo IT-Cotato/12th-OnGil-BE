@@ -28,6 +28,8 @@ import com.ongil.backend.domain.search.service.SearchService;
 import com.ongil.backend.domain.search.validator.SearchValidator;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
+import com.ongil.backend.domain.category.entity.Category;
+import com.ongil.backend.domain.category.repository.CategoryRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
@@ -48,6 +50,7 @@ public class ProductService {
 	private final SizeGuideConverter sizeGuideConverter;
 	private final SearchService searchService;
 	private final RecentSearchService recentSearchService;
+	private final CategoryRepository categoryRepository;
 
 	private static final int SIMILAR_CUSTOMERS_LIMIT = 4;
 
@@ -98,15 +101,48 @@ public class ProductService {
 			sort
 		);
 
-		Page<Product> products = productRepository.findAllByCondition(
-			targetIds,
-			condition.getCategoryId(),
-			condition.getBrandId(),
-			minPrice,
-			maxPrice,
-			condition.getSize(),
-			pageableWithSort
-		);
+		Page<Product> products;
+
+		// categoryId가 있으면 상위/하위 카테고리 판단 후 분기 처리
+		if (condition.getCategoryId() != null) {
+			Category category = categoryRepository.findById(condition.getCategoryId())
+				.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+
+			if (category.getParentCategory() == null) {
+				// 상위 카테고리 → 하위 카테고리들의 상품 전체 조회
+				products = productRepository.findAllByParentCategoryCondition(
+					targetIds,
+					condition.getCategoryId(),
+					condition.getBrandId(),
+					minPrice,
+					maxPrice,
+					condition.getSize(),
+					pageableWithSort
+				);
+			} else {
+				// 하위 카테고리 → 해당 카테고리 상품만 조회
+				products = productRepository.findAllByCondition(
+					targetIds,
+					condition.getCategoryId(),
+					condition.getBrandId(),
+					minPrice,
+					maxPrice,
+					condition.getSize(),
+					pageableWithSort
+				);
+			}
+		} else {
+			// categoryId가 없으면 전체 상품 조회
+			products = productRepository.findAllByCondition(
+				targetIds,
+				null,
+				condition.getBrandId(),
+				minPrice,
+				maxPrice,
+				condition.getSize(),
+				pageableWithSort
+			);
+		}
 
 		// 추천 검색어에 이용하기 위한 과정
 		if (hasQuery && !products.isEmpty()) {

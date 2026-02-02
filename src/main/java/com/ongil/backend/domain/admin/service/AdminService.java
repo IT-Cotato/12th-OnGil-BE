@@ -19,12 +19,13 @@ import com.ongil.backend.domain.product.converter.ProductConverter;
 import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.entity.Product;
-import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.entity.ProductOption;
+import com.ongil.backend.domain.product.enums.ProductType;
 import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.common.exception.ValidationException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -76,6 +77,11 @@ public class AdminService {
 
 		Category category = categoryRepository.findById(request.getCategoryId())
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+
+		// 상품은 하위 카테고리에만 등록 가능
+		if (category.getParentCategory() == null) {
+			throw new ValidationException(ErrorCode.INVALID_CATEGORY);
+		}
 
 		Integer discountPrice = null;
 		if (request.getPrice() != null && request.getDiscountRate() != null && request.getDiscountRate() > 0) {
