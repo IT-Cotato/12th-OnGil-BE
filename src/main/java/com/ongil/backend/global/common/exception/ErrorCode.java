@@ -37,6 +37,7 @@ public enum ErrorCode {
 
 	// CATEGORY
 	CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "카테고리를 찾을 수 없습니다.", "CATEGORY-001"),
+	INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "상품은 하위 카테고리에만 등록할 수 있습니다.", "CATEGORY-002"),
 
 	// WISHLIST
 	WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "찜을 찾을 수 없습니다.", "WISHLIST-001"),
