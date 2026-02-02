@@ -162,4 +162,44 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		@Param("userWeight") Integer userWeight,
 		Pageable pageable
 	);
+
+	// ===== 추천 상품 관련 쿼리 =====
+
+	/**
+	 * 인기 상품 조회 (viewCount + cartCount 기준 정렬)
+	 */
+	@EntityGraph(attributePaths = {"brand", "category"})
+	@Query("SELECT p FROM Product p " +
+		"WHERE p.onSale = true " +
+		"ORDER BY (COALESCE(p.viewCount, 0) + COALESCE(p.cartCount, 0)) DESC")
+	List<Product> findPopularProducts(Pageable pageable);
+
+	/**
+	 * 개인화 추천 - 같은 카테고리 + 비슷한 가격대
+	 * 정렬: viewCount + cartCount 순
+	 */
+	@EntityGraph(attributePaths = {"brand", "category"})
+	@Query("SELECT p FROM Product p " +
+		"WHERE p.onSale = true " +
+		"AND p.category.id IN :categoryIds " +
+		"AND p.id NOT IN :excludeProductIds " +
+		"AND (" +
+		"  (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice BETWEEN :minPrice AND :maxPrice) " +
+		"  OR (p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price BETWEEN :minPrice AND :maxPrice" +
+		") " +
+		"ORDER BY (COALESCE(p.viewCount, 0) + COALESCE(p.cartCount, 0)) DESC")
+	List<Product> findRecommendedProducts(
+		@Param("categoryIds") List<Long> categoryIds,
+		@Param("minPrice") Integer minPrice,
+		@Param("maxPrice") Integer maxPrice,
+		@Param("excludeProductIds") List<Long> excludeProductIds,
+		Pageable pageable
+	);
+
+	/**
+	 * 상품 ID 목록으로 상품 조회
+	 */
+	@EntityGraph(attributePaths = {"brand", "category"})
+	@Query("SELECT p FROM Product p WHERE p.id IN :productIds AND p.onSale = true")
+	List<Product> findByIdInAndOnSaleTrue(@Param("productIds") List<Long> productIds);
 }

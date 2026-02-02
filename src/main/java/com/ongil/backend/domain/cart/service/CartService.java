@@ -78,6 +78,10 @@ public class CartService {
 			.build();
 
 		Cart savedCart = cartRepository.save(cart);
+
+		// 상품의 장바구니 담긴 횟수 증가
+		product.incrementCartCount();
+
 		return cartConverter.toResponse(savedCart);
 	}
 

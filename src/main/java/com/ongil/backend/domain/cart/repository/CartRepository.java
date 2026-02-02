@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 
 import com.ongil.backend.domain.cart.entity.Cart;
 
-import feign.Param;
+import org.springframework.data.repository.query.Param;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
@@ -52,4 +52,8 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
 		@Param("cartIds") List<Long> cartIds,
 		@Param("userId") Long userId
 	);
+
+	// 사용자의 장바구니에 담긴 상품 ID 목록
+	@Query("SELECT DISTINCT c.product.id FROM Cart c WHERE c.user.id = :userId")
+	List<Long> findProductIdsByUserId(@Param("userId") Long userId);
 }

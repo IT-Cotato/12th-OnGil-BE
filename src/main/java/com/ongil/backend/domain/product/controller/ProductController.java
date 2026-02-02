@@ -13,6 +13,7 @@ import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
+import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
 import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.service.ProductService;
@@ -35,10 +36,13 @@ public class ProductController {
 
 	private final ProductService productService;
 
-	@Operation(summary = "상품 상세 조회", description = "상품의 상세 정보를 조회합니다.")
+	@Operation(summary = "상품 상세 조회", description = "상품의 상세 정보를 조회합니다. 로그인 사용자의 경우 조회 기록이 저장됩니다.")
 	@GetMapping("/{productId}")
-	public DataResponse<ProductDetailResponse> getProductDetail(@PathVariable Long productId) {
-		ProductDetailResponse productDetail = productService.getProductDetail(productId);
+	public DataResponse<ProductDetailResponse> getProductDetail(
+		@PathVariable Long productId,
+		@AuthenticationPrincipal Long userId
+	) {
+		ProductDetailResponse productDetail = productService.getProductDetail(productId, userId);
 		return DataResponse.from(productDetail);
 	}
 
@@ -121,5 +125,23 @@ public class ProductController {
 		@PathVariable Long productId, @AuthenticationPrincipal Long userId) {
 		SizeGuideResponse responses = productService.getSizeGuide(productId, userId);
 		return DataResponse.from(responses);
+	}
+
+	@Operation(
+		summary = "홈화면 추천 상품 조회",
+		description = """
+			로그인 사용자: 최근 30일간 조회/장바구니 상품 기준 같은 카테고리 + 비슷한 가격대(±10,000원) 상품 추천
+			비로그인 사용자: 전체 인기 상품 추천
+
+			정렬 기준: 전체 고객의 조회수 + 장바구니 담긴 횟수 순
+			"""
+	)
+	@GetMapping("/recommend")
+	public DataResponse<List<RecommendedProductResponse>> getRecommendedProducts(
+		@AuthenticationPrincipal Long userId,
+		@RequestParam(defaultValue = "10") int size
+	) {
+		List<RecommendedProductResponse> products = productService.getRecommendedProducts(userId, size);
+		return DataResponse.from(products);
 	}
 }
