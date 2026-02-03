@@ -22,10 +22,10 @@ public class NotificationSseService {
 
 	// SSE 구독 생성
 	public SseEmitter subscribe(Long userId) {
-		// 기존 연결이 있으면 제거
-		if (emitters.containsKey(userId)) {
-			emitters.get(userId).complete();
-			emitters.remove(userId);
+		// 기존 연결이 있으면 제거 (원자적 연산)
+		SseEmitter existingEmitter = emitters.remove(userId);
+		if (existingEmitter != null) {
+			existingEmitter.complete();
 		}
 
 		SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);

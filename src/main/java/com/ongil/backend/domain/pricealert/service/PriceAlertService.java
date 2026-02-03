@@ -60,11 +60,7 @@ public class PriceAlertService {
 
 		PriceAlert priceAlert = priceAlertRepository
 			.findByUserIdAndProductIdAndIsActiveTrue(userId, productId)
-			.orElse(null);
-
-		if (priceAlert == null) {
-			return null;
-		}
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRICE_ALERT_NOT_FOUND));
 
 		return PriceAlertConverter.toResponse(priceAlert);
 	}
