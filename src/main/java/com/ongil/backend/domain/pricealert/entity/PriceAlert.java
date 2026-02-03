@@ -1,7 +1,5 @@
 package com.ongil.backend.domain.pricealert.entity;
 
-import java.time.LocalDateTime;
-
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.global.common.entity.BaseEntity;
@@ -27,13 +25,10 @@ public class PriceAlert extends BaseEntity {
 	private Integer targetPrice;
 
 	@Column(name = "is_active", nullable = false)
-	private Boolean isActive = true;
+	private Boolean isActive = true; // 알림 활성화 여부
 
-	@Column(name = "read_at")
-	private LocalDateTime readAt;
-
-	@Column(name = "is_read", nullable = false)
-	private Boolean isRead = false;
+	@Column(name = "is_notified", nullable = false)
+	private Boolean isNotified = false; // 알림 발송 여부
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
@@ -49,5 +44,13 @@ public class PriceAlert extends BaseEntity {
 		this.isActive = isActive;
 		this.user = user;
 		this.product = product;
+	}
+
+	public void markAsNotified() { // 가격 알림이 발송되었음을 표시
+		this.isNotified = true;
+	}
+
+	public void deactivate() { // 알림을 비활성화
+		this.isActive = false;
 	}
 }

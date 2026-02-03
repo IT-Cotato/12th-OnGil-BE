@@ -66,6 +66,12 @@ public enum ErrorCode {
 	// MAGAZINE
 	MAGAZINE_NOT_FOUND(HttpStatus.NOT_FOUND, "매거진을 찾을 수 없습니다.", "MAG-001"),
 	COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다.", "COMM-002"),
+
+	// NOTIFICATION
+	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다.", "NOTI-001"),
+
+	// PRICE_ALERT
+	PRICE_ALERT_NOT_FOUND(HttpStatus.NOT_FOUND, "설정된 가격 알림이 없습니다.", "ALERT-001"),
 	;
 
 	private final HttpStatus httpStatus;
