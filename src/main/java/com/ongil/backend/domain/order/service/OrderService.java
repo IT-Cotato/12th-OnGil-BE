@@ -130,9 +130,6 @@ public class OrderService {
 
 	@Transactional(readOnly = true)
 	public List<OrderListResponse> getUserOrders(Long userId) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
-
 		List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
 		return orders.stream()
