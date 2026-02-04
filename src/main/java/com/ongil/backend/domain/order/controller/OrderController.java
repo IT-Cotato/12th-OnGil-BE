@@ -1,5 +1,7 @@
 package com.ongil.backend.domain.order.controller;
 
+import java.util.List;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
+import com.ongil.backend.domain.order.dto.response.OrderListResponse;
 import com.ongil.backend.domain.order.service.OrderService;
 import com.ongil.backend.global.common.dto.DataResponse;
 
@@ -26,6 +29,14 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
 	private final OrderService orderService;
+
+	@GetMapping
+	@Operation(summary = "주문 내역 조회", description = "사용자의 전체 주문 내역을 최신순으로 조회합니다.")
+	public DataResponse<List<OrderListResponse>> getUserOrders(
+		@AuthenticationPrincipal Long userId
+	) {
+		return DataResponse.from(orderService.getUserOrders(userId));
+	}
 
 	@PostMapping
 	@Operation(

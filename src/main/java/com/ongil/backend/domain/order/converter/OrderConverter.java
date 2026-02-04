@@ -13,6 +13,7 @@ import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
+import com.ongil.backend.domain.order.dto.response.OrderListResponse;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.enums.OrderStatus;
@@ -88,6 +89,37 @@ public class OrderConverter {
 			request.detailAddress(),
 			request.postalCode(),
 			request.deliveryMessage()
+		);
+	}
+
+	// Order 엔티티 -> OrderListResponse
+	public OrderListResponse toListResponse(Order order) {
+		OrderItem firstItem = order.getOrderItems().isEmpty() ? null : order.getOrderItems().get(0);
+		String representativeProductName = "";
+		String representativeImageUrl = "default-image-url";
+
+		if (firstItem != null && firstItem.getProduct() != null) {
+			Product product = firstItem.getProduct();
+			representativeProductName = product.getName();
+			
+			if (product.getImageUrls() != null && !product.getImageUrls().isBlank()) {
+				representativeImageUrl = product.getImageUrls().split(",")[0].trim();
+			}
+		}
+
+		int totalItemCount = order.getOrderItems().stream()
+			.mapToInt(OrderItem::getQuantity)
+			.sum();
+
+		return new OrderListResponse(
+			order.getId(),
+			order.getOrderNumber(),
+			order.getOrderStatus(),
+			representativeProductName,
+			representativeImageUrl,
+			totalItemCount,
+			order.getTotalAmount(),
+			order.getCreatedAt()
 		);
 	}
 

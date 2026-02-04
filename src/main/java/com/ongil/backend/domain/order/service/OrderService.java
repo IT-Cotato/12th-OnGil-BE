@@ -14,6 +14,7 @@ import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
+import com.ongil.backend.domain.order.dto.response.OrderListResponse;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.repository.OrderRepository;
@@ -125,5 +126,17 @@ public class OrderService {
 		cartRepository.deleteAllInBatch(cartItems);
 
 		return orderId;
+	}
+
+	@Transactional(readOnly = true)
+	public List<OrderListResponse> getUserOrders(Long userId) {
+		User user = userRepository.findById(userId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+		List<Order> orders = orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+
+		return orders.stream()
+			.map(orderConverter::toListResponse)
+			.toList();
 	}
 }

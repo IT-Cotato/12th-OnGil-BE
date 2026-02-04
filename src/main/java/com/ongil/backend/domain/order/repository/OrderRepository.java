@@ -59,4 +59,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 		@Param("status") OrderStatus status,
 		@Param("beforeTime") LocalDateTime beforeTime
 	);
+
+	// 특정 사용자의 전체 주문 조회
+	@Query("SELECT o FROM Order o " +
+		"WHERE o.user.id = :userId " +
+		"ORDER BY o.createdAt DESC")
+	List<Order> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 }
