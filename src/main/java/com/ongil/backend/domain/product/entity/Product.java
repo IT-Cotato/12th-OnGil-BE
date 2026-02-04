@@ -67,6 +67,9 @@ public class Product extends BaseEntity {
 	@Column(name = "purchase_count", nullable = false)
 	private Integer purchaseCount = 0;
 
+	@Column(name = "cart_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+	private Integer cartCount = 0;
+
 	@Column(name = "review_count")
 	private Integer reviewCount = 0;
 
@@ -127,5 +130,10 @@ public class Product extends BaseEntity {
 		this.aiMaterialAdvantages = advantages;
 		this.aiMaterialDisadvantages = disadvantages;
 		this.aiMaterialCare = care;
+	}
+
+	// 실제 가격 반환 (할인가가 있으면 할인가, 없으면 원가)
+	public Integer getEffectivePrice() {
+		return (discountPrice != null && discountPrice > 0) ? discountPrice : price;
 	}
 }

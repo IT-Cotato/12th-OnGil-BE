@@ -17,4 +17,8 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 		"WHERE oi.order.user.id = :userId " +
 		"ORDER BY oi.order.createdAt DESC")
 	List<OrderItem> findByOrderUserIdWithProduct(@Param("userId") Long userId);
+
+	// 사용자가 구매한 상품 ID 목록 (추천 제외용)
+	@Query("SELECT DISTINCT oi.product.id FROM OrderItem oi WHERE oi.order.user.id = :userId")
+	List<Long> findProductIdsByUserId(@Param("userId") Long userId);
 }
