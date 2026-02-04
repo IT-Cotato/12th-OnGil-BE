@@ -435,15 +435,17 @@ public class ProductService {
 			pageable
 		);
 
-		// 9. 부족하면 인기 상품으로 채우기
+		// 9. 부족하면 인기 상품으로 채우기 (제외 대상을 고려해 충분히 조회)
 		if (recommendations.size() < size) {
 			Set<Long> foundIds = recommendations.stream()
 				.map(Product::getId)
 				.collect(Collectors.toSet());
 			excludeIds.addAll(foundIds);
 
+			int needed = size - recommendations.size();
+			int fetchSize = needed + excludeIds.size();
 			List<Product> popularProducts = productRepository.findPopularProducts(
-				PageRequest.of(0, size)
+				PageRequest.of(0, fetchSize)
 			);
 
 			for (Product p : popularProducts) {

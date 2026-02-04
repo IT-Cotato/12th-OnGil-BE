@@ -12,7 +12,7 @@ import com.ongil.backend.domain.product.entity.ProductViewHistory;
 public interface ProductViewHistoryRepository extends JpaRepository<ProductViewHistory, Long> {
 
 	@Query("SELECT DISTINCT pvh.product.id FROM ProductViewHistory pvh " +
-		"WHERE pvh.user.id = :userId AND pvh.createdAt >= :since")
+		"WHERE pvh.user.id = :userId AND pvh.createdAt > :since")
 	List<Long> findDistinctProductIdsByUserIdAndCreatedAtAfter(
 		@Param("userId") Long userId,
 		@Param("since") LocalDateTime since

@@ -21,6 +21,8 @@ import com.ongil.backend.global.common.dto.DataResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -139,7 +141,7 @@ public class ProductController {
 	@GetMapping("/recommend")
 	public DataResponse<List<RecommendedProductResponse>> getRecommendedProducts(
 		@AuthenticationPrincipal Long userId,
-		@RequestParam(defaultValue = "10") int size
+		@RequestParam(defaultValue = "10") @Min(1) @Max(100) int size
 	) {
 		List<RecommendedProductResponse> products = productService.getRecommendedProducts(userId, size);
 		return DataResponse.from(products);

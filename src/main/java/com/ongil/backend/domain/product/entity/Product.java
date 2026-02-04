@@ -67,7 +67,7 @@ public class Product extends BaseEntity {
 	@Column(name = "purchase_count", nullable = false)
 	private Integer purchaseCount = 0;
 
-	@Column(name = "cart_count", nullable = false)
+	@Column(name = "cart_count", nullable = false, columnDefinition = "INT DEFAULT 0")
 	private Integer cartCount = 0;
 
 	@Column(name = "review_count")
@@ -130,11 +130,6 @@ public class Product extends BaseEntity {
 		this.aiMaterialAdvantages = advantages;
 		this.aiMaterialDisadvantages = disadvantages;
 		this.aiMaterialCare = care;
-	}
-
-	// 장바구니 담김 횟수 증가
-	public void incrementCartCount() {
-		this.cartCount++;
 	}
 
 	// 실제 가격 반환 (할인가가 있으면 할인가, 없으면 원가)

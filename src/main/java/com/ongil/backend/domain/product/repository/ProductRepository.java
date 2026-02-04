@@ -21,6 +21,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.id = :productId")
 	void incrementViewCount(@Param("productId") Long productId);
 
+	// 장바구니 담김 횟수 증가
+	@Modifying
+	@Query("UPDATE Product p SET p.cartCount = p.cartCount + 1 WHERE p.id = :productId")
+	void incrementCartCount(@Param("productId") Long productId);
+
 	// 상품 단건 조회 (브랜드, 카테고리 정보 포함)
 	@EntityGraph(attributePaths = {"brand", "category", "category.parentCategory"})
 	Optional<Product> findWithBrandAndCategoryById(Long id);
