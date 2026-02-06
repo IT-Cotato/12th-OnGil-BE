@@ -1,8 +1,13 @@
 package com.ongil.backend.domain.order.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +18,7 @@ import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
+import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
@@ -74,7 +80,7 @@ public class OrderService {
 	@Transactional(readOnly = true)
 	public OrderDetailResponse getOrderDetail(Long userId, Long orderId) {
 		Order order = orderRepository.findById(orderId)
-			.orElseThrow(() -> new AppException(ErrorCode.NOT_FOUND));
+			.orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
 		if (!order.getUser().getId().equals(userId)) {
 			throw new AppException(ErrorCode.FORBIDDEN);
@@ -125,5 +131,31 @@ public class OrderService {
 		cartRepository.deleteAllInBatch(cartItems);
 
 		return orderId;
+	}
+
+	public OrderHistoryResponse getOrderHistory(
+		Long userId,
+		String keyword,
+		LocalDate startDate,
+		LocalDate endDate,
+		Pageable pageable
+	) {
+		// 기본값 설정: endDate가 null이면 오늘, startDate가 null이면 1년 전
+		LocalDate effectiveEndDate = (endDate != null) ? endDate : LocalDate.now();
+		LocalDate effectiveStartDate = (startDate != null) ? startDate : effectiveEndDate.minusYears(1);
+
+		// LocalDate -> LocalDateTime 변환
+		LocalDateTime startDateTime = effectiveStartDate.atStartOfDay();
+		LocalDateTime endDateTime = effectiveEndDate.atTime(LocalTime.MAX);
+
+		Page<Order> orderPage = orderRepository.findOrderHistoryWithCount(
+			userId,
+			keyword,
+			startDateTime,
+			endDateTime,
+			pageable
+		);
+
+		return orderConverter.toHistoryResponse(orderPage);
 	}
 }

@@ -1,20 +1,29 @@
 package com.ongil.backend.domain.order.controller;
 
+import java.time.LocalDate;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
+import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.service.OrderService;
 import com.ongil.backend.global.common.dto.DataResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +35,30 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
 	private final OrderService orderService;
+
+	@GetMapping
+	@Operation(
+		summary = "주문 내역 조회",
+		description = "기간별, 키워드별 주문 내역을 조회합니다. " +
+			"startDate, endDate를 지정하지 않으면 기본적으로 최근 1년간의 주문을 조회합니다. " +
+			"토큰 필요"
+	)
+	public DataResponse<OrderHistoryResponse> getOrderHistory(
+		@AuthenticationPrincipal Long userId,
+		@Parameter(description = "검색어 (상품명 또는 주문번호)")
+		@RequestParam(required = false) String keyword,
+		@Parameter(description = "조회 시작일 (yyyy-MM-dd), 기본값: 1년 전")
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+		@Parameter(description = "조회 종료일 (yyyy-MM-dd), 기본값: 오늘")
+		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+		@Parameter(description = "페이지 번호 (0부터 시작)")
+		@RequestParam(defaultValue = "0") int page,
+		@Parameter(description = "페이지 크기")
+		@RequestParam(defaultValue = "10") int size
+	) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+		return DataResponse.from(orderService.getOrderHistory(userId, keyword, startDate, endDate, pageable));
+	}
 
 	@PostMapping
 	@Operation(

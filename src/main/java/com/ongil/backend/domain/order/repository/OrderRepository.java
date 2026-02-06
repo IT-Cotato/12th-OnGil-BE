@@ -3,6 +3,8 @@ package com.ongil.backend.domain.order.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -58,5 +60,50 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 		@Param("userId") Long userId,
 		@Param("status") OrderStatus status,
 		@Param("beforeTime") LocalDateTime beforeTime
+	);
+
+	// 주문 내역 조회 (기간 + 키워드 검색)
+	@Query("SELECT DISTINCT o FROM Order o " +
+		"LEFT JOIN FETCH o.orderItems oi " +
+		"LEFT JOIN FETCH oi.product p " +
+		"WHERE o.user.id = :userId " +
+		"AND o.createdAt >= :startDate " +
+		"AND o.createdAt <= :endDate " +
+		"AND (:keyword IS NULL OR :keyword = '' " +
+		"OR o.orderNumber LIKE CONCAT('%', :keyword, '%') " +
+		"OR p.name LIKE CONCAT('%', :keyword, '%'))")
+	Page<Order> findOrderHistory(
+		@Param("userId") Long userId,
+		@Param("keyword") String keyword,
+		@Param("startDate") LocalDateTime startDate,
+		@Param("endDate") LocalDateTime endDate,
+		Pageable pageable
+	);
+
+	// 주문 내역 개수 조회 (countQuery 분리)
+	@Query(value = "SELECT DISTINCT o FROM Order o " +
+		"LEFT JOIN o.orderItems oi " +
+		"LEFT JOIN oi.product p " +
+		"WHERE o.user.id = :userId " +
+		"AND o.createdAt >= :startDate " +
+		"AND o.createdAt <= :endDate " +
+		"AND (:keyword IS NULL OR :keyword = '' " +
+		"OR o.orderNumber LIKE CONCAT('%', :keyword, '%') " +
+		"OR p.name LIKE CONCAT('%', :keyword, '%'))",
+		countQuery = "SELECT COUNT(DISTINCT o) FROM Order o " +
+			"LEFT JOIN o.orderItems oi " +
+			"LEFT JOIN oi.product p " +
+			"WHERE o.user.id = :userId " +
+			"AND o.createdAt >= :startDate " +
+			"AND o.createdAt <= :endDate " +
+			"AND (:keyword IS NULL OR :keyword = '' " +
+			"OR o.orderNumber LIKE CONCAT('%', :keyword, '%') " +
+			"OR p.name LIKE CONCAT('%', :keyword, '%'))")
+	Page<Order> findOrderHistoryWithCount(
+		@Param("userId") Long userId,
+		@Param("keyword") String keyword,
+		@Param("startDate") LocalDateTime startDate,
+		@Param("endDate") LocalDateTime endDate,
+		Pageable pageable
 	);
 }
