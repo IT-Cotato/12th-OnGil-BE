@@ -60,11 +60,18 @@ public class OrderConverter {
 			order.getOrderNumber(),
 			itemDtos,
 			order.getTotalAmount(),
+			order.getOrderStatus(),
 			order.getRecipient(),
 			order.getRecipientPhone(),
-			order.getDeliveryAddress() + " " + (order.getDetailAddress() != null ? order.getDetailAddress() : ""),
+			order.getDeliveryAddress(),
+			order.getDetailAddress(),
+			order.getPostalCode(),
 			order.getDeliveryMessage(),
-			order.getCreatedAt()
+			order.getCreatedAt(),
+			order.getShippingStartedAt(),
+			order.getDeliveredAt(),
+			order.getConfirmedAt(),
+			order.getCanceledAt()
 		);
 	}
 
