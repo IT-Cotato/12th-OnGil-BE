@@ -54,7 +54,12 @@ public class OrderController {
 	}
 
 	@GetMapping("/{orderId}")
-	@Operation(summary = "주문 상세 조회", description = "orderId를 통한 주문 상세 조회")
+	@Operation(
+		summary = "주문 상세 조회",
+		description = "orderId를 통한 주문 상세 조회. " +
+			"주문 상태(orderStatus), 배송 정보, 상품 목록, 결제 금액 등을 반환합니다. " +
+			"주문 상태 변경 시간(배송 시작, 배송 완료, 구매 확정, 취소 시간 등)도 포함됩니다."
+	)
 	public DataResponse<OrderDetailResponse> getOrderDetail(
 		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
 	) {
