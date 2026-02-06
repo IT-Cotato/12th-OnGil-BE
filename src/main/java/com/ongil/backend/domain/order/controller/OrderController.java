@@ -21,6 +21,8 @@ import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.service.OrderService;
 import com.ongil.backend.global.common.dto.DataResponse;
+import com.ongil.backend.global.common.exception.AppException;
+import com.ongil.backend.global.common.exception.ErrorCode;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -35,6 +37,8 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
 	private final OrderService orderService;
+
+	private static final int MAX_PAGE_SIZE = 100;
 
 	@GetMapping
 	@Operation(
@@ -53,9 +57,19 @@ public class OrderController {
 		@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
 		@Parameter(description = "페이지 번호 (0부터 시작)")
 		@RequestParam(defaultValue = "0") int page,
-		@Parameter(description = "페이지 크기")
+		@Parameter(description = "페이지 크기 (최대 100)")
 		@RequestParam(defaultValue = "10") int size
 	) {
+		if (page < 0) {
+			throw new AppException(ErrorCode.INVALID_PARAMETER, "page는 0 이상이어야 합니다.");
+		}
+		if (size < 1 || size > MAX_PAGE_SIZE) {
+			throw new AppException(ErrorCode.INVALID_PARAMETER, "size는 1 이상 " + MAX_PAGE_SIZE + " 이하여야 합니다.");
+		}
+		if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+			throw new AppException(ErrorCode.INVALID_PARAMETER, "시작일이 종료일보다 이후일 수 없습니다.");
+		}
+
 		Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 		return DataResponse.from(orderService.getOrderHistory(userId, keyword, startDate, endDate, pageable));
 	}
