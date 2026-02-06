@@ -1,6 +1,7 @@
 package com.ongil.backend.domain.order.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.service.OrderService;
 import com.ongil.backend.global.common.dto.DataResponse;
@@ -59,6 +61,17 @@ public class OrderController {
 		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
 	) {
 		return DataResponse.from(orderService.getOrderDetail(userId, orderId));
+	}
+
+	@DeleteMapping("/{orderId}")
+	@Operation(
+		summary = "주문 취소",
+		description = "주문을 취소합니다. 주문 접수 상태에서만 취소가 가능하며, 사용한 포인트는 환불됩니다."
+	)
+	public DataResponse<OrderCancelResponse> cancelOrder(
+		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
+	) {
+		return DataResponse.from(orderService.cancelOrder(userId, orderId));
 	}
 
 }

@@ -12,10 +12,12 @@ import com.ongil.backend.domain.order.converter.OrderConverter;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
+import com.ongil.backend.domain.order.enums.OrderStatus;
 import com.ongil.backend.domain.order.repository.OrderRepository;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.repository.ProductRepository;
@@ -125,5 +127,30 @@ public class OrderService {
 		cartRepository.deleteAllInBatch(cartItems);
 
 		return orderId;
+	}
+
+	@Transactional
+	public OrderCancelResponse cancelOrder(Long userId, Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+		if (!order.getUser().getId().equals(userId)) {
+			throw new AppException(ErrorCode.FORBIDDEN);
+		}
+
+		if (order.getOrderStatus() == OrderStatus.CANCELED) {
+			throw new AppException(ErrorCode.ORDER_ALREADY_CANCELED);
+		}
+
+		if (order.getOrderStatus() != OrderStatus.ORDER_RECEIVED) {
+			throw new AppException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+		}
+
+		User user = order.getUser();
+		user.increasePoints(order.getUsedPoints());
+
+		order.cancel();
+
+		return orderConverter.toCancelResponse(order);
 	}
 }

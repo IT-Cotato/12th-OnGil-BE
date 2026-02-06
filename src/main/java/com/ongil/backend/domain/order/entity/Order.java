@@ -35,6 +35,9 @@ public class Order extends BaseEntity {
 	@Column(name = "total_amount", nullable = false)
 	private Integer totalAmount;
 
+	@Column(name = "used_points", nullable = false)
+	private Integer usedPoints;
+
 	@Column(nullable = false, length = 50)
 	private String recipient;
 
@@ -83,5 +86,10 @@ public class Order extends BaseEntity {
 	public void addOrderItem(OrderItem orderItem) {
 		this.orderItems.add(orderItem);
 		orderItem.setOrder(this);
+	}
+
+	public void cancel() {
+		this.orderStatus = OrderStatus.CANCELED;
+		this.canceledAt = LocalDateTime.now();
 	}
 }

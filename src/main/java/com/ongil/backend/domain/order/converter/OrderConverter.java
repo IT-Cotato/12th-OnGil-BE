@@ -11,6 +11,7 @@ import com.ongil.backend.domain.cart.entity.Cart;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
 import com.ongil.backend.domain.order.entity.Order;
@@ -31,6 +32,7 @@ public class OrderConverter {
 		return Order.builder()
 			.orderNumber(orderNumber)
 			.totalAmount(finalAmount)
+			.usedPoints(request.usedPoints())
 			.recipient(request.recipient())
 			.recipientPhone(request.recipientPhone())
 			.deliveryAddress(request.deliveryAddress())
@@ -88,6 +90,17 @@ public class OrderConverter {
 			request.detailAddress(),
 			request.postalCode(),
 			request.deliveryMessage()
+		);
+	}
+
+	// Order 엔티티 -> OrderCancelResponse
+	public OrderCancelResponse toCancelResponse(Order order) {
+		return new OrderCancelResponse(
+			order.getId(),
+			order.getOrderNumber(),
+			order.getOrderStatus().getDescription(),
+			order.getUsedPoints(),
+			order.getCanceledAt()
 		);
 	}
 
