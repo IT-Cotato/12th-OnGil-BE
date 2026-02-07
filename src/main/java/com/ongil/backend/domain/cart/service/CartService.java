@@ -14,6 +14,8 @@ import com.ongil.backend.domain.cart.dto.response.CartResponse;
 import com.ongil.backend.domain.cart.entity.Cart;
 import com.ongil.backend.domain.cart.repository.CartRepository;
 import com.ongil.backend.domain.product.entity.Product;
+import com.ongil.backend.domain.product.entity.ProductOption;
+import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
@@ -30,6 +32,7 @@ public class CartService {
 
 	private final CartRepository cartRepository;
 	private final ProductRepository productRepository;
+	private final ProductOptionRepository productOptionRepository;
 	private final UserRepository userRepository;
 	private final CartConverter cartConverter;
 
@@ -55,6 +58,16 @@ public class CartService {
 		Product product = productRepository.findWithBrandAndCategoryById(request.productId())
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
 
+		// 옵션 존재 여부 확인
+		ProductOption productOption = productOptionRepository
+			.findByProductIdAndSizeAndColor(
+				request.productId(),
+				request.selectedSize(),
+				request.selectedColor()
+			)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_OPTION_NOT_FOUND));
+
+		// 기존 장바구니 확인
 		Optional<Cart> existingCart = cartRepository
 			.findByUserIdAndProductIdAndSelectedSizeAndSelectedColor(
 				userId,
@@ -63,10 +76,24 @@ public class CartService {
 				request.selectedColor()
 			);
 
+		int totalQuantity = request.quantity();
+
 		if (existingCart.isPresent()) {
 			Cart cart = existingCart.get();
-			cart.updateQuantity(cart.getQuantity() + request.quantity());
+			totalQuantity = cart.getQuantity() + request.quantity();
+
+			// 재고 확인 (기존 수량 + 추가 수량)
+			if (totalQuantity > productOption.getStock()) {
+				throw new ValidationException(ErrorCode.OUT_OF_STOCK);
+			}
+
+			cart.updateQuantity(totalQuantity);
 			return cartConverter.toResponse(cart);
+		}
+
+		// 재고 확인 (신규 추가)
+		if (totalQuantity > productOption.getStock()) {
+			throw new ValidationException(ErrorCode.OUT_OF_STOCK);
 		}
 
 		Cart cart = Cart.builder()
@@ -91,6 +118,27 @@ public class CartService {
 
 		Cart cart = cartRepository.findByIdAndUserId(cartId, userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CART_NOT_FOUND));
+
+		// 변경될 옵션 정보
+		String updatedSize = request.selectedSize() != null ? request.selectedSize() : cart.getSelectedSize();
+		String updatedColor = request.selectedColor() != null ? request.selectedColor() : cart.getSelectedColor();
+		Integer updatedQuantity = request.quantity() != null ? request.quantity() : cart.getQuantity();
+
+		// 옵션이 변경되거나 수량이 변경된 경우 재고 확인
+		if (request.selectedSize() != null || request.selectedColor() != null || request.quantity() != null) {
+			ProductOption productOption = productOptionRepository
+				.findByProductIdAndSizeAndColor(
+					cart.getProduct().getId(),
+					updatedSize,
+					updatedColor
+				)
+				.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_OPTION_NOT_FOUND));
+
+			// 재고 확인
+			if (updatedQuantity > productOption.getStock()) {
+				throw new ValidationException(ErrorCode.OUT_OF_STOCK);
+			}
+		}
 
 		// 옵션 업데이트
 		if (request.selectedSize() != null) {

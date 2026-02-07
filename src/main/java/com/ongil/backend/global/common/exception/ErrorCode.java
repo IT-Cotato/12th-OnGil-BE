@@ -31,6 +31,8 @@ public enum ErrorCode {
 
 	// PRODUCT
 	PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.", "PRODUCT-001"),
+	PRODUCT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "선택한 옵션(색상/사이즈)을 찾을 수 없습니다.", "PRODUCT-002"),
+	OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "재고가 부족합니다.", "PRODUCT-003"),
 
 	// BRAND
 	BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "브랜드를 찾을 수 없습니다.", "BRAND-001"),
