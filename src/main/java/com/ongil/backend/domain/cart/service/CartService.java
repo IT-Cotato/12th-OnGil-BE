@@ -124,6 +124,10 @@ public class CartService {
 		String updatedColor = request.selectedColor() != null ? request.selectedColor() : cart.getSelectedColor();
 		Integer updatedQuantity = request.quantity() != null ? request.quantity() : cart.getQuantity();
 
+		// 옵션 변경 여부 확인
+		boolean optionChanged = (request.selectedSize() != null && !updatedSize.equals(cart.getSelectedSize()))
+			|| (request.selectedColor() != null && !updatedColor.equals(cart.getSelectedColor()));
+
 		// 옵션이 변경되거나 수량이 변경된 경우 재고 확인
 		if (request.selectedSize() != null || request.selectedColor() != null || request.quantity() != null) {
 			ProductOption productOption = productOptionRepository
@@ -140,7 +144,41 @@ public class CartService {
 			}
 		}
 
-		// 옵션 업데이트
+		// 옵션이 변경된 경우 중복 체크
+		if (optionChanged) {
+			Optional<Cart> duplicateCart = cartRepository
+				.findByUserIdAndProductIdAndSelectedSizeAndSelectedColor(
+					userId,
+					cart.getProduct().getId(),
+					updatedSize,
+					updatedColor
+				);
+
+			if (duplicateCart.isPresent() && !duplicateCart.get().getId().equals(cartId)) {
+				// 중복 항목이 존재하면 수량 합산 후 현재 항목 삭제
+				Cart existingCart = duplicateCart.get();
+				int totalQuantity = existingCart.getQuantity() + updatedQuantity;
+
+				// 합산된 수량이 재고를 초과하는지 확인
+				ProductOption productOption = productOptionRepository
+					.findByProductIdAndSizeAndColor(
+						cart.getProduct().getId(),
+						updatedSize,
+						updatedColor
+					)
+					.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_OPTION_NOT_FOUND));
+
+				if (totalQuantity > productOption.getStock()) {
+					throw new ValidationException(ErrorCode.OUT_OF_STOCK);
+				}
+
+				existingCart.updateQuantity(totalQuantity);
+				cartRepository.delete(cart);
+				return cartConverter.toResponse(existingCart);
+			}
+		}
+
+		// 중복이 없으면 옵션 업데이트
 		if (request.selectedSize() != null) {
 			cart.updateSize(request.selectedSize());
 		}
