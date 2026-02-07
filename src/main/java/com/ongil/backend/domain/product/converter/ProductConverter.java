@@ -87,7 +87,7 @@ public class ProductConverter {
 	}
 
 	// 옵션 리스트 변환
-	private List<ProductOptionResponse> convertOptions(List<ProductOption> options) {
+	public List<ProductOptionResponse> convertOptions(List<ProductOption> options) {
 		if (options == null || options.isEmpty()) {
 			return Collections.emptyList();
 		}

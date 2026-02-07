@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
+import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
@@ -46,6 +47,15 @@ public class ProductController {
 	) {
 		ProductDetailResponse productDetail = productService.getProductDetail(productId, userId);
 		return DataResponse.from(productDetail);
+	}
+
+	@Operation(summary = "상품별 전체 옵션 목록 조회", description = "상품의 색상/사이즈별 옵션과 재고 정보를 조회합니다. 장바구니 추가 시 사용됩니다.")
+	@GetMapping("/{productId}/options")
+	public DataResponse<List<ProductOptionResponse>> getProductOptions(
+		@PathVariable Long productId
+	) {
+		List<ProductOptionResponse> options = productService.getProductOptions(productId);
+		return DataResponse.from(options);
 	}
 
 	@Operation(

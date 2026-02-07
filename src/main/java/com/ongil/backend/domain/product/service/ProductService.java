@@ -22,6 +22,7 @@ import com.ongil.backend.domain.product.converter.SizeGuideConverter;
 import com.ongil.backend.domain.product.dto.request.ProductSearchCondition;
 import com.ongil.backend.domain.product.dto.response.AiMaterialDescriptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
+import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
 import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
@@ -90,6 +91,17 @@ public class ProductService {
 		List<ProductOption> options = productOptionRepository.findByProductId(productId);
 
 		return productConverter.toDetailResponse(product, options);
+	}
+
+	// 상품별 옵션 목록 조회
+	public List<ProductOptionResponse> getProductOptions(Long productId) {
+		// 상품 존재 여부 확인
+		if (!productRepository.existsById(productId)) {
+			throw new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
+		}
+
+		List<ProductOption> options = productOptionRepository.findByProductId(productId);
+		return productConverter.convertOptions(options);
 	}
 
 	// 상품 조회 기록 저장
