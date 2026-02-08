@@ -96,13 +96,7 @@ public class S3FileStorageService {
 
 		// 파일 타입 검증
 		String contentType = file.getContentType();
-		boolean isValidType = false;
-		for (String allowedType : ALLOWED_CONTENT_TYPES) {
-			if (allowedType.equals(contentType)) {
-				isValidType = true;
-				break;
-			}
-		}
+		boolean isValidType = java.util.Arrays.asList(ALLOWED_CONTENT_TYPES).contains(contentType);
 
 		if (!isValidType) {
 			throw new AppException(ErrorCode.INVALID_FILE_TYPE);
@@ -110,11 +104,20 @@ public class S3FileStorageService {
 	}
 
 	private String generateFileName(MultipartFile file, Long userId) {
-		String originalFilename = file.getOriginalFilename();
-		String extension = "";
-		if (originalFilename != null && originalFilename.contains(".")) {
-			extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+		String contentType = file.getContentType();
+		String extension = ".jpg"; // default
+		
+		// 검증된 contentType을 기반으로 확장자 결정
+		if ("image/jpeg".equals(contentType) || "image/jpg".equals(contentType)) {
+			extension = ".jpg";
+		} else if ("image/png".equals(contentType)) {
+			extension = ".png";
+		} else if ("image/gif".equals(contentType)) {
+			extension = ".gif";
+		} else if ("image/webp".equals(contentType)) {
+			extension = ".webp";
 		}
+		
 		return userId + "_" + UUID.randomUUID() + extension;
 	}
 
@@ -130,6 +133,17 @@ public class S3FileStorageService {
 		String baseUrl = String.format("https://%s.s3.%s.amazonaws.com/",
 			s3Properties.getBucketName(),
 			s3Properties.getRegion());
+		
+		if (!fileUrl.startsWith(baseUrl)) {
+			log.warn("File URL does not match expected S3 URL pattern: {}", fileUrl);
+			// URL이 패턴과 맞지 않으면 파일명만 추출 시도
+			int lastSlashIndex = fileUrl.lastIndexOf("/");
+			if (lastSlashIndex >= 0 && lastSlashIndex < fileUrl.length() - 1) {
+				return "profile-images/" + fileUrl.substring(lastSlashIndex + 1);
+			}
+			return fileUrl; // 최후의 수단으로 전체 URL 반환
+		}
+		
 		return fileUrl.replace(baseUrl, "");
 	}
 }

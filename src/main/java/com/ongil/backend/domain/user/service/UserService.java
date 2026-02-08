@@ -51,9 +51,9 @@ public class UserService {
 	public UserInfoResDto uploadProfileImage(Long userId, MultipartFile file) {
 		User user = findUser(userId);
 
-		// 기존 프로필 이미지가 있으면 S3에서 삭제
+		// 기존 프로필 이미지가 S3 URL이면 S3에서 삭제
 		String oldImageUrl = user.getProfileImg();
-		if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+		if (oldImageUrl != null && !oldImageUrl.isEmpty() && isS3Url(oldImageUrl)) {
 			s3FileStorageService.deleteFile(oldImageUrl);
 		}
 
@@ -64,6 +64,11 @@ public class UserService {
 		user.updateProfileImage(newImageUrl);
 
 		return UserConverter.toUserInfoResDto(user);
+	}
+
+	// S3 URL인지 확인하는 헬퍼 메서드
+	private boolean isS3Url(String url) {
+		return url.contains("s3.") && url.contains(".amazonaws.com");
 	}
 
 	// 공통 유저 찾기 메서드
