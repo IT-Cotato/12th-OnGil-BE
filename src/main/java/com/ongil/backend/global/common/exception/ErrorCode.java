@@ -29,6 +29,12 @@ public enum ErrorCode {
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다.", "USER-001"),
 	INVALID_SIZE(HttpStatus.BAD_REQUEST, "유효하지 않은 사이즈입니다.", "USER-002"),
 
+	// FILE
+	FILE_NOT_PROVIDED(HttpStatus.BAD_REQUEST, "파일이 제공되지 않았습니다.", "FILE-001"),
+	FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "파일 크기가 제한을 초과했습니다. (최대 5MB)", "FILE-002"),
+	INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다. (jpeg, jpg, png, gif, webp만 가능)", "FILE-003"),
+	FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.", "FILE-004"),
+
 	// PRODUCT
 	PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.", "PRODUCT-001"),
 	PRODUCT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "선택한 옵션(색상/사이즈)을 찾을 수 없습니다.", "PRODUCT-002"),
