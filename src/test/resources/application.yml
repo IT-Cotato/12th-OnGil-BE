@@ -15,3 +15,48 @@ spring:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+
+  # 테스트용 Redis 설정
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # 테스트용 Elasticsearch 설정
+  elasticsearch:
+    uris: http://localhost:9200
+
+# 테스트용 AWS S3 설정 (더미 값)
+aws:
+  s3:
+    bucket-name: test-bucket
+    region: ap-northeast-2
+    access-key: test-access-key
+    secret-key: test-secret-key
+
+# 테스트용 JWT 설정
+jwt:
+  secret: test-jwt-secret-key-for-testing-purposes-only-minimum-256-bits
+  access-expiration-ms: 3600000
+  refresh-expiration-ms: 1209600000
+  issuer: "ongil-test"
+
+# 테스트용 OpenAI 설정
+openai:
+  api-key: test-openai-key
+
+# 테스트용 Kakao 설정
+kakao:
+  client-id: test-kakao-client-id
+  client-secret: test-kakao-client-secret
+  redirect-uri: http://localhost:8080/test
+  token-uri: https://kauth.kakao.com/oauth/token
+  user-info-uri: https://kapi.kakao.com/v2/user/me
+
+# 테스트용 Google 설정
+google:
+  client-id: test-google-client-id
+  client-secret: test-google-client-secret
+  redirect-uri: http://localhost:8080/test
+  authorization-grant-type: authorization_code
+  scope: email, profile
