@@ -32,4 +32,14 @@ public class ErrorResponse extends BaseResponse {
 			errorCode.getHttpStatus()
 		);
 	}
+
+	public static ErrorResponse of(ErrorCode errorCode, String message, HttpServletRequest request) {
+		return new ErrorResponse(
+			errorCode.getCode(),
+			message,
+			request.getMethod(),
+			request.getRequestURI(),
+			errorCode.getHttpStatus()
+		);
+	}
 }

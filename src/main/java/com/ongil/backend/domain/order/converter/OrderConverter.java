@@ -7,12 +7,17 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
+import org.springframework.data.domain.Page;
+
 import com.ongil.backend.domain.cart.entity.Cart;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
+import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
+import com.ongil.backend.domain.order.dto.response.OrderItemSummaryDto;
+import com.ongil.backend.domain.order.dto.response.OrderSummaryDto;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.enums.OrderStatus;
@@ -88,6 +93,59 @@ public class OrderConverter {
 			request.detailAddress(),
 			request.postalCode(),
 			request.deliveryMessage()
+		);
+	}
+
+	// Order 엔티티 -> OrderSummaryDto
+	public OrderSummaryDto toSummaryDto(Order order) {
+		List<OrderItemSummaryDto> itemDtos = order.getOrderItems().stream()
+			.map(this::toItemSummaryDto)
+			.toList();
+
+		return new OrderSummaryDto(
+			order.getId(),
+			order.getOrderNumber(),
+			order.getOrderStatus(),
+			order.getTotalAmount(),
+			order.getCreatedAt(),
+			itemDtos
+		);
+	}
+
+	// OrderItem 엔티티 -> OrderItemSummaryDto
+	public OrderItemSummaryDto toItemSummaryDto(OrderItem orderItem) {
+		Product product = orderItem.getProduct();
+
+		String imageUrl = "default-image-url";
+		if (product.getImageUrls() != null && !product.getImageUrls().isBlank()) {
+			imageUrl = product.getImageUrls().split(",")[0].trim();
+		}
+
+		String brandName = product.getBrand() != null ? product.getBrand().getName() : "일반 브랜드";
+
+		return new OrderItemSummaryDto(
+			product.getId(),
+			product.getName(),
+			imageUrl,
+			brandName,
+			orderItem.getSelectedSize(),
+			orderItem.getSelectedColor(),
+			orderItem.getQuantity(),
+			orderItem.getPriceAtOrder()
+		);
+	}
+
+	// Page<Order> -> OrderHistoryResponse
+	public OrderHistoryResponse toHistoryResponse(Page<Order> orderPage) {
+		List<OrderSummaryDto> content = orderPage.getContent().stream()
+			.map(this::toSummaryDto)
+			.toList();
+
+		return new OrderHistoryResponse(
+			content,
+			orderPage.getTotalElements(),
+			orderPage.getTotalPages(),
+			orderPage.getNumber()
 		);
 	}
 
