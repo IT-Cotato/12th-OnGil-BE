@@ -1,19 +1,29 @@
 package com.ongil.backend.domain.home.converter;
 
-import com.ongil.backend.domain.home.dto.response.HomeResDto;
-import lombok.experimental.UtilityClass;
-
 import java.util.List;
+
+import com.ongil.backend.domain.advertisement.dto.AdvertisementResponse;
+import com.ongil.backend.domain.banner.dto.response.BannerResponse;
+import com.ongil.backend.domain.home.dto.response.HomeResDto;
+import com.ongil.backend.domain.magazine.dto.response.MagazineResDto;
+import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
+
+import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class HomeConverter {
 
-    // 나중에는 파라미터로 실제 Product, Magazine 객체를 받게 됩니다.
-    public static HomeResDto toHomeResDto(List<String> banners, List<String> products, String magazineTitle) {
+    public static HomeResDto toHomeResDto(
+            BannerResponse banner,
+            List<AdvertisementResponse> advertisements,
+            List<RecommendedProductResponse> recommendedProducts,
+            List<MagazineResDto> recommendedMagazines
+    ) {
         return HomeResDto.builder()
-                .bannerUrls(banners)
-                .recommendProducts(products)
-                .latestMagazineTitle(magazineTitle)
+                .banner(banner)
+                .advertisements(advertisements)
+                .recommendedProducts(recommendedProducts)
+                .recommendedMagazines(recommendedMagazines)
                 .build();
     }
 }
