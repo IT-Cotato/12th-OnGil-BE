@@ -69,6 +69,9 @@ public class Order extends BaseEntity {
 	@Column(name = "canceled_at")
 	private LocalDateTime canceledAt;
 
+	@Column(name = "cancel_reason", length = 200)
+	private String cancelReason;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
@@ -88,6 +91,12 @@ public class Order extends BaseEntity {
 	public void cancel() {
 		this.orderStatus = OrderStatus.CANCELED;
 		this.canceledAt = LocalDateTime.now();
+	}
+
+	public void cancel(String reason) {
+		this.orderStatus = OrderStatus.CANCELED;
+		this.canceledAt = LocalDateTime.now();
+		this.cancelReason = reason;
 	}
 
 	public boolean canBeCanceled() {

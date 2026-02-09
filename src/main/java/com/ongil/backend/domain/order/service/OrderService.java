@@ -163,7 +163,7 @@ public class OrderService {
 	}
 
 	@Transactional
-	public OrderCancelResponse cancelOrder(Long userId, Long orderId) {
+	public OrderCancelResponse cancelOrder(Long userId, Long orderId, String cancelReason) {
 		Order order = orderRepository.findById(orderId)
 			.orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
@@ -180,12 +180,13 @@ public class OrderService {
 		}
 
 		// 주문 취소 처리
-		order.cancel();
+		order.cancel(cancelReason);
 
 		// 결제 정보 취소 처리
 		Payment payment = order.getPayment();
 		if (payment != null) {
 			payment.cancel();
+			paymentRepository.save(payment);
 			
 			// 사용한 포인트 환불
 			if (payment.getUsedPoints() > 0) {

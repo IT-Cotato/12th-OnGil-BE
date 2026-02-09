@@ -121,7 +121,7 @@ public class OrderController {
 		@PathVariable Long orderId,
 		@RequestBody @Valid OrderCancelRequest request
 	) {
-		return DataResponse.from(orderService.cancelOrder(userId, orderId));
+		return DataResponse.from(orderService.cancelOrder(userId, orderId, request.cancelReason()));
 	}
 
 }
