@@ -40,6 +40,11 @@ public class ProductOption extends BaseEntity {
 		this.stock = stock != null ? stock : 0;
 	}
 
+	// 재고 복원
+	public void restoreStock(int quantity) {
+		this.stock += quantity;
+	}
+
 	// 재고 상태 반환
 	public StockStatus getStockStatus() {
 		return this.stock == 0 ? StockStatus.SOLD_OUT : StockStatus.AVAILABLE;

@@ -38,7 +38,7 @@ public class SwaggerConfig {
 
 		Server server = new Server();
 		if ("prod".equals(profile)) {
-			server.setUrl("http://43.202.164.240");
+			server.setUrl("https://ongil.shop");
 			server.setDescription("운영 서버");
 		} else {
 			server.setUrl("http://localhost:8080");

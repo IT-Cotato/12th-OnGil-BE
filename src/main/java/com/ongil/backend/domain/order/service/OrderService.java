@@ -11,19 +11,32 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ongil.backend.domain.address.entity.Address;
+import com.ongil.backend.domain.address.repository.AddressRepository;
+import com.ongil.backend.domain.cart.dto.request.CartCreateRequest;
 import com.ongil.backend.domain.cart.entity.Cart;
 import com.ongil.backend.domain.cart.repository.CartRepository;
+import com.ongil.backend.domain.cart.service.CartService;
 import com.ongil.backend.domain.order.converter.OrderConverter;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
+import com.ongil.backend.domain.order.dto.request.DeliveryAddressUpdateRequest;
+import com.ongil.backend.domain.order.dto.request.OrderCancelRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
+import com.ongil.backend.domain.order.dto.response.CancelRefundInfoResponse;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
+import com.ongil.backend.domain.order.dto.response.RefundInfoDto;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
+import com.ongil.backend.domain.order.enums.OrderStatus;
 import com.ongil.backend.domain.order.repository.OrderRepository;
+import com.ongil.backend.domain.payment.entity.Payment;
 import com.ongil.backend.domain.product.entity.Product;
+import com.ongil.backend.domain.product.entity.ProductOption;
+import com.ongil.backend.domain.product.repository.ProductOptionRepository;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
@@ -43,6 +56,9 @@ public class OrderService {
 	private final ProductRepository productRepository;
 	private final OrderConverter orderConverter;
 	private final CartRepository cartRepository;
+	private final CartService cartService;
+	private final AddressRepository addressRepository;
+	private final ProductOptionRepository productOptionRepository;
 
 	@Transactional
 	public Long processPayment(Long userId, OrderCreateRequest request) {
@@ -86,27 +102,7 @@ public class OrderService {
 			throw new AppException(ErrorCode.FORBIDDEN);
 		}
 
-		List<OrderItemDto> itemDtos = order.getOrderItems().stream()
-			.map(item -> {
-				Product product = item.getProduct();
-
-				String firstImageUrl = "default-image-url";
-				if (product.getImageUrls() != null && !product.getImageUrls().isBlank()) {
-					firstImageUrl = product.getImageUrls().split(",")[0].trim();
-				}
-
-				return new OrderItemDto(
-					product.getId(),
-					product.getBrand() != null ? product.getBrand().getName() : "일반 브랜드",
-					product.getName(),
-					firstImageUrl,
-					item.getSelectedSize(),
-					item.getSelectedColor(),
-					item.getQuantity(),
-					item.getPriceAtOrder()
-				);
-			})
-			.toList();
+		List<OrderItemDto> itemDtos = orderConverter.toOrderItemDtos(order);
 
 		return orderConverter.toDetailResponse(order, itemDtos);
 	}
@@ -131,6 +127,120 @@ public class OrderService {
 		cartRepository.deleteAllInBatch(cartItems);
 
 		return orderId;
+	}
+
+	public CancelRefundInfoResponse getRefundInfo(Long userId, Long orderId) {
+		Order order = getOrderAndValidateOwner(userId, orderId);
+		validateCancelable(order);
+
+		List<OrderItemDto> itemDtos = orderConverter.toOrderItemDtos(order);
+		RefundInfoDto refundInfo = calculateRefundInfo(order);
+
+		return new CancelRefundInfoResponse(itemDtos, refundInfo);
+	}
+
+	@Transactional
+	public OrderCancelResponse cancelOrder(Long userId, Long orderId, OrderCancelRequest request) {
+		Order order = getOrderAndValidateOwner(userId, orderId);
+		validateCancelable(order);
+
+		// 1. 주문 취소 처리
+		order.cancel(request.cancelReason(), request.cancelDetail());
+
+		// 2. 결제 취소 처리
+		Payment payment = order.getPayment();
+		if (payment != null) {
+			payment.cancelPayment();
+
+			// 3. 포인트 복원
+			if (payment.getUsedPoints() != null && payment.getUsedPoints() > 0) {
+				order.getUser().restorePoints(payment.getUsedPoints());
+			}
+		}
+
+		// 4. 재고 복원
+		for (OrderItem orderItem : order.getOrderItems()) {
+			productOptionRepository.findByProductIdAndSizeAndColor(
+				orderItem.getProduct().getId(),
+				orderItem.getSelectedSize(),
+				orderItem.getSelectedColor()
+			).ifPresent(option -> option.restoreStock(orderItem.getQuantity()));
+		}
+
+		// 5. 장바구니 담기 (선택)
+		if (Boolean.TRUE.equals(request.addToCart())) {
+			for (OrderItem orderItem : order.getOrderItems()) {
+				CartCreateRequest cartRequest = new CartCreateRequest(
+					orderItem.getProduct().getId(),
+					orderItem.getSelectedSize(),
+					orderItem.getSelectedColor(),
+					orderItem.getQuantity()
+				);
+				cartService.addCart(userId, cartRequest);
+			}
+		}
+
+		List<OrderItemDto> itemDtos = orderConverter.toOrderItemDtos(order);
+		RefundInfoDto refundInfo = calculateRefundInfo(order);
+
+		return orderConverter.toCancelResponse(order, itemDtos, refundInfo);
+	}
+
+	@Transactional
+	public OrderDetailResponse updateDeliveryAddress(Long userId, Long orderId, DeliveryAddressUpdateRequest request) {
+		Order order = getOrderAndValidateOwner(userId, orderId);
+
+		if (order.getOrderStatus() != OrderStatus.ORDER_RECEIVED) {
+			throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+		}
+
+		Address address = addressRepository.findById(request.addressId())
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.ADDRESS_NOT_FOUND));
+
+		if (!address.getUser().getId().equals(userId)) {
+			throw new AppException(ErrorCode.ADDRESS_FORBIDDEN);
+		}
+
+		order.updateDeliveryAddress(
+			address.getRecipientName(),
+			address.getRecipientPhone(),
+			address.getBaseAddress(),
+			address.getDetailAddress(),
+			address.getPostalCode()
+		);
+
+		List<OrderItemDto> itemDtos = orderConverter.toOrderItemDtos(order);
+		return orderConverter.toDetailResponse(order, itemDtos);
+	}
+
+	private Order getOrderAndValidateOwner(Long userId, Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.ORDER_NOT_FOUND));
+
+		if (!order.getUser().getId().equals(userId)) {
+			throw new AppException(ErrorCode.FORBIDDEN);
+		}
+
+		return order;
+	}
+
+	private void validateCancelable(Order order) {
+		if (order.getOrderStatus() == OrderStatus.CANCELED) {
+			throw new AppException(ErrorCode.ORDER_ALREADY_CANCELED);
+		}
+		if (order.getOrderStatus() != OrderStatus.ORDER_RECEIVED) {
+			throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+		}
+	}
+
+	private RefundInfoDto calculateRefundInfo(Order order) {
+		int productAmount = order.getOrderItems().stream()
+			.mapToInt(item -> item.getPriceAtOrder() * item.getQuantity())
+			.sum();
+		int shippingFee = 0;
+		int returnFee = Math.max(productAmount - shippingFee, 0);
+
+		return new RefundInfoDto(productAmount, shippingFee, returnFee);
 	}
 
 	public OrderHistoryResponse getOrderHistory(
