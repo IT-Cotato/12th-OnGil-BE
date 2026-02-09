@@ -15,6 +15,8 @@ public class CorsConfig implements WebMvcConfigurer {
 
 	private static final List<String> ALLOWED_ORIGINS = List.of(
 		"https://ongil-fe.vercel.app",
+		"https://ongil.shop",
+		"https://www.ongil.shop",
 		"http://localhost:3000",
 		"http://3.38.199.67:8080",
 		"http://localhost:8080"

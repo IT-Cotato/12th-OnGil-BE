@@ -65,6 +65,9 @@ public enum ErrorCode {
 	ORDER_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "주문 상품을 찾을 수 없습니다.", "ORDER-002"),
 	INSUFFICIENT_POINTS(HttpStatus.BAD_REQUEST, "적립금이 부족합니다.", "ORDER-003"),
 	INVALID_POINT_USAGE(HttpStatus.BAD_REQUEST, "포인트 사용 금액이 유효하지 않습니다. (0 미만 혹은 결제 금액 초과)", "ORDER-004"),
+	ORDER_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "주문 접수 상태에서만 취소가 가능합니다.", "ORDER-005"),
+	ORDER_ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 취소된 주문입니다.", "ORDER-006"),
+	ORDER_UPDATE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "주문 접수 상태에서만 변경이 가능합니다.", "ORDER-007"),
 
 	// ADDRESS
 	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),

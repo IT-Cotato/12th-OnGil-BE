@@ -5,9 +5,11 @@ services:
     image: nginx:alpine
     container_name: ongil-nginx
     ports:
-      - "80:80"
+      - "80:80"   # HTTP (암호화 안 됨)
+      - "443:443"  # HTTPS (암호화됨, SSL/TLS)
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
     restart: always

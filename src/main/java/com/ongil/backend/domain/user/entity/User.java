@@ -98,6 +98,17 @@ public class User extends BaseEntity {
 		this.bodyInfoAgreed = agreed;
 	}
 
+	// 적립금 복원 비즈니스 로직
+	public void restorePoints(Integer amount) {
+		if (amount == null || amount == 0) return;
+
+		if (amount < 0) {
+			throw new AppException(ErrorCode.INVALID_AMOUNT);
+		}
+
+		this.points += amount;
+	}
+
 	// 적립금 차감 비즈니스 로직
 	public void decreasePoints(Integer amount) {
 		if (amount == null || amount == 0) return;

@@ -54,4 +54,12 @@ public class Payment extends BaseEntity {
 		this.paymentStatus = paymentStatus;
 		this.order = order;
 	}
+
+	public void cancelPayment() {
+		if (this.paymentStatus == PaymentStatus.CANCELED) {
+			return;
+		}
+		this.paymentStatus = PaymentStatus.CANCELED;
+		this.canceledAt = LocalDateTime.now();
+	}
 }

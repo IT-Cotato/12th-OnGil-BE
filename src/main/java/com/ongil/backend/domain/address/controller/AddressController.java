@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ongil.backend.domain.address.dto.request.ShippingInfoCreateReqDto;
 import com.ongil.backend.domain.address.dto.request.ShippingInfoUpdateReqDto;
+import com.ongil.backend.domain.address.dto.response.AddressListResponse;
 import com.ongil.backend.domain.address.dto.response.ShippingInfoResDto;
 import com.ongil.backend.domain.address.service.AddressService;
 import com.ongil.backend.global.common.dto.DataResponse;
+
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +30,14 @@ import lombok.RequiredArgsConstructor;
 public class AddressController {
 
 	private final AddressService addressService;
+
+	@GetMapping
+	@Operation(summary = "내 배송지 목록 조회", description = "현재 로그인한 사용자의 전체 배송지 목록을 조회합니다. 토큰 필요")
+	public DataResponse<List<AddressListResponse>> getAddressList(
+		@AuthenticationPrincipal Long userId
+	) {
+		return DataResponse.from(addressService.getAddressList(userId));
+	}
 
 	@GetMapping("/me")
 	@Operation(summary = "내 배송지 조회", description = "현재 로그인한 사용자의 배송지 정보를 조회합니다.")
