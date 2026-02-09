@@ -42,6 +42,9 @@ public class ProductOption extends BaseEntity {
 
 	// 재고 복원
 	public void restoreStock(int quantity) {
+		if (quantity <= 0) {
+			throw new IllegalArgumentException("복원 수량은 양수여야 합니다.");
+		}
 		this.stock += quantity;
 	}
 

@@ -20,6 +20,9 @@ public record OrderCancelResponse(
 	@Schema(description = "주문 상태")
 	OrderStatus orderStatus,
 
+	@Schema(description = "주문 총액")
+	Integer totalAmount,
+
 	@Schema(description = "취소 일시")
 	LocalDateTime canceledAt,
 

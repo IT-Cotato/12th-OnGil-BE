@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +46,9 @@ import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -160,11 +163,19 @@ public class OrderService {
 
 		// 4. 재고 복원
 		for (OrderItem orderItem : order.getOrderItems()) {
-			productOptionRepository.findByProductIdAndSizeAndColor(
+			Optional<ProductOption> optionOpt = productOptionRepository.findByProductIdAndSizeAndColor(
 				orderItem.getProduct().getId(),
 				orderItem.getSelectedSize(),
 				orderItem.getSelectedColor()
-			).ifPresent(option -> option.restoreStock(orderItem.getQuantity()));
+			);
+			if (optionOpt.isPresent()) {
+				optionOpt.get().restoreStock(orderItem.getQuantity());
+			} else {
+				log.warn("재고 복원 실패 - productId: {}, size: {}, color: {}",
+					orderItem.getProduct().getId(),
+					orderItem.getSelectedSize(),
+					orderItem.getSelectedColor());
+			}
 		}
 
 		// 5. 장바구니 담기 (선택)
@@ -191,7 +202,7 @@ public class OrderService {
 		Order order = getOrderAndValidateOwner(userId, orderId);
 
 		if (order.getOrderStatus() != OrderStatus.ORDER_RECEIVED) {
-			throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
+			throw new AppException(ErrorCode.ORDER_UPDATE_NOT_ALLOWED);
 		}
 
 		Address address = addressRepository.findById(request.addressId())
@@ -238,9 +249,9 @@ public class OrderService {
 			.mapToInt(item -> item.getPriceAtOrder() * item.getQuantity())
 			.sum();
 		int shippingFee = 0;
-		int returnFee = Math.max(productAmount - shippingFee, 0);
+		int refundAmount = Math.max(productAmount - shippingFee, 0);
 
-		return new RefundInfoDto(productAmount, shippingFee, returnFee);
+		return new RefundInfoDto(productAmount, shippingFee, refundAmount);
 	}
 
 	public OrderHistoryResponse getOrderHistory(

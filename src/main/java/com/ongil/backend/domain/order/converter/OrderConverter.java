@@ -69,7 +69,7 @@ public class OrderConverter {
 			order.getTotalAmount(),
 			order.getRecipient(),
 			order.getRecipientPhone(),
-			order.getDeliveryAddress() + " " + (order.getDetailAddress() != null ? order.getDetailAddress() : ""),
+			order.getDeliveryAddress() + (order.getDetailAddress() != null ? " " + order.getDetailAddress() : ""),
 			order.getDeliveryMessage(),
 			order.getCreatedAt()
 		);
@@ -134,12 +134,13 @@ public class OrderConverter {
 			order.getId(),
 			order.getOrderNumber(),
 			order.getOrderStatus(),
+			order.getTotalAmount(),
 			order.getCanceledAt(),
 			order.getCancelReason(),
 			order.getCancelDetail(),
 			itemDtos,
 			refundInfo,
-			order.getDeliveryAddress() + " " + (order.getDetailAddress() != null ? order.getDetailAddress() : ""),
+			order.getDeliveryAddress() + (order.getDetailAddress() != null ? " " + order.getDetailAddress() : ""),
 			order.getRecipient(),
 			order.getRecipientPhone(),
 			order.getDeliveryMessage(),

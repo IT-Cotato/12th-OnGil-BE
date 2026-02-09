@@ -11,7 +11,7 @@ public record RefundInfoDto(
 	@Schema(description = "배송비")
 	Integer shippingFee,
 
-	@Schema(description = "반품비 (상품 금액 - 배송비)")
-	Integer returnFee
+	@Schema(description = "환불 금액 (상품 금액 - 배송비)")
+	Integer refundAmount
 ) {
 }
