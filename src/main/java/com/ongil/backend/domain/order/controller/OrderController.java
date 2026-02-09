@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
+import com.ongil.backend.domain.order.dto.request.OrderCancelRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.service.OrderService;
@@ -106,6 +109,19 @@ public class OrderController {
 		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
 	) {
 		return DataResponse.from(orderService.getOrderDetail(userId, orderId));
+	}
+
+	@PatchMapping("/{orderId}/cancel")
+	@Operation(
+		summary = "주문 취소",
+		description = "주문 접수 상태의 주문을 취소합니다. 사용한 포인트는 환불됩니다. 토큰 필요"
+	)
+	public DataResponse<OrderCancelResponse> cancelOrder(
+		@AuthenticationPrincipal Long userId,
+		@PathVariable Long orderId,
+		@RequestBody @Valid OrderCancelRequest request
+	) {
+		return DataResponse.from(orderService.cancelOrder(userId, orderId));
 	}
 
 }

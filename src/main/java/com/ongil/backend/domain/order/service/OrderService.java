@@ -20,9 +20,11 @@ import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.repository.OrderRepository;
+import com.ongil.backend.domain.payment.entity.Payment;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.domain.user.entity.User;
@@ -43,6 +45,7 @@ public class OrderService {
 	private final ProductRepository productRepository;
 	private final OrderConverter orderConverter;
 	private final CartRepository cartRepository;
+	private final com.ongil.backend.domain.payment.repository.PaymentRepository paymentRepository;
 
 	@Transactional
 	public Long processPayment(Long userId, OrderCreateRequest request) {
@@ -157,5 +160,40 @@ public class OrderService {
 		);
 
 		return orderConverter.toHistoryResponse(orderPage);
+	}
+
+	@Transactional
+	public OrderCancelResponse cancelOrder(Long userId, Long orderId) {
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+		if (!order.getUser().getId().equals(userId)) {
+			throw new AppException(ErrorCode.FORBIDDEN);
+		}
+
+		if (order.getOrderStatus() == com.ongil.backend.domain.order.enums.OrderStatus.CANCELED) {
+			throw new AppException(ErrorCode.ORDER_ALREADY_CANCELED);
+		}
+
+		if (!order.canBeCanceled()) {
+			throw new AppException(ErrorCode.ORDER_CANNOT_BE_CANCELED);
+		}
+
+		// 주문 취소 처리
+		order.cancel();
+
+		// 결제 정보 취소 처리
+		Payment payment = order.getPayment();
+		if (payment != null) {
+			payment.cancel();
+			
+			// 사용한 포인트 환불
+			if (payment.getUsedPoints() > 0) {
+				User user = order.getUser();
+				user.increasePoints(payment.getUsedPoints());
+			}
+		}
+
+		return orderConverter.toCancelResponse(order);
 	}
 }

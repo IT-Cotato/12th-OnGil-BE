@@ -84,4 +84,13 @@ public class Order extends BaseEntity {
 		this.orderItems.add(orderItem);
 		orderItem.setOrder(this);
 	}
+
+	public void cancel() {
+		this.orderStatus = OrderStatus.CANCELED;
+		this.canceledAt = LocalDateTime.now();
+	}
+
+	public boolean canBeCanceled() {
+		return this.orderStatus == OrderStatus.ORDER_RECEIVED;
+	}
 }

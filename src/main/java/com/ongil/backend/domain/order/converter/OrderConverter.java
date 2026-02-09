@@ -18,6 +18,7 @@ import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
 import com.ongil.backend.domain.order.dto.response.OrderItemSummaryDto;
 import com.ongil.backend.domain.order.dto.response.OrderSummaryDto;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.enums.OrderStatus;
@@ -146,6 +147,17 @@ public class OrderConverter {
 			orderPage.getTotalElements(),
 			orderPage.getTotalPages(),
 			orderPage.getNumber()
+		);
+	}
+
+	// Order 엔티티 -> OrderCancelResponse
+	public OrderCancelResponse toCancelResponse(Order order) {
+		return new OrderCancelResponse(
+			order.getId(),
+			order.getOrderNumber(),
+			order.getOrderStatus(),
+			order.getCanceledAt(),
+			order.getTotalAmount()
 		);
 	}
 

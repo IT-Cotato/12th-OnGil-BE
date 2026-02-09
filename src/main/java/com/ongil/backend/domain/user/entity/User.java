@@ -113,4 +113,15 @@ public class User extends BaseEntity {
 		this.points -= amount;
 	}
 
+	// 적립금 증가 비즈니스 로직
+	public void increasePoints(Integer amount) {
+		if (amount == null || amount == 0) return;
+
+		if (amount < 0) {
+			throw new AppException(ErrorCode.INVALID_AMOUNT);
+		}
+
+		this.points += amount;
+	}
+
 }
