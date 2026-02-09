@@ -106,13 +106,6 @@ public class AdminController {
 		return DataResponse.from(response);
 	}
 
-	@Operation(summary = "상품 삭제", description = "상품을 삭제합니다.")
-	@DeleteMapping("/products/{productId}")
-	public DataResponse<String> deleteProduct(@PathVariable Long productId) {
-		adminService.deleteProduct(productId);
-		return DataResponse.from("상품이 삭제되었습니다.");
-	}
-
 	@Operation(summary = "상품 옵션 수정", description = "상품 옵션 정보를 수정합니다. 수정할 필드만 입력하면 됩니다.")
 	@PatchMapping("/product-options/{optionId}")
 	public DataResponse<ProductOptionResponse> updateProductOption(

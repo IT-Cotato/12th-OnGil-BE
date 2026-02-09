@@ -222,17 +222,6 @@ public class AdminService {
 		return productConverter.toSimpleResponse(product);
 	}
 
-	// 상품 삭제
-	public void deleteProduct(Long productId) {
-		Product product = productRepository.findById(productId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
-
-		// 연관된 상품 옵션들을 먼저 삭제
-		productOptionRepository.deleteByProduct(product);
-
-		productRepository.delete(product);
-	}
-
 	// 상품 옵션 수정
 	public ProductOptionResponse updateProductOption(Long optionId, AdminProductOptionUpdateRequest request) {
 		ProductOption productOption = productOptionRepository.findById(optionId)
