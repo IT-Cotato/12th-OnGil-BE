@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ongil.backend.domain.order.enums.CancelReason;
 import com.ongil.backend.domain.order.enums.OrderStatus;
 import com.ongil.backend.domain.payment.entity.Payment;
 import com.ongil.backend.domain.user.entity.User;
@@ -69,6 +70,13 @@ public class Order extends BaseEntity {
 	@Column(name = "canceled_at")
 	private LocalDateTime canceledAt;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "cancel_reason")
+	private CancelReason cancelReason;
+
+	@Column(name = "cancel_detail", length = 300)
+	private String cancelDetail;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
@@ -83,5 +91,21 @@ public class Order extends BaseEntity {
 	public void addOrderItem(OrderItem orderItem) {
 		this.orderItems.add(orderItem);
 		orderItem.setOrder(this);
+	}
+
+	public void cancel(CancelReason cancelReason, String cancelDetail) {
+		this.orderStatus = OrderStatus.CANCELED;
+		this.canceledAt = LocalDateTime.now();
+		this.cancelReason = cancelReason;
+		this.cancelDetail = cancelDetail;
+	}
+
+	public void updateDeliveryAddress(String recipient, String recipientPhone,
+		String deliveryAddress, String detailAddress, String postalCode) {
+		this.recipient = recipient;
+		this.recipientPhone = recipientPhone;
+		this.deliveryAddress = deliveryAddress;
+		this.detailAddress = detailAddress;
+		this.postalCode = postalCode;
 	}
 }

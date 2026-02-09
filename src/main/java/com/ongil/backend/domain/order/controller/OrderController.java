@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,8 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.ongil.backend.domain.order.dto.request.CancelRefundInfoRequest;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
+import com.ongil.backend.domain.order.dto.request.DeliveryAddressUpdateRequest;
+import com.ongil.backend.domain.order.dto.request.OrderCancelRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
+import com.ongil.backend.domain.order.dto.response.CancelRefundInfoResponse;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.service.OrderService;
@@ -106,6 +112,45 @@ public class OrderController {
 		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
 	) {
 		return DataResponse.from(orderService.getOrderDetail(userId, orderId));
+	}
+
+	@GetMapping("/{orderId}/cancel/refund-info")
+	@Operation(
+		summary = "환불 정보 조회",
+		description = "주문 취소 시 환불 정보를 조회합니다. 주문 접수 상태에서만 조회 가능합니다. 토큰 필요"
+	)
+	public DataResponse<CancelRefundInfoResponse> getRefundInfo(
+		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
+	) {
+		return DataResponse.from(orderService.getRefundInfo(userId, orderId));
+	}
+
+	@PostMapping("/{orderId}/cancel")
+	@Operation(
+		summary = "주문 취소",
+		description = "주문을 취소합니다. 주문 접수 상태에서만 취소 가능합니다. " +
+			"addToCart가 true이면 취소된 상품을 장바구니에 다시 담습니다. 토큰 필요"
+	)
+	public DataResponse<OrderCancelResponse> cancelOrder(
+		@AuthenticationPrincipal Long userId,
+		@PathVariable Long orderId,
+		@RequestBody @Valid OrderCancelRequest request
+	) {
+		return DataResponse.from(orderService.cancelOrder(userId, orderId, request));
+	}
+
+	@PatchMapping("/{orderId}/delivery-address")
+	@Operation(
+		summary = "주문 배송지 변경",
+		description = "주문의 배송지를 사용자의 기존 등록 배송지 중 하나로 변경합니다. " +
+			"주문 접수 상태에서만 변경 가능합니다. 토큰 필요"
+	)
+	public DataResponse<OrderDetailResponse> updateDeliveryAddress(
+		@AuthenticationPrincipal Long userId,
+		@PathVariable Long orderId,
+		@RequestBody @Valid DeliveryAddressUpdateRequest request
+	) {
+		return DataResponse.from(orderService.updateDeliveryAddress(userId, orderId, request));
 	}
 
 }

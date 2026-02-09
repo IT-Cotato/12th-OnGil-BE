@@ -13,11 +13,13 @@ import com.ongil.backend.domain.cart.entity.Cart;
 import com.ongil.backend.domain.order.dto.request.CartOrderRequest;
 import com.ongil.backend.domain.order.dto.request.OrderCreateRequest;
 import com.ongil.backend.domain.order.dto.request.OrderItemRequest;
+import com.ongil.backend.domain.order.dto.response.OrderCancelResponse;
 import com.ongil.backend.domain.order.dto.response.OrderDetailResponse;
 import com.ongil.backend.domain.order.dto.response.OrderHistoryResponse;
 import com.ongil.backend.domain.order.dto.response.OrderItemDto;
 import com.ongil.backend.domain.order.dto.response.OrderItemSummaryDto;
 import com.ongil.backend.domain.order.dto.response.OrderSummaryDto;
+import com.ongil.backend.domain.order.dto.response.RefundInfoDto;
 import com.ongil.backend.domain.order.entity.Order;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.enums.OrderStatus;
@@ -93,6 +95,55 @@ public class OrderConverter {
 			request.detailAddress(),
 			request.postalCode(),
 			request.deliveryMessage()
+		);
+	}
+
+	// OrderItem -> OrderItemDto
+	public OrderItemDto toOrderItemDto(OrderItem orderItem) {
+		Product product = orderItem.getProduct();
+
+		String imageUrl = "default-image-url";
+		if (product.getImageUrls() != null && !product.getImageUrls().isBlank()) {
+			imageUrl = product.getImageUrls().split(",")[0].trim();
+		}
+
+		String brandName = product.getBrand() != null ? product.getBrand().getName() : "일반 브랜드";
+
+		return new OrderItemDto(
+			product.getId(),
+			brandName,
+			product.getName(),
+			imageUrl,
+			orderItem.getSelectedSize(),
+			orderItem.getSelectedColor(),
+			orderItem.getQuantity(),
+			orderItem.getPriceAtOrder()
+		);
+	}
+
+	// Order의 OrderItem 리스트 -> OrderItemDto 리스트
+	public List<OrderItemDto> toOrderItemDtos(Order order) {
+		return order.getOrderItems().stream()
+			.map(this::toOrderItemDto)
+			.toList();
+	}
+
+	// Order -> OrderCancelResponse
+	public OrderCancelResponse toCancelResponse(Order order, List<OrderItemDto> itemDtos, RefundInfoDto refundInfo) {
+		return new OrderCancelResponse(
+			order.getId(),
+			order.getOrderNumber(),
+			order.getOrderStatus(),
+			order.getCanceledAt(),
+			order.getCancelReason(),
+			order.getCancelDetail(),
+			itemDtos,
+			refundInfo,
+			order.getDeliveryAddress() + " " + (order.getDetailAddress() != null ? order.getDetailAddress() : ""),
+			order.getRecipient(),
+			order.getRecipientPhone(),
+			order.getDeliveryMessage(),
+			order.getCreatedAt()
 		);
 	}
 

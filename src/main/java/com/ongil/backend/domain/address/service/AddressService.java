@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.address.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ongil.backend.domain.address.converter.AddressConverter;
 import com.ongil.backend.domain.address.dto.request.ShippingInfoCreateReqDto;
 import com.ongil.backend.domain.address.dto.request.ShippingInfoUpdateReqDto;
+import com.ongil.backend.domain.address.dto.response.AddressListResponse;
 import com.ongil.backend.domain.address.dto.response.ShippingInfoResDto;
 import com.ongil.backend.domain.address.entity.Address;
 import com.ongil.backend.domain.address.repository.AddressRepository;
@@ -26,6 +28,22 @@ public class AddressService {
 
 	private final AddressRepository addressRepository;
 	private final UserRepository userRepository;
+
+	public List<AddressListResponse> getAddressList(Long userId) {
+		List<Address> addresses = addressRepository.findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(userId);
+
+		return addresses.stream()
+			.map(address -> new AddressListResponse(
+				address.getId(),
+				address.getRecipientName(),
+				address.getRecipientPhone(),
+				address.getBaseAddress(),
+				address.getDetailAddress(),
+				address.getPostalCode(),
+				address.isDefault()
+			))
+			.toList();
+	}
 
 	public ShippingInfoResDto getShippingInfo(Long userId) {
 		Optional<Address> address = addressRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
