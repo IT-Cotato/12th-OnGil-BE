@@ -4,9 +4,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.admin.dto.request.AdminBrandCreateRequest;
+import com.ongil.backend.domain.admin.dto.request.AdminBrandUpdateRequest;
 import com.ongil.backend.domain.admin.dto.request.AdminCategoryCreateRequest;
+import com.ongil.backend.domain.admin.dto.request.AdminCategoryUpdateRequest;
 import com.ongil.backend.domain.admin.dto.request.AdminProductCreateRequest;
 import com.ongil.backend.domain.admin.dto.request.AdminProductOptionCreateRequest;
+import com.ongil.backend.domain.admin.dto.request.AdminProductOptionUpdateRequest;
+import com.ongil.backend.domain.admin.dto.request.AdminProductUpdateRequest;
 import com.ongil.backend.domain.brand.converter.BrandConverter;
 import com.ongil.backend.domain.brand.dto.response.BrandResponse;
 import com.ongil.backend.domain.brand.entity.Brand;
@@ -126,5 +130,134 @@ public class AdminService {
 			.stock(savedOption.getStock())
 			.stockStatus(savedOption.getStockStatus())
 			.build();
+	}
+
+	// 브랜드 수정
+	public BrandResponse updateBrand(Long brandId, AdminBrandUpdateRequest request) {
+		Brand brand = brandRepository.findById(brandId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
+
+		brand.updateBrand(
+			request.getName(),
+			request.getDescription(),
+			request.getLogoImageUrl()
+		);
+
+		return brandConverter.toResponse(brand);
+	}
+
+	// 브랜드 삭제
+	public void deleteBrand(Long brandId) {
+		Brand brand = brandRepository.findById(brandId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
+
+		brandRepository.delete(brand);
+	}
+
+	// 카테고리 수정
+	public CategorySimpleResponse updateCategory(Long categoryId, AdminCategoryUpdateRequest request) {
+		Category category = categoryRepository.findById(categoryId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+
+		Category parentCategory = null;
+		if (request.getParentCategoryId() != null) {
+			parentCategory = categoryRepository.findById(request.getParentCategoryId())
+				.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+		}
+
+		category.updateCategory(
+			request.getName(),
+			request.getIconUrl(),
+			request.getDisplayOrder(),
+			parentCategory
+		);
+
+		return categoryConverter.toSimpleResponse(category);
+	}
+
+	// 카테고리 삭제
+	public void deleteCategory(Long categoryId) {
+		Category category = categoryRepository.findById(categoryId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+
+		categoryRepository.delete(category);
+	}
+
+	// 상품 수정
+	public ProductSimpleResponse updateProduct(Long productId, AdminProductUpdateRequest request) {
+		Product product = productRepository.findById(productId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+
+		Brand brand = null;
+		if (request.getBrandId() != null) {
+			brand = brandRepository.findById(request.getBrandId())
+				.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
+		}
+
+		Category category = null;
+		if (request.getCategoryId() != null) {
+			category = categoryRepository.findById(request.getCategoryId())
+				.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+
+			// 상품은 하위 카테고리에만 등록 가능
+			if (category.getParentCategory() == null) {
+				throw new ValidationException(ErrorCode.INVALID_CATEGORY);
+			}
+		}
+
+		product.updateProduct(
+			request.getName(),
+			request.getDescription(),
+			request.getPrice(),
+			request.getMaterialOriginal(),
+			request.getImageUrls(),
+			request.getSizes(),
+			request.getColors(),
+			request.getDiscountRate(),
+			request.getProductType(),
+			brand,
+			category
+		);
+
+		return productConverter.toSimpleResponse(product);
+	}
+
+	// 상품 삭제
+	public void deleteProduct(Long productId) {
+		Product product = productRepository.findById(productId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+
+		// 연관된 상품 옵션들을 먼저 삭제
+		productOptionRepository.deleteByProduct(product);
+
+		productRepository.delete(product);
+	}
+
+	// 상품 옵션 수정
+	public ProductOptionResponse updateProductOption(Long optionId, AdminProductOptionUpdateRequest request) {
+		ProductOption productOption = productOptionRepository.findById(optionId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_OPTION_NOT_FOUND));
+
+		productOption.updateProductOption(
+			request.getSize(),
+			request.getColor(),
+			request.getStock()
+		);
+
+		return ProductOptionResponse.builder()
+			.optionId(productOption.getId())
+			.size(productOption.getSize())
+			.color(productOption.getColor())
+			.stock(productOption.getStock())
+			.stockStatus(productOption.getStockStatus())
+			.build();
+	}
+
+	// 상품 옵션 삭제
+	public void deleteProductOption(Long optionId) {
+		ProductOption productOption = productOptionRepository.findById(optionId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_OPTION_NOT_FOUND));
+
+		productOptionRepository.delete(productOption);
 	}
 }

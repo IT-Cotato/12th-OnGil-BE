@@ -136,4 +136,53 @@ public class Product extends BaseEntity {
 	public Integer getEffectivePrice() {
 		return (discountPrice != null && discountPrice > 0) ? discountPrice : price;
 	}
+
+	// 상품 정보 수정
+	public void updateProduct(String name, String description, Integer price, String materialOriginal,
+		String imageUrls, String sizes, String colors, Integer discountRate, ProductType productType,
+		Brand brand, Category category) {
+		if (name != null) {
+			this.name = name;
+		}
+		if (description != null) {
+			this.description = description;
+		}
+		if (price != null) {
+			this.price = price;
+			// 가격 변경 시 할인가 재계산
+			if (this.discountRate != null && this.discountRate > 0) {
+				this.discountPrice = price - (price * this.discountRate / 100);
+			}
+		}
+		if (materialOriginal != null) {
+			this.materialOriginal = materialOriginal;
+		}
+		if (imageUrls != null) {
+			this.imageUrls = imageUrls;
+		}
+		if (sizes != null) {
+			this.sizes = sizes;
+		}
+		if (colors != null) {
+			this.colors = colors;
+		}
+		if (discountRate != null) {
+			this.discountRate = discountRate;
+			// 할인율 변경 시 할인가 재계산
+			if (this.price != null && discountRate > 0) {
+				this.discountPrice = this.price - (this.price * discountRate / 100);
+			} else {
+				this.discountPrice = null;
+			}
+		}
+		if (productType != null) {
+			this.productType = productType;
+		}
+		if (brand != null) {
+			this.brand = brand;
+		}
+		if (category != null) {
+			this.category = category;
+		}
+	}
 }

@@ -45,4 +45,20 @@ public class Category extends BaseEntity {
 		this.displayOrder = displayOrder;
 		this.parentCategory = parentCategory;
 	}
+
+	// 카테고리 정보 수정
+	public void updateCategory(String name, String iconUrl, Integer displayOrder, Category parentCategory) {
+		if (name != null) {
+			this.name = name;
+		}
+		if (iconUrl != null) {
+			this.iconUrl = iconUrl;
+		}
+		if (displayOrder != null) {
+			this.displayOrder = displayOrder;
+		}
+		if (parentCategory != null) {
+			this.parentCategory = parentCategory;
+		}
+	}
 }

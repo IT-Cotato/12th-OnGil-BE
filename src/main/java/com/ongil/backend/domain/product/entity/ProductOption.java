@@ -45,6 +45,19 @@ public class ProductOption extends BaseEntity {
 		return this.stock == 0 ? StockStatus.SOLD_OUT : StockStatus.AVAILABLE;
 	}
 
+	// 상품 옵션 수정
+	public void updateProductOption(String size, String color, Integer stock) {
+		if (size != null) {
+			this.size = size;
+		}
+		if (color != null) {
+			this.color = color;
+		}
+		if (stock != null) {
+			this.stock = stock;
+		}
+	}
+
 	public enum StockStatus {
 		AVAILABLE,    // 구매 가능
 		SOLD_OUT      // 품절
