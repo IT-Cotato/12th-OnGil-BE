@@ -45,6 +45,25 @@ public class ProductOption extends BaseEntity {
 		return this.stock == 0 ? StockStatus.SOLD_OUT : StockStatus.AVAILABLE;
 	}
 
+	// 상품 옵션 수정
+	public void updateProductOption(String size, String color, Integer stock) {
+		if (size != null) {
+			this.size = size;
+		}
+		if (color != null) {
+			this.color = color;
+		}
+		if (stock != null) {
+			// 재고 음수 방지
+			if (stock < 0) {
+				throw new com.ongil.backend.global.common.exception.ValidationException(
+					com.ongil.backend.global.common.exception.ErrorCode.INVALID_STOCK
+				);
+			}
+			this.stock = stock;
+		}
+	}
+
 	public enum StockStatus {
 		AVAILABLE,    // 구매 가능
 		SOLD_OUT      // 품절

@@ -34,4 +34,17 @@ public class Brand extends BaseEntity {
 		this.description = description;
 		this.logoImageUrl = logoImageUrl;
 	}
+
+	// 브랜드 정보 수정
+	public void updateBrand(String name, String description, String logoImageUrl) {
+		if (name != null) {
+			this.name = name;
+		}
+		if (description != null) {
+			this.description = description;
+		}
+		if (logoImageUrl != null) {
+			this.logoImageUrl = logoImageUrl;
+		}
+	}
 }

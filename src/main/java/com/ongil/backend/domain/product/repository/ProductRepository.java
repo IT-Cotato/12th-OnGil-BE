@@ -229,4 +229,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("SELECT p FROM Product p WHERE p.id IN :productIds AND p.onSale = true")
 	List<Product> findByIdInAndOnSaleTrue(@Param("productIds") List<Long> productIds);
+
+	// 특정 브랜드를 사용하는 상품이 있는지 확인
+	boolean existsByBrandId(Long brandId);
+
+	// 특정 카테고리를 사용하는 상품이 있는지 확인
+	boolean existsByCategoryId(Long categoryId);
 }

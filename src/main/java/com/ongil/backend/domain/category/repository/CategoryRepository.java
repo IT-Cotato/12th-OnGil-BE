@@ -34,4 +34,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 		"WHERE c.parentCategory.id = :parentCategoryId " +
 		"ORDER BY c.displayOrder")
 	List<Category> findSubCategoriesByParentId(@Param("parentCategoryId") Long parentCategoryId);
+
+	// 특정 카테고리를 상위 카테고리로 가진 하위 카테고리가 있는지 확인
+	boolean existsByParentCategoryId(Long parentCategoryId);
 }

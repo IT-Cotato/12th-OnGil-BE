@@ -33,13 +33,18 @@ public enum ErrorCode {
 	PRODUCT_NOT_FOUND(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다.", "PRODUCT-001"),
 	PRODUCT_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "선택한 옵션(색상/사이즈)을 찾을 수 없습니다.", "PRODUCT-002"),
 	OUT_OF_STOCK(HttpStatus.BAD_REQUEST, "재고가 부족합니다.", "PRODUCT-003"),
+	INVALID_STOCK(HttpStatus.BAD_REQUEST, "재고는 0 이상이어야 합니다.", "PRODUCT-004"),
 
 	// BRAND
 	BRAND_NOT_FOUND(HttpStatus.NOT_FOUND, "브랜드를 찾을 수 없습니다.", "BRAND-001"),
+	CANNOT_DELETE_BRAND_WITH_PRODUCTS(HttpStatus.BAD_REQUEST, "해당 브랜드를 사용하는 상품이 있어 삭제할 수 없습니다.", "BRAND-002"),
 
 	// CATEGORY
 	CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "카테고리를 찾을 수 없습니다.", "CATEGORY-001"),
 	INVALID_CATEGORY(HttpStatus.BAD_REQUEST, "상품은 하위 카테고리에만 등록할 수 있습니다.", "CATEGORY-002"),
+	CANNOT_DELETE_CATEGORY_WITH_PRODUCTS(HttpStatus.BAD_REQUEST, "해당 카테고리를 사용하는 상품이 있어 삭제할 수 없습니다.", "CATEGORY-003"),
+	CANNOT_DELETE_CATEGORY_WITH_SUBCATEGORIES(HttpStatus.BAD_REQUEST, "하위 카테고리가 있어 삭제할 수 없습니다.", "CATEGORY-004"),
+	CATEGORY_SELF_REFERENCE(HttpStatus.BAD_REQUEST, "카테고리의 상위 카테고리로 자기 자신을 설정할 수 없습니다.", "CATEGORY-005"),
 
 	// WISHLIST
 	WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "찜을 찾을 수 없습니다.", "WISHLIST-001"),

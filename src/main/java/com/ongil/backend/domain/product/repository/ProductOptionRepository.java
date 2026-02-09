@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.entity.ProductOption;
 
 public interface ProductOptionRepository extends JpaRepository<ProductOption, Long> {
@@ -23,4 +24,7 @@ public interface ProductOptionRepository extends JpaRepository<ProductOption, Lo
 
 	// 재고 있는 옵션 조회 (재고 1개 이상)
 	List<ProductOption> findByProductIdAndStockGreaterThan(Long productId, int stock);
+
+	// 특정 상품의 모든 옵션 삭제
+	void deleteByProduct(Product product);
 }

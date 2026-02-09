@@ -45,4 +45,26 @@ public class Category extends BaseEntity {
 		this.displayOrder = displayOrder;
 		this.parentCategory = parentCategory;
 	}
+
+	// 카테고리 정보 수정
+	public void updateCategory(String name, String iconUrl, Integer displayOrder, Category parentCategory) {
+		if (name != null) {
+			this.name = name;
+		}
+		if (iconUrl != null) {
+			this.iconUrl = iconUrl;
+		}
+		if (displayOrder != null) {
+			this.displayOrder = displayOrder;
+		}
+		if (parentCategory != null) {
+			// 자기 참조(순환 참조) 방지
+			if (parentCategory.getId().equals(this.id)) {
+				throw new com.ongil.backend.global.common.exception.ValidationException(
+					com.ongil.backend.global.common.exception.ErrorCode.CATEGORY_SELF_REFERENCE
+				);
+			}
+			this.parentCategory = parentCategory;
+		}
+	}
 }
