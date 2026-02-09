@@ -58,6 +58,12 @@ public class Category extends BaseEntity {
 			this.displayOrder = displayOrder;
 		}
 		if (parentCategory != null) {
+			// 자기 참조(순환 참조) 방지
+			if (parentCategory.getId().equals(this.id)) {
+				throw new com.ongil.backend.global.common.exception.ValidationException(
+					com.ongil.backend.global.common.exception.ErrorCode.CATEGORY_SELF_REFERENCE
+				);
+			}
 			this.parentCategory = parentCategory;
 		}
 	}

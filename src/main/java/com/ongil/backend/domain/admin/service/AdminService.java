@@ -151,6 +151,11 @@ public class AdminService {
 		Brand brand = brandRepository.findById(brandId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.BRAND_NOT_FOUND));
 
+		// 해당 브랜드를 사용하는 상품이 있는지 확인
+		if (productRepository.existsByBrandId(brandId)) {
+			throw new ValidationException(ErrorCode.CANNOT_DELETE_BRAND_WITH_PRODUCTS);
+		}
+
 		brandRepository.delete(brand);
 	}
 
@@ -179,6 +184,16 @@ public class AdminService {
 	public void deleteCategory(Long categoryId) {
 		Category category = categoryRepository.findById(categoryId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.CATEGORY_NOT_FOUND));
+
+		// 해당 카테고리를 사용하는 상품이 있는지 확인
+		if (productRepository.existsByCategoryId(categoryId)) {
+			throw new ValidationException(ErrorCode.CANNOT_DELETE_CATEGORY_WITH_PRODUCTS);
+		}
+
+		// 하위 카테고리가 있는지 확인
+		if (categoryRepository.existsByParentCategoryId(categoryId)) {
+			throw new ValidationException(ErrorCode.CANNOT_DELETE_CATEGORY_WITH_SUBCATEGORIES);
+		}
 
 		categoryRepository.delete(category);
 	}

@@ -54,6 +54,12 @@ public class ProductOption extends BaseEntity {
 			this.color = color;
 		}
 		if (stock != null) {
+			// 재고 음수 방지
+			if (stock < 0) {
+				throw new com.ongil.backend.global.common.exception.ValidationException(
+					com.ongil.backend.global.common.exception.ErrorCode.INVALID_STOCK
+				);
+			}
 			this.stock = stock;
 		}
 	}
