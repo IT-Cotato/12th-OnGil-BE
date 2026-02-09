@@ -217,7 +217,8 @@ public class OrderService {
 			address.getRecipientPhone(),
 			address.getBaseAddress(),
 			address.getDetailAddress(),
-			address.getPostalCode()
+			address.getPostalCode(),
+			address.getDeliveryRequest()
 		);
 
 		List<OrderItemDto> itemDtos = orderConverter.toOrderItemDtos(order);
@@ -249,9 +250,16 @@ public class OrderService {
 			.mapToInt(item -> item.getPriceAtOrder() * item.getQuantity())
 			.sum();
 		int shippingFee = 0;
-		int refundAmount = Math.max(productAmount - shippingFee, 0);
 
-		return new RefundInfoDto(productAmount, shippingFee, refundAmount);
+		int usedPoints = 0;
+		Payment payment = order.getPayment();
+		if (payment != null && payment.getUsedPoints() != null) {
+			usedPoints = payment.getUsedPoints();
+		}
+
+		int refundAmount = Math.max(productAmount - shippingFee - usedPoints, 0);
+
+		return new RefundInfoDto(productAmount, shippingFee, usedPoints, refundAmount);
 	}
 
 	public OrderHistoryResponse getOrderHistory(

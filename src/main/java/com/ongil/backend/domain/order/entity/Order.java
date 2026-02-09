@@ -101,11 +101,12 @@ public class Order extends BaseEntity {
 	}
 
 	public void updateDeliveryAddress(String recipient, String recipientPhone,
-		String deliveryAddress, String detailAddress, String postalCode) {
+		String deliveryAddress, String detailAddress, String postalCode, String deliveryMessage) {
 		this.recipient = recipient;
 		this.recipientPhone = recipientPhone;
 		this.deliveryAddress = deliveryAddress;
 		this.detailAddress = detailAddress;
 		this.postalCode = postalCode;
+		this.deliveryMessage = deliveryMessage;
 	}
 }

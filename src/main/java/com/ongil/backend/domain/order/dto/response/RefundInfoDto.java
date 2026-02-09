@@ -11,7 +11,10 @@ public record RefundInfoDto(
 	@Schema(description = "배송비")
 	Integer shippingFee,
 
-	@Schema(description = "환불 금액 (상품 금액 - 배송비)")
+	@Schema(description = "사용 포인트 (복원 예정)")
+	Integer usedPoints,
+
+	@Schema(description = "환불 금액 (실결제 금액 기준)")
 	Integer refundAmount
 ) {
 }
