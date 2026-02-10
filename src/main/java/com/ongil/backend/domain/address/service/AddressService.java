@@ -100,7 +100,13 @@ public class AddressService {
 			throw new ForbiddenException(ErrorCode.ADDRESS_FORBIDDEN);
 		}
 
+		boolean wasDefault = address.isDefault();
 		addressRepository.delete(address);
+
+		if (wasDefault) {
+			addressRepository.findFirstByUserIdOrderByIsDefaultDescCreatedAtDesc(userId)
+				.ifPresent(next -> next.setDefault(true));
+		}
 	}
 
 	@Transactional
