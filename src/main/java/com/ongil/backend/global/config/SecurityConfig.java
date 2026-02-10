@@ -35,8 +35,8 @@ public class SecurityConfig {
 			.httpBasic(AbstractHttpConfigurer::disable)
 
 			.authorizeHttpRequests(auth -> auth
-				// [1] 시스템 및 문서화 관련 (Swagger, H2 Console)
-				.requestMatchers("/ping", "/h2-console/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+				// [1] 시스템 및 문서화 관련 (Swagger)
+				.requestMatchers("/ping", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
 				// [Admin] 관리자 API (Swagger 테스트용)
 				.requestMatchers("/api/admin/**").permitAll()
