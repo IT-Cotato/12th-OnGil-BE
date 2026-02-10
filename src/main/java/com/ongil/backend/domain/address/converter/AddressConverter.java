@@ -35,10 +35,6 @@ public class AddressConverter {
 			.build();
 	}
 
-	public static Address toEntity(User user, ShippingInfoCreateReqDto request) {
-		return toEntity(user, request, true);
-	}
-
 	public static Address toEntity(User user, ShippingInfoCreateReqDto request, boolean isDefault) {
 		return Address.builder()
 			.user(user)

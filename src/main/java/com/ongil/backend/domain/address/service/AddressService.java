@@ -65,12 +65,11 @@ public class AddressService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-		// 기존 배송지 개수 확인
-		List<Address> existingAddresses = addressRepository.findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(userId);
-		boolean isFirstAddress = existingAddresses.isEmpty();
+		// 기존 배송지 존재 여부 확인 (최적화: 전체 조회 대신 존재 여부만 확인)
+		boolean hasExistingAddresses = addressRepository.existsByUserId(userId);
 
 		// 새 배송지 등록 (첫 번째 주소는 자동으로 기본 배송지)
-		Address address = AddressConverter.toEntity(user, request, isFirstAddress);
+		Address address = AddressConverter.toEntity(user, request, !hasExistingAddresses);
 		Address savedAddress = addressRepository.save(address);
 
 		return AddressConverter.toShippingInfoResDto(savedAddress);
