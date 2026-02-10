@@ -65,8 +65,9 @@ public class UserService {
 		User user = findUser(userId);
 
 		if (user.getProfileImg() != null) {
-			s3ImageService.delete(user.getProfileImg());
+			String oldImageUrl = user.getProfileImg();
 			user.updateProfileImage(null);
+			s3ImageService.delete(oldImageUrl);
 		}
 
 		return UserConverter.toUserInfoResDto(user);
