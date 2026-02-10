@@ -72,6 +72,9 @@ dependencies {
 
     // Crawling
     implementation 'org.jsoup:jsoup:1.17.2'
+
+    // AWS S3
+    implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.2.1'
 }
 
 dependencyManagement {

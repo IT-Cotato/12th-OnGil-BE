@@ -2,6 +2,7 @@ package com.ongil.backend.domain.user.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ongil.backend.domain.user.converter.BodyInfoConverter;
 import com.ongil.backend.domain.user.converter.UserConverter;
@@ -17,6 +18,7 @@ import com.ongil.backend.domain.user.enums.TopSize;
 import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.config.s3.S3ImageService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class UserService {
 	private final UserRepository userRepository;
+	private final S3ImageService s3ImageService;
+
 	// 1. 내 정보 조회
 	public UserInfoResDto getUserInfo(Long userId) {
 		User user = userRepository.findById(userId)
@@ -34,11 +38,37 @@ public class UserService {
 	}
 
 	// 2. 프로필 이미지 변경
-	@Transactional // 쓰기 권한 부여
-	public UserInfoResDto updateProfileImage(Long userId, String newImageUrl) {
+	@Transactional
+	public UserInfoResDto updateProfileImage(Long userId, MultipartFile imageFile) {
 		User user = findUser(userId);
 
+		// 1. 새 이미지 먼저 S3 업로드 (실패 시 기존 이미지 보존)
+		String newImageUrl = s3ImageService.upload(imageFile);
+
+		// 2. 기존 프로필 이미지 URL 백업
+		String oldImageUrl = user.getProfileImg();
+
+		// 3. DB 업데이트
 		user.updateProfileImage(newImageUrl);
+
+		// 4. 기존 이미지가 있으면 S3에서 삭제
+		if (oldImageUrl != null) {
+			s3ImageService.delete(oldImageUrl);
+		}
+
+		return UserConverter.toUserInfoResDto(user);
+	}
+
+	// 2-1. 프로필 이미지 삭제 (기본 이미지로 초기화)
+	@Transactional
+	public UserInfoResDto deleteProfileImage(Long userId) {
+		User user = findUser(userId);
+
+		if (user.getProfileImg() != null) {
+			String oldImageUrl = user.getProfileImg();
+			user.updateProfileImage(null);
+			s3ImageService.delete(oldImageUrl);
+		}
 
 		return UserConverter.toUserInfoResDto(user);
 	}

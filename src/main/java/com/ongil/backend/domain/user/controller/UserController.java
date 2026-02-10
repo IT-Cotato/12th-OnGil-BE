@@ -1,18 +1,21 @@
 package com.ongil.backend.domain.user.controller;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ongil.backend.domain.user.dto.request.BodyInfoRequest;
-import com.ongil.backend.domain.user.dto.request.UserUpdateProfileRequest;
 import com.ongil.backend.domain.user.dto.response.BodyInfoResponse;
 import com.ongil.backend.domain.user.dto.response.SizeOptionsResponse;
 import com.ongil.backend.domain.user.dto.response.TermsResponse;
@@ -52,13 +55,22 @@ public class UserController {
 		return ResponseEntity.ok(DataResponse.from(res));
 	}
 
-	@PatchMapping("/me/profile-image")
-	@Operation(summary = "프로필 이미지 수정 API", description = "현재 로그인한 사용자의 프로필 이미지를 수정")
+	@PatchMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@Operation(summary = "프로필 이미지 수정 API", description = "현재 로그인한 사용자의 프로필 이미지를 수정 (토큰 필요)")
 	public ResponseEntity<DataResponse<UserInfoResDto>> updateProfileImage(
 		@AuthenticationPrincipal Long userId,
-		@RequestBody UserUpdateProfileRequest request
+		@RequestPart("image") MultipartFile imageFile
 	) {
-		UserInfoResDto res = userService.updateProfileImage(userId, request.profileImageUrl());
+		UserInfoResDto res = userService.updateProfileImage(userId, imageFile);
+		return ResponseEntity.ok(DataResponse.from(res));
+	}
+
+	@DeleteMapping("/me/profile-image")
+	@Operation(summary = "프로필 이미지 삭제 API", description = "프로필 이미지를 삭제하고 기본 이미지로 초기화 (토큰 필요)")
+	public ResponseEntity<DataResponse<UserInfoResDto>> deleteProfileImage(
+		@AuthenticationPrincipal Long userId
+	) {
+		UserInfoResDto res = userService.deleteProfileImage(userId);
 		return ResponseEntity.ok(DataResponse.from(res));
 	}
 
