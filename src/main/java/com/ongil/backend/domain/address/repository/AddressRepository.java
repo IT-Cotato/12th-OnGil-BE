@@ -14,4 +14,6 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
 	List<Address> findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(Long userId);
 
 	void deleteAllByUserId(Long userId);
+
+	Optional<Address> findByUserIdAndIsDefaultTrue(Long userId);
 }

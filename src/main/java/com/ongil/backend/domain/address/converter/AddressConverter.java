@@ -36,6 +36,10 @@ public class AddressConverter {
 	}
 
 	public static Address toEntity(User user, ShippingInfoCreateReqDto request) {
+		return toEntity(user, request, true);
+	}
+
+	public static Address toEntity(User user, ShippingInfoCreateReqDto request, boolean isDefault) {
 		return Address.builder()
 			.user(user)
 			.recipientName(request.recipientName())
@@ -44,7 +48,7 @@ public class AddressConverter {
 			.detailAddress(request.detailAddress())
 			.postalCode(request.postalCode())
 			.deliveryRequest(request.deliveryRequest())
-			.isDefault(true)
+			.isDefault(isDefault)
 			.build();
 	}
 

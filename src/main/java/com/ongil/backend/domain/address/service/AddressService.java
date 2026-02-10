@@ -19,6 +19,7 @@ import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 import com.ongil.backend.global.common.exception.ForbiddenException;
 
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,6 +29,7 @@ public class AddressService {
 
 	private final AddressRepository addressRepository;
 	private final UserRepository userRepository;
+	private final EntityManager entityManager;
 
 	public List<AddressListResponse> getAddressList(Long userId) {
 		List<Address> addresses = addressRepository.findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(userId);
@@ -68,17 +70,7 @@ public class AddressService {
 		boolean isFirstAddress = existingAddresses.isEmpty();
 
 		// 새 배송지 등록 (첫 번째 주소는 자동으로 기본 배송지)
-		Address address = Address.builder()
-			.user(user)
-			.recipientName(request.recipientName())
-			.recipientPhone(request.phone())
-			.baseAddress(request.baseAddress())
-			.detailAddress(request.detailAddress())
-			.postalCode(request.postalCode())
-			.deliveryRequest(request.deliveryRequest())
-			.isDefault(isFirstAddress)
-			.build();
-
+		Address address = AddressConverter.toEntity(user, request, isFirstAddress);
 		Address savedAddress = addressRepository.save(address);
 
 		return AddressConverter.toShippingInfoResDto(savedAddress);
@@ -114,13 +106,13 @@ public class AddressService {
 			throw new ForbiddenException(ErrorCode.ADDRESS_FORBIDDEN);
 		}
 
-		// 기존 기본 배송지 해제
-		List<Address> addresses = addressRepository.findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(userId);
-		for (Address addr : addresses) {
-			if (addr.isDefault() && !addr.getId().equals(addressId)) {
+		// 기존 기본 배송지 해제 (더 효율적으로 단일 조회)
+		Optional<Address> currentDefaultAddress = addressRepository.findByUserIdAndIsDefaultTrue(userId);
+		currentDefaultAddress.ifPresent(addr -> {
+			if (!addr.getId().equals(addressId)) {
 				addr.setDefault(false);
 			}
-		}
+		});
 
 		// 새로운 기본 배송지 설정
 		address.setDefault(true);
@@ -137,6 +129,9 @@ public class AddressService {
 
 		boolean wasDefault = address.isDefault();
 		addressRepository.delete(address);
+		
+		// 삭제를 즉시 DB에 반영하여 다음 조회에서 제외되도록 함
+		entityManager.flush();
 
 		// 삭제한 주소가 기본 배송지였다면, 남은 주소 중 가장 최근 주소를 기본으로 설정
 		if (wasDefault) {
