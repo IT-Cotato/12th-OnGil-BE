@@ -83,6 +83,12 @@ public enum ErrorCode {
 
 	// PRICE_ALERT
 	PRICE_ALERT_NOT_FOUND(HttpStatus.NOT_FOUND, "설정된 가격 알림이 없습니다.", "ALERT-001"),
+
+	// FILE / S3
+	FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "파일이 비어 있습니다.", "FILE-001"),
+	INVALID_FILE_EXTENSION(HttpStatus.BAD_REQUEST, "허용되지 않는 파일 확장자입니다. (jpg, jpeg, png만 가능)", "FILE-002"),
+	S3_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다.", "S3-001"),
+	S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다.", "S3-002"),
 	;
 
 	private final HttpStatus httpStatus;
