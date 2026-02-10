@@ -18,6 +18,7 @@ import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 import com.ongil.backend.global.common.exception.ForbiddenException;
+import com.ongil.backend.global.common.exception.ValidationException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class AddressService {
 
+	private static final int MAX_ADDRESS_COUNT = 5;
+
 	private final AddressRepository addressRepository;
 	private final UserRepository userRepository;
 
@@ -33,20 +36,12 @@ public class AddressService {
 		List<Address> addresses = addressRepository.findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(userId);
 
 		return addresses.stream()
-			.map(address -> new AddressListResponse(
-				address.getId(),
-				address.getRecipientName(),
-				address.getRecipientPhone(),
-				address.getBaseAddress(),
-				address.getDetailAddress(),
-				address.getPostalCode(),
-				address.isDefault()
-			))
+			.map(AddressConverter::toAddressListResponse)
 			.toList();
 	}
 
 	public ShippingInfoResDto getShippingInfo(Long userId) {
-		Optional<Address> address = addressRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
+		Optional<Address> address = addressRepository.findFirstByUserIdOrderByIsDefaultDescCreatedAtDesc(userId);
 
 		if (address.isEmpty()) {
 			return ShippingInfoResDto.builder()
@@ -63,11 +58,13 @@ public class AddressService {
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-		// 기존 배송지 벌크 삭제
-		addressRepository.deleteAllByUserId(userId);
+		long count = addressRepository.countByUserId(userId);
+		if (count >= MAX_ADDRESS_COUNT) {
+			throw new ValidationException(ErrorCode.ADDRESS_LIMIT_EXCEEDED);
+		}
 
-		// 새 배송지 등록
-		Address address = AddressConverter.toEntity(user, request);
+		boolean isDefault = (count == 0);
+		Address address = AddressConverter.toEntity(user, request, isDefault);
 		Address savedAddress = addressRepository.save(address);
 
 		return AddressConverter.toShippingInfoResDto(savedAddress);
@@ -92,5 +89,39 @@ public class AddressService {
 		);
 
 		return AddressConverter.toShippingInfoResDto(address);
+	}
+
+	@Transactional
+	public void deleteAddress(Long userId, Long addressId) {
+		Address address = addressRepository.findById(addressId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.ADDRESS_NOT_FOUND));
+
+		if (!address.getUser().getId().equals(userId)) {
+			throw new ForbiddenException(ErrorCode.ADDRESS_FORBIDDEN);
+		}
+
+		boolean wasDefault = address.isDefault();
+		addressRepository.delete(address);
+
+		if (wasDefault) {
+			addressRepository.findFirstByUserIdOrderByIsDefaultDescCreatedAtDesc(userId)
+				.ifPresent(next -> next.setDefault(true));
+		}
+	}
+
+	@Transactional
+	public void setDefaultAddress(Long userId, Long addressId) {
+		Address address = addressRepository.findById(addressId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.ADDRESS_NOT_FOUND));
+
+		if (!address.getUser().getId().equals(userId)) {
+			throw new ForbiddenException(ErrorCode.ADDRESS_FORBIDDEN);
+		}
+
+		addressRepository.findFirstByUserIdOrderByIsDefaultDescCreatedAtDesc(userId)
+			.filter(Address::isDefault)
+			.ifPresent(current -> current.setDefault(false));
+
+		address.setDefault(true);
 	}
 }

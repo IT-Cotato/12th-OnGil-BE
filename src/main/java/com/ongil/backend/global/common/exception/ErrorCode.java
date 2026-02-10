@@ -73,6 +73,7 @@ public enum ErrorCode {
 	// ADDRESS
 	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),
 	ADDRESS_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 배송지만 수정/삭제할 수 있습니다.", "ADDRESS-002"),
+	ADDRESS_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "배송지는 최대 5개까지 등록 가능합니다.", "ADDRESS-003"),
 
 	// MAGAZINE
 	MAGAZINE_NOT_FOUND(HttpStatus.NOT_FOUND, "매거진을 찾을 수 없습니다.", "MAG-001"),

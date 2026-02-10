@@ -9,9 +9,9 @@ import com.ongil.backend.domain.address.entity.Address;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
 
-	Optional<Address> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
+	Optional<Address> findFirstByUserIdOrderByIsDefaultDescCreatedAtDesc(Long userId);
 
 	List<Address> findAllByUserIdOrderByIsDefaultDescCreatedAtDesc(Long userId);
 
-	void deleteAllByUserId(Long userId);
+	long countByUserId(Long userId);
 }
