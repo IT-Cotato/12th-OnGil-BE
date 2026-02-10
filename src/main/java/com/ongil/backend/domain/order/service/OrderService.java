@@ -77,7 +77,7 @@ public class OrderService {
 			Product product = productRepository.findById(itemRequest.productId())
 				.orElseThrow(() -> new AppException(ErrorCode.PRODUCT_NOT_FOUND));
 
-			totalProductPrice += product.getPrice() * itemRequest.quantity();
+			totalProductPrice += product.getEffectivePrice() * itemRequest.quantity();
 
 			OrderItem orderItem = orderConverter.toOrderItem(itemRequest, product);
 			orderItems.add(orderItem);
@@ -223,6 +223,17 @@ public class OrderService {
 
 		List<OrderItemDto> itemDtos = orderConverter.toOrderItemDtos(order);
 		return orderConverter.toDetailResponse(order, itemDtos);
+	}
+
+	@Transactional
+	public void deleteOrder(Long userId, Long orderId) {
+		Order order = getOrderAndValidateOwner(userId, orderId);
+
+		if (order.getOrderStatus() != OrderStatus.CONFIRMED && order.getOrderStatus() != OrderStatus.CANCELED) {
+			throw new AppException(ErrorCode.ORDER_DELETE_NOT_ALLOWED);
+		}
+
+		orderRepository.delete(order);
 	}
 
 	private Order getOrderAndValidateOwner(Long userId, Long orderId) {

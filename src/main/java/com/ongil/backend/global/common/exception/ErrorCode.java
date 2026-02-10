@@ -68,6 +68,7 @@ public enum ErrorCode {
 	ORDER_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "주문 접수 상태에서만 취소가 가능합니다.", "ORDER-005"),
 	ORDER_ALREADY_CANCELED(HttpStatus.BAD_REQUEST, "이미 취소된 주문입니다.", "ORDER-006"),
 	ORDER_UPDATE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "주문 접수 상태에서만 변경이 가능합니다.", "ORDER-007"),
+	ORDER_DELETE_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "구매 확정 또는 취소된 주문만 삭제할 수 있습니다.", "ORDER-008"),
 
 	// ADDRESS
 	ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "배송지 정보를 찾을 수 없습니다.", "ADDRESS-001"),
