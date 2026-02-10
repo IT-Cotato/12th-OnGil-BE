@@ -1,6 +1,7 @@
 package com.ongil.backend.domain.address.controller;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,7 +41,7 @@ public class AddressController {
 	}
 
 	@GetMapping("/me")
-	@Operation(summary = "내 배송지 조회", description = "현재 로그인한 사용자의 배송지 정보를 조회합니다.")
+	@Operation(summary = "내 배송지 조회", description = "현재 로그인한 사용자의 배송지 정보를 조회합니다. (토큰 필요)")
 	public DataResponse<ShippingInfoResDto> getShippingInfo(
 		@AuthenticationPrincipal Long userId
 	) {
@@ -49,7 +50,7 @@ public class AddressController {
 	}
 
 	@PostMapping
-	@Operation(summary = "배송지 등록", description = "새로운 배송지를 등록합니다. 기존 배송지가 있으면 삭제 후 등록됩니다.")
+	@Operation(summary = "배송지 등록", description = "새로운 배송지를 등록합니다. 최대 5개까지 등록 가능합니다. (토큰 필요)")
 	public DataResponse<ShippingInfoResDto> createShippingInfo(
 		@AuthenticationPrincipal Long userId,
 		@Valid @RequestBody ShippingInfoCreateReqDto request
@@ -59,7 +60,7 @@ public class AddressController {
 	}
 
 	@PatchMapping("/{addressId}")
-	@Operation(summary = "배송지 수정", description = "기존 배송지 정보를 수정합니다.")
+	@Operation(summary = "배송지 수정", description = "기존 배송지 정보를 수정합니다. (토큰 필요)")
 	public DataResponse<ShippingInfoResDto> updateShippingInfo(
 		@AuthenticationPrincipal Long userId,
 		@PathVariable Long addressId,
@@ -67,5 +68,25 @@ public class AddressController {
 	) {
 		ShippingInfoResDto response = addressService.updateShippingInfo(userId, addressId, request);
 		return DataResponse.from(response);
+	}
+
+	@DeleteMapping("/{addressId}")
+	@Operation(summary = "배송지 삭제", description = "배송지를 삭제합니다. (토큰 필요)")
+	public DataResponse<String> deleteAddress(
+		@AuthenticationPrincipal Long userId,
+		@PathVariable Long addressId
+	) {
+		addressService.deleteAddress(userId, addressId);
+		return DataResponse.from("배송지가 삭제되었습니다.");
+	}
+
+	@PatchMapping("/{addressId}/default")
+	@Operation(summary = "기본 배송지 설정", description = "해당 배송지를 기본 배송지로 설정합니다. (토큰 필요)")
+	public DataResponse<String> setDefaultAddress(
+		@AuthenticationPrincipal Long userId,
+		@PathVariable Long addressId
+	) {
+		addressService.setDefaultAddress(userId, addressId);
+		return DataResponse.from("기본 배송지가 변경되었습니다.");
 	}
 }
