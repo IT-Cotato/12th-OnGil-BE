@@ -56,7 +56,7 @@ public class UserController {
 	}
 
 	@PatchMapping(value = "/me/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	@Operation(summary = "프로필 이미지 수정 API", description = "현재 로그인한 사용자의 프로필 이미지를 수정")
+	@Operation(summary = "프로필 이미지 수정 API", description = "현재 로그인한 사용자의 프로필 이미지를 수정 (토큰 필요)")
 	public ResponseEntity<DataResponse<UserInfoResDto>> updateProfileImage(
 		@AuthenticationPrincipal Long userId,
 		@RequestPart("image") MultipartFile imageFile
@@ -66,7 +66,7 @@ public class UserController {
 	}
 
 	@DeleteMapping("/me/profile-image")
-	@Operation(summary = "프로필 이미지 삭제 API", description = "프로필 이미지를 삭제하고 기본 이미지로 초기화")
+	@Operation(summary = "프로필 이미지 삭제 API", description = "프로필 이미지를 삭제하고 기본 이미지로 초기화 (토큰 필요)")
 	public ResponseEntity<DataResponse<UserInfoResDto>> deleteProfileImage(
 		@AuthenticationPrincipal Long userId
 	) {

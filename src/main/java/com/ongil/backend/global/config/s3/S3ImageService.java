@@ -13,6 +13,7 @@ import com.ongil.backend.global.common.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -52,7 +53,7 @@ public class S3ImageService {
 
 			s3Client.putObject(putRequest,
 				RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
-		} catch (IOException e) {
+		} catch (IOException | SdkException e) {
 			log.error("S3 업로드 실패: {}", e.getMessage());
 			throw new AppException(ErrorCode.S3_UPLOAD_FAILED);
 		}
@@ -74,7 +75,7 @@ public class S3ImageService {
 
 			s3Client.deleteObject(deleteRequest);
 			log.info("S3 이미지 삭제 완료: {}", key);
-		} catch (Exception e) {
+		} catch (SdkException e) {
 			log.error("S3 이미지 삭제 실패: {}", e.getMessage());
 			throw new AppException(ErrorCode.S3_DELETE_FAILED);
 		}
@@ -104,11 +105,19 @@ public class S3ImageService {
 	 *   -> "profile/abc.jpg"
 	 */
 	private String extractKey(String imageUrl) {
-		String prefix = "https://" + bucket + ".s3." + region + ".amazonaws.com/";
-		return imageUrl.replace(prefix, "");
+		String prefix = generatePrefix();
+		if (!imageUrl.startsWith(prefix)) {
+			log.error("예상 외 이미지 URL 형식: {}", imageUrl);
+			throw new AppException(ErrorCode.S3_DELETE_FAILED);
+		}
+		return imageUrl.substring(prefix.length());
+	}
+
+	private String generatePrefix() {
+		return "https://" + bucket + ".s3." + region + ".amazonaws.com/";
 	}
 
 	private String generateUrl(String key) {
-		return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
+		return generatePrefix() + key;
 	}
 }

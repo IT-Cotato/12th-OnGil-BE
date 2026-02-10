@@ -42,16 +42,19 @@ public class UserService {
 	public UserInfoResDto updateProfileImage(Long userId, MultipartFile imageFile) {
 		User user = findUser(userId);
 
-		// 기존 프로필 이미지가 있으면 S3에서 삭제
-		if (user.getProfileImg() != null) {
-			s3ImageService.delete(user.getProfileImg());
-		}
-
-		// 새 이미지 S3 업로드
+		// 1. 새 이미지 먼저 S3 업로드 (실패 시 기존 이미지 보존)
 		String newImageUrl = s3ImageService.upload(imageFile);
 
-		// DB 업데이트
+		// 2. 기존 프로필 이미지 URL 백업
+		String oldImageUrl = user.getProfileImg();
+
+		// 3. DB 업데이트
 		user.updateProfileImage(newImageUrl);
+
+		// 4. 기존 이미지가 있으면 S3에서 삭제
+		if (oldImageUrl != null) {
+			s3ImageService.delete(oldImageUrl);
+		}
 
 		return UserConverter.toUserInfoResDto(user);
 	}
