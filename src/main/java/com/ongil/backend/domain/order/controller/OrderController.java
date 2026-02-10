@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -83,7 +84,7 @@ public class OrderController {
 	@PostMapping
 	@Operation(
 		summary = "상품 화면에서 바로 상품 주문",
-		description = "장바구니를 거치지 않고 개별 상품을 즉시 주문합니다. 성공 시 생성된 주문 ID(orderId)를 반환합니다."
+		description = "장바구니를 거치지 않고 개별 상품을 즉시 주문합니다. 성공 시 생성된 주문 ID(orderId)를 반환합니다. 토큰 필요"
 	)
 	public DataResponse<Long> createOrder(
 		@AuthenticationPrincipal Long userId, @RequestBody @Valid OrderCreateRequest request
@@ -97,7 +98,7 @@ public class OrderController {
 		summary = "장바구니 상품 주문",
 		description = "장바구니에서 선택한 하나 이상의 상품들을 한 번에 주문합니다. " +
 			"cartItemIds 필드에 장바구니 항목 ID 리스트(예: [3, 4])를 담아 보냅니다. " +
-			"성공 시 생성된 주문 ID(orderId)를 반환하며, 해당 장바구니 항목들은 삭제됩니다."
+			"성공 시 생성된 주문 ID(orderId)를 반환하며, 해당 장바구니 항목들은 삭제됩니다. 토큰 필요"
 	)
 	public DataResponse<Long> createOrderFromCart(
 		@AuthenticationPrincipal Long userId, @RequestBody @Valid CartOrderRequest request
@@ -107,7 +108,7 @@ public class OrderController {
 	}
 
 	@GetMapping("/{orderId}")
-	@Operation(summary = "주문 상세 조회", description = "orderId를 통한 주문 상세 조회")
+	@Operation(summary = "주문 상세 조회", description = "orderId를 통한 주문 상세 조회. 토큰 필요")
 	public DataResponse<OrderDetailResponse> getOrderDetail(
 		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
 	) {
@@ -137,6 +138,18 @@ public class OrderController {
 		@RequestBody @Valid OrderCancelRequest request
 	) {
 		return DataResponse.from(orderService.cancelOrder(userId, orderId, request));
+	}
+
+	@DeleteMapping("/{orderId}")
+	@Operation(
+		summary = "주문 내역 삭제",
+		description = "주문 내역을 삭제합니다. 구매 확정 또는 취소된 주문만 삭제 가능합니다. 토큰 필요"
+	)
+	public DataResponse<String> deleteOrder(
+		@AuthenticationPrincipal Long userId, @PathVariable Long orderId
+	) {
+		orderService.deleteOrder(userId, orderId);
+		return DataResponse.from("주문 내역이 삭제되었습니다.");
 	}
 
 	@PatchMapping("/{orderId}/delivery-address")
