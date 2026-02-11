@@ -44,8 +44,8 @@ public class BannerService {
 			return monthlyReviewBanner;
 		}
 
-		// 3순위: 매거진 유도 알림
-		return createMagazineBanner();
+		// 리뷰 배너가 없으면 비활성 배너 반환
+		return bannerConverter.toEmptyResponse();
 	}
 
 	private BannerResponse checkInitialReviewBanner(Long userId) {
@@ -141,14 +141,4 @@ public class BannerService {
 		return null;
 	}
 
-	private BannerResponse createMagazineBanner() {
-		return bannerConverter.toResponse(
-			BannerType.MAGAZINE,
-			"추천 매거진을 확인해보세요",
-			"보러가기",
-			"/magazine",
-			null,
-			true
-		);
-	}
 }
