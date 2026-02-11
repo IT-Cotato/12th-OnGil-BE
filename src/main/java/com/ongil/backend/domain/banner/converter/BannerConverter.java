@@ -19,4 +19,10 @@ public class BannerConverter {
 			.enabled(enabled)
 			.build();
 	}
+
+	public BannerResponse toEmptyResponse() {
+		return BannerResponse.builder()
+			.enabled(false)
+			.build();
+	}
 }

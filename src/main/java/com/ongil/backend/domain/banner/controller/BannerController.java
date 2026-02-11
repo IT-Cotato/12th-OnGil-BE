@@ -23,7 +23,7 @@ public class BannerController {
 	private final BannerService bannerService;
 
 	@GetMapping
-	@Operation(summary = "배너 조회 API", description = "토큰 필요. 현재 사용자에게 보여줄 배너를 조회합니다. 구매 직후 리뷰 유도, 한달 후기 유도, 매거진 추천 중 우선순위에 따라 반환됩니다.")
+	@Operation(summary = "배너 조회 API", description = "토큰 필요. 현재 사용자에게 보여줄 배너를 조회합니다. 구매 직후 리뷰 유도, 한달 후기 유도 우선순위에 따라 반환되며, 해당 배너가 없으면 enabled=false로 반환됩니다.")
 	public ResponseEntity<DataResponse<BannerResponse>> getBanner(
 		@AuthenticationPrincipal Long userId
 	) {
