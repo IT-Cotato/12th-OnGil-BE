@@ -52,8 +52,7 @@ public class SecurityConfig {
 				.requestMatchers("/api/auth/oauth/**").permitAll()
 				.requestMatchers("/api/auth/token/refresh").permitAll()
 
-				// [4] 홈 & 광고
-				.requestMatchers("/api/home").permitAll()
+				// [4] 광고
 				.requestMatchers("/api/advertisements/**").permitAll()
 
 				// [5] 상품 관련
