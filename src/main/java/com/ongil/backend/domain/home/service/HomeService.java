@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Deprecated(since = "1.0", forRemoval = true)
 public class HomeService {
 
     private static final int RECOMMENDED_PRODUCTS_SIZE = 10;
@@ -29,6 +30,14 @@ public class HomeService {
     private final BrandService brandService;
     private final CartService cartService;
 
+    /**
+     * @deprecated 개별 API를 사용하세요:
+     * - AdvertisementService.getHomeAdvertisements()
+     * - ProductService.getRecommendedProducts(userId, size)
+     * - BrandService.getRecommendBrands()
+     * - CartService.getCartCount(userId)
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
     public HomeResDto getHomeData(Long userId) {
         List<AdvertisementResponse> advertisements = advertisementService.getHomeAdvertisements();
         List<RecommendedProductResponse> recommendedProducts = productService.getRecommendedProducts(userId, RECOMMENDED_PRODUCTS_SIZE);

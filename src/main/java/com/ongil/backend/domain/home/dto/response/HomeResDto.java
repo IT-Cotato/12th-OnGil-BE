@@ -10,7 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 @Builder
-@Schema(description = "홈 화면 통합 응답")
+@Schema(description = "[Deprecated] 홈 화면 통합 응답 - 개별 API 사용 권장")
+@Deprecated(since = "1.0", forRemoval = true)
 public record HomeResDto(
 
         @Schema(description = "할인 광고 배너 목록 (5개)")

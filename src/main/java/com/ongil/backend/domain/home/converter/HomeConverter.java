@@ -10,8 +10,13 @@ import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
+@Deprecated(since = "1.0", forRemoval = true)
 public class HomeConverter {
 
+    /**
+     * @deprecated 개별 API 사용 권장
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
     public static HomeResDto toHomeResDto(
             List<AdvertisementResponse> advertisements,
             List<RecommendedProductResponse> recommendedProducts,
