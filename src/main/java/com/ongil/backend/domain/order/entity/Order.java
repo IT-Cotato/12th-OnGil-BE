@@ -100,6 +100,11 @@ public class Order extends BaseEntity {
 		this.cancelDetail = cancelDetail;
 	}
 
+	public void confirm() {
+		this.orderStatus = OrderStatus.CONFIRMED;
+		this.confirmedAt = LocalDateTime.now();
+	}
+
 	public void updateDeliveryAddress(String recipient, String recipientPhone,
 		String deliveryAddress, String detailAddress, String postalCode, String deliveryMessage) {
 		this.recipient = recipient;
