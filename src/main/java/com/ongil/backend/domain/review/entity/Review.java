@@ -4,13 +4,18 @@ import java.time.LocalDateTime;
 
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.product.entity.Product;
+import com.ongil.backend.domain.review.enums.ClothingCategory;
+import com.ongil.backend.domain.review.enums.ColorAnswer;
+import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
+import com.ongil.backend.domain.review.enums.SizeAnswer;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +24,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "reviews")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@AllArgsConstructor
+@Builder
 public class Review extends BaseEntity {
 
 	@Id
@@ -35,18 +42,28 @@ public class Review extends BaseEntity {
 	private ReviewStatus reviewStatus;
 
 	@Column(name = "current_step", nullable = false)
-	private Integer currentStep = 0;
+	@Builder.Default
+	private Integer currentStep = 1;
 
 	@Column(nullable = false)
-	private Integer rating;
+	@Builder.Default
+	private Integer rating = 0;
 
 	// 도움돼요 카운트
 	@Column(name = "helpful_count", nullable = false, columnDefinition = "INT DEFAULT 0")
+	@Builder.Default
 	private Integer helpfulCount = 0;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "clothing_category", nullable = false)
+	private ClothingCategory clothingCategory;
+
 	// 후기 내용
-	@Column(name = "ai_generated_review", columnDefinition = "TEXT")
-	private String aiGeneratedReview;
+	@Column(name = "size_review", columnDefinition = "TEXT")
+	private String sizeReview;
+
+	@Column(name = "material_review", columnDefinition = "TEXT")
+	private String materialReview;
 
 	@Column(name = "text_review", columnDefinition = "TEXT")
 	private String textReview;
@@ -55,14 +72,17 @@ public class Review extends BaseEntity {
 	private String reviewImageUrls;
 
 	// 구매 직후 리뷰 - 1차 질문
-	@Column(name = "size_answer", columnDefinition = "TEXT")
-	private String sizeAnswer;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "size_answer")
+	private SizeAnswer sizeAnswer;
 
-	@Column(name = "color_answer", columnDefinition = "TEXT")
-	private String colorAnswer;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "color_answer")
+	private ColorAnswer colorAnswer;
 
-	@Column(name = "material_answer", columnDefinition = "TEXT")
-	private String materialAnswer;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "material_answer")
+	private MaterialAnswer materialAnswer;
 
 	// 구매 직후 리뷰 - 2차 질문
 	@Column(name = "fit_issue_parts", columnDefinition = "TEXT")
@@ -79,7 +99,8 @@ public class Review extends BaseEntity {
 	private String oneMonthChanges;  // 변화 항목
 
 	@Column(name = "earned_points")
-	private Integer earnedPoints;
+	@Builder.Default
+	private Integer earnedPoints = 0;
 
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
@@ -96,33 +117,6 @@ public class Review extends BaseEntity {
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product product;
 
-	@Builder
-	public Review(ReviewType reviewType, ReviewStatus reviewStatus, Integer currentStep,
-		Integer rating, String aiGeneratedReview, String textReview, String reviewImageUrls,
-		String sizeAnswer, String colorAnswer, String materialAnswer,
-		String fitIssueParts, String materialFeatures,
-		String oneMonthOverall, String oneMonthChanges,
-		User user, OrderItem orderItem, Product product) {
-		this.reviewType = reviewType;
-		this.reviewStatus = reviewStatus != null ? reviewStatus : ReviewStatus.DRAFT;
-		this.currentStep = currentStep != null ? currentStep : 0;
-		this.rating = rating;
-		this.helpfulCount = 0;
-		this.aiGeneratedReview = aiGeneratedReview;
-		this.textReview = textReview;
-		this.reviewImageUrls = reviewImageUrls;
-		this.sizeAnswer = sizeAnswer;
-		this.colorAnswer = colorAnswer;
-		this.materialAnswer = materialAnswer;
-		this.fitIssueParts = fitIssueParts;
-		this.materialFeatures = materialFeatures;
-		this.oneMonthOverall = oneMonthOverall;
-		this.oneMonthChanges = oneMonthChanges;
-		this.user = user;
-		this.orderItem = orderItem;
-		this.product = product;
-	}
-
 	public void incrementHelpfulCount() {
 		this.helpfulCount++;
 	}
@@ -133,9 +127,41 @@ public class Review extends BaseEntity {
 		}
 	}
 
-	public void complete(Integer points) {
+	public void updateStep1(int rating, SizeAnswer sizeAnswer, ColorAnswer colorAnswer, MaterialAnswer materialAnswer) {
+		this.rating = rating;
+		this.sizeAnswer = sizeAnswer;
+		this.colorAnswer = colorAnswer;
+		this.materialAnswer = materialAnswer;
+	}
+
+	public void updateStep2Size(String fitIssueParts) {
+		this.fitIssueParts = fitIssueParts;
+		this.currentStep = Math.max(this.currentStep, 2);
+	}
+
+	public void updateStep2Material(String materialFeatures) {
+		this.materialFeatures = materialFeatures;
+		this.currentStep = Math.max(this.currentStep, 2);
+	}
+
+	public void clearStep2AndStep3() {
+		this.fitIssueParts = null;
+		this.materialFeatures = null;
+		this.sizeReview = null;
+		this.materialReview = null;
+		this.textReview = null;
+		this.reviewImageUrls = null;
+	}
+
+	public void submit(String textReview, String imageUrls, String sizeReview, String materialReview, Integer points) {
+		this.textReview = textReview;
+		this.reviewImageUrls = imageUrls;
+		this.sizeReview = sizeReview;
+		this.materialReview = materialReview;
+
 		this.reviewStatus = ReviewStatus.COMPLETED;
 		this.completedAt = LocalDateTime.now();
+		this.currentStep = 4; // 작성 완료 단계
 		this.earnedPoints = points;
 	}
 }
