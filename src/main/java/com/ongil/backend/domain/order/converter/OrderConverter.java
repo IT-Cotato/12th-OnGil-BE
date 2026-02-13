@@ -1,7 +1,5 @@
 package com.ongil.backend.domain.order.converter;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,9 +29,11 @@ public class OrderConverter {
 
 	// Request -> Order 엔티티
 	public Order toOrder(OrderCreateRequest request, User user, int finalAmount) {
-		String datePart = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-		String randomPart = UUID.randomUUID().toString().substring(0, 8);
-		String orderNumber = "ORD-" + datePart + "-" + randomPart;
+		String orderNumber = UUID.randomUUID()
+			.toString()
+			.replace("-", "")
+			.substring(0, 10)
+			.toUpperCase();
 
 		return Order.builder()
 			.orderNumber(orderNumber)
@@ -44,7 +44,7 @@ public class OrderConverter {
 			.detailAddress(request.detailAddress())
 			.postalCode(request.postalCode())
 			.deliveryMessage(request.deliveryMessage())
-			.orderStatus(OrderStatus.ORDER_RECEIVED)
+			.orderStatus(OrderStatus.CONFIRMED)
 			.user(user)
 			.build();
 	}
@@ -110,6 +110,7 @@ public class OrderConverter {
 		String brandName = product.getBrand() != null ? product.getBrand().getName() : "일반 브랜드";
 
 		return new OrderItemDto(
+			orderItem.getId(),
 			product.getId(),
 			brandName,
 			product.getName(),
