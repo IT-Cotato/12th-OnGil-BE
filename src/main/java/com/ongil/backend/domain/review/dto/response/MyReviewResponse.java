@@ -24,10 +24,13 @@ public class MyReviewResponse {
 	@Schema(description = "도움돼요 수")
 	private Integer helpfulCount;
 
-	@Schema(description = "AI 생성 리뷰")
-	private String aiGeneratedReview;
+	@Schema(description = "사이즈 관련 후기 문장 목록")
+	private List<String> sizeReview;
 
-	@Schema(description = "텍스트 리뷰")
+	@Schema(description = "소재 관련 후기 문장 목록")
+	private List<String> materialReview;
+
+	@Schema(description = "기타 텍스트 리뷰")
 	private String textReview;
 
 	@Schema(description = "리뷰 이미지 URL 목록")

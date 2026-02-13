@@ -33,7 +33,8 @@ public class ReviewConverter {
 			.rating(review.getRating())
 			.helpfulCount(review.getHelpfulCount())
 			.isHelpful(isHelpful)
-			.aiGeneratedReview(review.getAiGeneratedReview())
+			.sizeReview(parseToList(review.getSizeReview(), "\n"))
+			.materialReview(parseToList(review.getMaterialReview(), "\n"))
 			.textReview(review.getTextReview())
 			.reviewImageUrls(parseImageUrls(review.getReviewImageUrls()))
 			.reviewer(buildReviewerInfo(user, review.getProduct()))
@@ -66,9 +67,9 @@ public class ReviewConverter {
 	// 선택지 답변 요약 구성
 	private ReviewListResponse.AnswerSummary buildAnswerSummary(Review review) {
 		return ReviewListResponse.AnswerSummary.builder()
-			.sizeAnswer(review.getSizeAnswer())
-			.colorAnswer(review.getColorAnswer())
-			.materialAnswer(review.getMaterialAnswer())
+			.sizeAnswer(review.getSizeAnswer().getDisplayName())
+			.colorAnswer(review.getColorAnswer().getDisplayName())
+			.materialAnswer(review.getMaterialAnswer().getDisplayName())
 			.build();
 	}
 
@@ -86,7 +87,8 @@ public class ReviewConverter {
 			.rating(review.getRating())
 			.helpfulCount(review.getHelpfulCount())
 			.isHelpful(isHelpful)
-			.aiGeneratedReview(review.getAiGeneratedReview())
+			.sizeReview(parseToList(review.getSizeReview(), "\n"))
+			.materialReview(parseToList(review.getMaterialReview(), "\n"))
 			.textReview(review.getTextReview())
 			.reviewImageUrls(parseImageUrls(review.getReviewImageUrls()))
 			.reviewer(buildDetailReviewerInfo(user))
@@ -138,9 +140,9 @@ public class ReviewConverter {
 	// 1차 리뷰 답변 구성
 	private ReviewDetailResponse.InitialFirstAnswers buildInitialFirstAnswers(Review review) {
 		return ReviewDetailResponse.InitialFirstAnswers.builder()
-			.sizeAnswer(review.getSizeAnswer())
-			.colorAnswer(review.getColorAnswer())
-			.materialAnswer(review.getMaterialAnswer())
+			.sizeAnswer(review.getSizeAnswer().getDisplayName())
+			.colorAnswer(review.getColorAnswer().getDisplayName())
+			.materialAnswer(review.getMaterialAnswer().getDisplayName())
 			.build();
 	}
 
@@ -172,7 +174,8 @@ public class ReviewConverter {
 			.reviewType(review.getReviewType().name())
 			.rating(review.getRating())
 			.helpfulCount(review.getHelpfulCount())
-			.aiGeneratedReview(review.getAiGeneratedReview())
+			.sizeReview(parseToList(review.getSizeReview(), "\n"))
+			.materialReview(parseToList(review.getMaterialReview(), "\n"))
 			.textReview(review.getTextReview())
 			.reviewImageUrls(parseImageUrls(review.getReviewImageUrls()))
 			.product(buildMyReviewProductInfo(product))
@@ -202,9 +205,9 @@ public class ReviewConverter {
 	// 내가 작성한 리뷰 - 선택지 답변 요약 구성(2차 답변도 포함)
 	private MyReviewResponse.AnswerSummary buildMyReviewAnswerSummary(Review review) {
 		return MyReviewResponse.AnswerSummary.builder()
-			.sizeAnswer(review.getSizeAnswer())
-			.colorAnswer(review.getColorAnswer())
-			.materialAnswer(review.getMaterialAnswer())
+			.sizeAnswer(review.getSizeAnswer().getDisplayName())
+			.colorAnswer(review.getColorAnswer().getDisplayName())
+			.materialAnswer(review.getMaterialAnswer().getDisplayName())
 			.fitIssueParts(review.getFitIssueParts())
 			.materialFeatures(review.getMaterialFeatures())
 			.build();
@@ -278,4 +281,15 @@ public class ReviewConverter {
 		}
 		return null;
 	}
+
+	private List<String> parseToList(String content, String delimiter) {
+		if (content == null || content.isBlank()) {
+			return Collections.emptyList();
+		}
+		return Arrays.stream(content.split(delimiter))
+			.map(String::trim)
+			.filter(s -> !s.isEmpty())
+			.toList();
+	}
+
 }
