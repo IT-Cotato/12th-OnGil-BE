@@ -74,8 +74,6 @@ public class AuthController {
 		return ResponseEntity.ok(DataResponse.from(res));
 	}
 
-
-
 	@PostMapping("/logout")
 	@Operation(summary = "로그아웃 API", description = "Redis에 저장된 리프레시 토큰을 삭제하여 로그아웃 처리")
 	public ResponseEntity<DataResponse<String>> logout(
@@ -93,4 +91,5 @@ public class AuthController {
 		authService.withdraw(userId);
 		return ResponseEntity.ok(DataResponse.from("회원 탈퇴가 완료되었습니다."));
 	}
+
 }

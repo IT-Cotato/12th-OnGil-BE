@@ -59,6 +59,10 @@ public enum ErrorCode {
 	// REVIEW
 	REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "리뷰를 찾을 수 없습니다.", "REVIEW-001"),
 	REVIEW_FORBIDDEN(HttpStatus.FORBIDDEN, "본인의 리뷰만 수정/삭제할 수 있습니다.", "REVIEW-002"),
+	REVIEW_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "이미 해당 상품에 대한 리뷰를 작성했습니다.", "REVIEW-003"),
+	REVIEW_STEP1_INCOMPLETE(HttpStatus.BAD_REQUEST, "1차 답변이 완료되지 않았습니다.", "REVIEW-004"),
+	REVIEW_STEP2_INCOMPLETE(HttpStatus.BAD_REQUEST, "2차 답변이 완료되지 않았습니다.", "REVIEW-005"),
+	AI_GENERATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 리뷰 생성 중 오류가 발생했습니다.", "REVIEW-006"),
 
 	// ORDER
 	ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "주문을 찾을 수 없습니다.", "ORDER-001"),

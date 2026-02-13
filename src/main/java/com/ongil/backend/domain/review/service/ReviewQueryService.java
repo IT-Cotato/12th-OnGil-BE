@@ -15,15 +15,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.repository.OrderItemRepository;
+import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.domain.review.converter.ReviewConverter;
 import com.ongil.backend.domain.review.dto.request.ReviewListRequest;
 import com.ongil.backend.domain.review.dto.response.*;
 import com.ongil.backend.domain.review.entity.Review;
 import com.ongil.backend.domain.review.entity.ReviewHelpful;
+import com.ongil.backend.domain.review.enums.ColorAnswer;
+import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.ReviewSortType;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
+import com.ongil.backend.domain.review.enums.SizeAnswer;
 import com.ongil.backend.domain.review.repository.ReviewHelpfulRepository;
 import com.ongil.backend.domain.review.repository.ReviewRepository;
 import com.ongil.backend.domain.user.entity.User;
@@ -36,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ReviewService {
+public class ReviewQueryService {
 
 	private final ReviewRepository reviewRepository;
 	private final ReviewHelpfulRepository reviewHelpfulRepository;
@@ -51,13 +55,13 @@ public class ReviewService {
 
 	// 1. 상품별 리뷰 목록 조회
 	public Page<ReviewListResponse> getProductReviews(Long productId, Long userId, ReviewListRequest request) {
-		validateProductExists(productId);
+		getProductOrThrow(productId);
 
 		Pageable pageable = createPageable(request.getPage(), request.getPageSize(), request.getSort());
 		Page<Review> reviews;
 
 		// 유사 체형 필터링 적용 여부 확인
-		User user = (request.isMySizeOnly() && userId != null) ? findUserById(userId) : null;
+		User user = (request.isMySizeOnly() && userId != null) ? getUserOrThrow(userId) : null;
 		boolean useSimilarBodyType = user != null && hasBodyTypeInfo(user);
 
 		if (useSimilarBodyType) {
@@ -80,7 +84,7 @@ public class ReviewService {
 
 	// 2. 리뷰 통계 요약 조회
 	public ReviewSummaryResponse getReviewSummary(Long productId, Long userId) {
-		validateProductExists(productId);
+		getProductOrThrow(productId);
 
 		Double avgRating = reviewRepository.getAverageRating(productId); // 평균 평점
 		Long initialReviewCount = reviewRepository.countByProductIdAndType(productId, ReviewType.INITIAL); // 초기 리뷰 수
@@ -89,7 +93,7 @@ public class ReviewService {
 		// 사이즈 통계 (유사 체형 기준)
 		ReviewSummaryResponse.CategorySummary sizeSummary;
 		if (userId != null) {
-			User user = findUserById(userId);
+			User user = getUserOrThrow(userId);
 			if (hasBodyTypeInfo(user)) {
 				sizeSummary = buildSizeSummaryWithSimilarBodyType(productId, user);
 			} else {
@@ -214,7 +218,7 @@ public class ReviewService {
 		Review review = reviewRepository.findByIdWithLock(reviewId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND));
 
-		User user = findUserById(userId);
+		User user = getUserOrThrow(userId);
 
 		boolean exists = reviewHelpfulRepository.existsByReviewIdAndUserId(reviewId, userId);
 
@@ -235,23 +239,6 @@ public class ReviewService {
 			.isHelpful(!exists)
 			.helpfulCount(review.getHelpfulCount())
 			.build();
-	}
-
-	// 헬퍼 메서드
-
-	private void validateProductExists(Long productId) {
-		if (!productRepository.existsById(productId)) {
-			throw new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND);
-		}
-	}
-
-	private User findUserById(Long userId) {
-		return userRepository.findById(userId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
-	}
-
-	private boolean hasBodyTypeInfo(User user) {
-		return user.getHeight() != null && user.getWeight() != null;
 	}
 
 	// 정렬 기준에 따른 Pageable 생성
@@ -334,11 +321,21 @@ public class ReviewService {
 			.sum();
 
 		List<ReviewSummaryResponse.AnswerStat> answerStats = stats.stream()
-			.map(row -> ReviewSummaryResponse.AnswerStat.builder()
-				.answer((String)row[0])
-				.count((Long)row[1])
-				.percentage(totalCount > 0 ? Math.round(((Long)row[1]) * 1000.0 / totalCount) / 10.0 : 0.0)
-				.build())
+			.map(row -> {
+				Object key = row[0];
+				String answerLabel;
+
+				if (key instanceof SizeAnswer size) answerLabel = size.getDisplayName();
+				else if (key instanceof ColorAnswer color) answerLabel = color.getDisplayName();
+				else if (key instanceof MaterialAnswer mat) answerLabel = mat.getDisplayName();
+				else answerLabel = String.valueOf(key);
+
+				return ReviewSummaryResponse.AnswerStat.builder()
+					.answer(answerLabel)
+					.count((Long) row[1])
+					.percentage(totalCount > 0 ? Math.round(((Long) row[1]) * 1000.0 / totalCount) / 10.0 : 0.0)
+					.build();
+			})
 			.sorted(Comparator.comparing(ReviewSummaryResponse.AnswerStat::getCount).reversed())
 			.collect(Collectors.toList());
 
@@ -353,4 +350,20 @@ public class ReviewService {
 			.answerStats(answerStats)
 			.build();
 	}
+
+
+	private User getUserOrThrow(Long userId) {
+		return userRepository.findById(userId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));
+	}
+
+	private Product getProductOrThrow(Long productId) {
+		return productRepository.findById(productId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.PRODUCT_NOT_FOUND));
+	}
+
+	private boolean hasBodyTypeInfo(User user) {
+		return user.getHeight() != null && user.getWeight() != null;
+	}
 }
+

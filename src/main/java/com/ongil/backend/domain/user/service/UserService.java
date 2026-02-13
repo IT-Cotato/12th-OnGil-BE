@@ -43,7 +43,7 @@ public class UserService {
 		User user = findUser(userId);
 
 		// 1. 새 이미지 먼저 S3 업로드 (실패 시 기존 이미지 보존)
-		String newImageUrl = s3ImageService.upload(imageFile);
+		String newImageUrl = s3ImageService.uploadProfileImage(imageFile);
 
 		// 2. 기존 프로필 이미지 URL 백업
 		String oldImageUrl = user.getProfileImg();

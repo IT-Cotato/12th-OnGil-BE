@@ -201,7 +201,7 @@ public class OrderService {
 	public OrderDetailResponse updateDeliveryAddress(Long userId, Long orderId, DeliveryAddressUpdateRequest request) {
 		Order order = getOrderAndValidateOwner(userId, orderId);
 
-		if (order.getOrderStatus() != OrderStatus.ORDER_RECEIVED) {
+		if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
 			throw new AppException(ErrorCode.ORDER_UPDATE_NOT_ALLOWED);
 		}
 
@@ -251,7 +251,7 @@ public class OrderService {
 		if (order.getOrderStatus() == OrderStatus.CANCELED) {
 			throw new AppException(ErrorCode.ORDER_ALREADY_CANCELED);
 		}
-		if (order.getOrderStatus() != OrderStatus.ORDER_RECEIVED) {
+		if (order.getOrderStatus() != OrderStatus.CONFIRMED) {
 			throw new AppException(ErrorCode.ORDER_CANCEL_NOT_ALLOWED);
 		}
 	}

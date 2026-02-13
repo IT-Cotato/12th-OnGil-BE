@@ -34,15 +34,24 @@ public class S3ImageService {
 
 	private static final List<String> ALLOWED_EXTENSIONS = List.of("jpg", "jpeg", "png");
 	private static final String PROFILE_DIRECTORY = "profile";
+	private static final String REVIEW_DIRECTORY = "review";
+
+	public String uploadProfileImage(MultipartFile file) {
+		return upload(file, PROFILE_DIRECTORY);
+	}
+
+	public String uploadReviewImage(MultipartFile file) {
+		return upload(file, REVIEW_DIRECTORY);
+	}
 
 	/**
 	 * 이미지를 S3에 업로드하고 공개 URL을 반환한다.
 	 */
-	public String upload(MultipartFile file) {
+	private String upload(MultipartFile file, String directory) {
 		validateFile(file);
 
 		String extension = extractExtension(file.getOriginalFilename());
-		String key = PROFILE_DIRECTORY + "/" + UUID.randomUUID() + "." + extension;
+		String key = directory + "/" + UUID.randomUUID() + "." + extension;
 
 		try {
 			PutObjectRequest putRequest = PutObjectRequest.builder()

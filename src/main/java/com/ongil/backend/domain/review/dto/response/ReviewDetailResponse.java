@@ -27,10 +27,13 @@ public class ReviewDetailResponse {
 	@Schema(description = "현재 사용자가 도움돼요를 눌렀는지 여부")
 	private Boolean isHelpful;
 
-	@Schema(description = "AI 생성 리뷰")
-	private String aiGeneratedReview;
+	@Schema(description = "사이즈 관련 후기 문장 목록")
+	private List<String> sizeReview;
 
-	@Schema(description = "텍스트 리뷰")
+	@Schema(description = "소재 관련 후기 문장 목록")
+	private List<String> materialReview;
+
+	@Schema(description = "기타 텍스트 리뷰")
 	private String textReview;
 
 	@Schema(description = "리뷰 이미지 URL 목록")

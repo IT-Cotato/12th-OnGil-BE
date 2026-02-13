@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.review.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -186,9 +188,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 		@Param("reviewType") ReviewType reviewType
 	);
 
-	// ReviewRepository.java
-
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("SELECT r FROM Review r WHERE r.id = :reviewId")
 	Optional<Review> findByIdWithLock(@Param("reviewId") Long reviewId);
+
+	@Modifying
+	@Query("DELETE FROM Review r WHERE r.reviewStatus = 'DRAFT' AND r.createdAt < :threshold")
+	void deleteExpiredDraftReviews(LocalDateTime threshold);
+
+	boolean existsByOrderItemIdAndReviewTypeAndReviewStatus(
+		Long orderItemId,
+		ReviewType reviewType,
+		ReviewStatus reviewStatus
+	);
 }
