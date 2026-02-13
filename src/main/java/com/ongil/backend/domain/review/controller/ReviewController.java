@@ -25,6 +25,7 @@ import com.ongil.backend.global.config.s3.S3ImageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "Review", description = "리뷰 API (토큰 필요)")
@@ -125,7 +126,7 @@ public class ReviewController {
 	public DataResponse<ReviewStep1Response> updateReviewStep1(
 		@AuthenticationPrincipal Long userId,
 		@PathVariable Long reviewId,
-		@RequestBody ReviewStep1Request request
+		@Valid @RequestBody ReviewStep1Request request
 	) {
 		ReviewStep1Response response = reviewCommandService.updateReviewStep1(userId, reviewId, request);
 		return DataResponse.from(response);
@@ -136,7 +137,7 @@ public class ReviewController {
 	public DataResponse<Void> updateReviewStep2Size(
 		@AuthenticationPrincipal Long userId,
 		@PathVariable Long reviewId,
-		@RequestBody ReviewStep2SizeRequest request
+		@Valid @RequestBody ReviewStep2SizeRequest request
 	) {
 		reviewCommandService.updateReviewStep2Size(userId, reviewId, request);
 		return DataResponse.ok();
@@ -147,7 +148,7 @@ public class ReviewController {
 	public DataResponse<Void> updateReviewStep2Material(
 		@AuthenticationPrincipal Long userId,
 		@PathVariable Long reviewId,
-		@RequestBody ReviewStep2MaterialRequest request
+		@Valid @RequestBody ReviewStep2MaterialRequest request
 	) {
 		reviewCommandService.updateReviewStep2Material(userId, reviewId, request);
 		return DataResponse.ok();
@@ -193,7 +194,7 @@ public class ReviewController {
 	public DataResponse<Void> submitReview(
 		@AuthenticationPrincipal Long userId,
 		@PathVariable Long reviewId,
-		@RequestBody ReviewFinalSubmitRequest request
+		@Valid @RequestBody ReviewFinalSubmitRequest request
 	) {
 		reviewCommandService.submitReview(userId, reviewId, request);
 		return DataResponse.ok();

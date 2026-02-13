@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ReviewStep1Request {
 
-    @NotBlank(message = "의류 카테고리는 필수입니다.")
+    @NotNull(message = "의류 카테고리는 필수입니다.")
     private ClothingCategory clothingCategory;
 
     @NotNull(message = "별점은 필수입니다.")
@@ -27,12 +27,12 @@ public class ReviewStep1Request {
     @Max(value = 5, message = "별점은 5점 이하여야 합니다.")
     private Integer rating;
 
-    @NotBlank(message = "착용감 답변은 필수입니다.")
+    @NotNull(message = "착용감 답변은 필수입니다.")
     private SizeAnswer sizeAnswer;
 
-    @NotBlank(message = "색감 답변은 필수입니다.")
+    @NotNull(message = "색감 답변은 필수입니다.")
     private ColorAnswer colorAnswer;
 
-    @NotBlank(message = "소재 답변은 필수입니다.")
+    @NotNull(message = "소재 답변은 필수입니다.")
     private MaterialAnswer materialAnswer;
 }

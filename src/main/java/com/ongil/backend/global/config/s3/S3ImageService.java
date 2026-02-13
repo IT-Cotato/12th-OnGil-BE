@@ -47,7 +47,7 @@ public class S3ImageService {
 	/**
 	 * 이미지를 S3에 업로드하고 공개 URL을 반환한다.
 	 */
-	public String upload(MultipartFile file, String directory) {
+	private String upload(MultipartFile file, String directory) {
 		validateFile(file);
 
 		String extension = extractExtension(file.getOriginalFilename());

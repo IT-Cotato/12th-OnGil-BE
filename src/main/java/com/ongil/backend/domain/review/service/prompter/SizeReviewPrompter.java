@@ -112,7 +112,7 @@ public class SizeReviewPrompter implements ReviewPrompter {
 			prompt.append("\n- 위 리스트에 나열된 각 항목(예: 어깨&목, 전반적 등)마다 **반드시 2문장씩** 생성할 것.");
 
 			if (request.getFitIssueParts().contains("전반적")) {
-				prompt.append("\n- '전반적' 항목에 대해서는 특정 신체 부위 언급 없이 전체적인 실루엣이나 조이는 느낌에 대해 2문장을 생성할 것.");
+				prompt.append("\n- '전반적' 항목에 대해서는 특정 신체 부위 언급 없이 전체적으로 조이거나 답답한 느낌에 대해 2문장을 생성할 것.");
 			}
 
 			prompt.append("\n- 결과적으로 총 ").append(request.getFitIssueParts().size() * 2).append("문장이 생성되어야 함.");

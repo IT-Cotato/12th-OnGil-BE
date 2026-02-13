@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.ongil.backend.domain.category.entity.Category;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.repository.OrderItemRepository;
 import com.ongil.backend.domain.review.converter.ReviewWriteConverter;
@@ -33,6 +34,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class ReviewCommandService {
 
+	private static final int REVIEW_REWARD_POINTS = 500;
+
 	private final ReviewRepository reviewRepository;
 	private final UserRepository userRepository;
 	private final OrderItemRepository orderItemRepository;
@@ -48,7 +51,10 @@ public class ReviewCommandService {
 		reviewValidator.validateReviewAuthority(orderItem, userId);
 		reviewValidator.validateInitialReviewAlreadyExists(orderItemId);
 
-		String categoryName = orderItem.getProduct().getCategory().getParentCategory().getName();
+		Category category = orderItem.getProduct().getCategory();
+		String categoryName = (category.getParentCategory() != null)
+			? category.getParentCategory().getName()
+			: category.getName();
 		ClothingCategory clothingCategory = ClothingCategory.fromDisplayName(categoryName);
 
 		Review review = reviewWriteConverter.toInitialReviewEntity(user, orderItem, clothingCategory);
@@ -139,16 +145,15 @@ public class ReviewCommandService {
 		String joinedImages = (request.getReviewImageUrls() != null && !request.getReviewImageUrls().isEmpty())
 			? String.join(",", request.getReviewImageUrls()) : null;
 
-		int rewardAmount = 500;
 		review.submit(
 			request.getTextReview(),
 			joinedImages,
 			joinedSizeReview,
 			joinedMaterialReview,
-			rewardAmount
+			REVIEW_REWARD_POINTS
 		);
 
-		user.restorePoints(rewardAmount);
+		user.restorePoints(REVIEW_REWARD_POINTS);
 	}
 
 	private Review getReviewOrThrow(Long reviewId) {

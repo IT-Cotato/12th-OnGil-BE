@@ -30,10 +30,10 @@ public class ReviewWriteConverter {
 	}
 
 	public ReviewStep1Response toStep1Response(Review review) {
-		boolean needsSizeQ = review.getSizeAnswer().isNeedsSecondaryQuestion();
-		boolean needsMaterialQ = review.getMaterialAnswer().isNeedsSecondaryQuestion();
+		boolean needsSizeQ = review.getSizeAnswer() != null && review.getSizeAnswer().isNeedsSecondaryQuestion();
+		boolean needsMaterialQ = review.getMaterialAnswer() != null && review.getMaterialAnswer().isNeedsSecondaryQuestion();
 
-		List<String> availableBodyParts = needsSizeQ
+		List<String> availableBodyParts = (needsSizeQ && review.getClothingCategory() != null)
 			? review.getClothingCategory().getBodyParts()
 			: Collections.emptyList();
 
