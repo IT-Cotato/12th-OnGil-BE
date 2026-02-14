@@ -174,7 +174,8 @@ public class AdminService {
 			request.getName(),
 			request.getIconUrl(),
 			request.getDisplayOrder(),
-			parentCategory
+			parentCategory,
+			null  // sizeChartType은 수정하지 않음
 		);
 
 		return categoryConverter.toSimpleResponse(category);
