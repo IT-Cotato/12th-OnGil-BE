@@ -3,6 +3,7 @@ package com.ongil.backend.domain.category.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.ongil.backend.domain.category.enums.SizeChartType;
 import com.ongil.backend.global.common.entity.BaseEntity;
 
 import jakarta.persistence.*;
@@ -28,6 +29,10 @@ public class Category extends BaseEntity {
 	@Column(name = "icon_url", length = 500)
 	private String iconUrl;
 
+	@Enumerated(EnumType.STRING)
+	@Column(name = "size_chart_type", length = 20)
+	private SizeChartType sizeChartType;
+
 	@Column(name = "display_order", nullable = false)
 	private Integer displayOrder;
 
@@ -39,15 +44,16 @@ public class Category extends BaseEntity {
 	private List<Category> subCategories = new ArrayList<>();
 
 	@Builder
-	public Category(String name, String iconUrl, Integer displayOrder, Category parentCategory) {
+	public Category(String name, String iconUrl, Integer displayOrder, Category parentCategory, SizeChartType sizeChartType) {
 		this.name = name;
 		this.iconUrl = iconUrl;
 		this.displayOrder = displayOrder;
 		this.parentCategory = parentCategory;
+		this.sizeChartType = sizeChartType;
 	}
 
 	// 카테고리 정보 수정
-	public void updateCategory(String name, String iconUrl, Integer displayOrder, Category parentCategory) {
+	public void updateCategory(String name, String iconUrl, Integer displayOrder, Category parentCategory, SizeChartType sizeChartType) {
 		if (name != null) {
 			this.name = name;
 		}
@@ -65,6 +71,9 @@ public class Category extends BaseEntity {
 				);
 			}
 			this.parentCategory = parentCategory;
+		}
+		if (sizeChartType != null) {
+			this.sizeChartType = sizeChartType;
 		}
 	}
 }

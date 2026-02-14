@@ -2,6 +2,7 @@ package com.ongil.backend.domain.product.dto.response;
 
 import java.util.List;
 
+import com.ongil.backend.domain.category.enums.SizeChartType;
 import com.ongil.backend.domain.product.enums.ProductType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,6 +60,9 @@ public class ProductDetailResponse {
 
 	@Schema(description = "카테고리명")
 	private String categoryName;
+
+	@Schema(description = "사이즈표 타입")
+	private SizeChartType sizeChartType;
 
 	// 상태
 	@Schema(description = "판매 중 여부")

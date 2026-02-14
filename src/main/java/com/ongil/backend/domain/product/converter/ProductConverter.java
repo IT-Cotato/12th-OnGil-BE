@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.ongil.backend.domain.category.entity.Category;
+import com.ongil.backend.domain.category.enums.SizeChartType;
 import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
 import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
@@ -38,6 +40,7 @@ public class ProductConverter {
 			.brandName(product.getBrand().getName())
 			.categoryId(product.getCategory().getId())
 			.categoryName(product.getCategory().getName())
+			.sizeChartType(getSizeChartType(product))
 			.onSale(product.getOnSale())
 			.productType(product.getProductType())
 			.reviewCount(product.getReviewCount())
@@ -149,5 +152,18 @@ public class ProductConverter {
 	private String getFirstImage(String imageUrls) {
 		List<String> images = parseStringToList(imageUrls);
 		return images.isEmpty() ? null : images.get(0);
+	}
+
+	// 사이즈표 타입 가져오기
+	private SizeChartType getSizeChartType(Product product) {
+		Category category = product.getCategory();
+
+		// 하위 카테고리라면 상위 카테고리의 타입 사용
+		if (category.getParentCategory() != null) {
+			return category.getParentCategory().getSizeChartType();
+		}
+
+		// 상위 카테고리라면 자기 자신의 타입 사용
+		return category.getSizeChartType();
 	}
 }
