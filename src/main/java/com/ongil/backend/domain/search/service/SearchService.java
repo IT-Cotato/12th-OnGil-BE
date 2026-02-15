@@ -138,7 +138,7 @@ public class SearchService {
 			.withMaxResults(0)
 			.withAggregation("top_keywords", Aggregation.of(a -> a
 				.terms(t -> t
-					.field("keyword.keyword")
+					.field("keyword")
 					.size(50)
 				)
 			))
