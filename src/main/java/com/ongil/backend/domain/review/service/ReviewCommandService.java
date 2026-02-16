@@ -2,6 +2,7 @@ package com.ongil.backend.domain.review.service;
 
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import com.ongil.backend.domain.review.repository.ReviewRepository;
 import com.ongil.backend.domain.review.validator.ReviewValidator;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
+import com.ongil.backend.global.common.exception.AppException;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
@@ -64,7 +66,14 @@ public class ReviewCommandService {
 				ClothingCategory clothingCategory = ClothingCategory.fromDisplayName(categoryName);
 
 				Review review = reviewWriteConverter.toInitialReviewEntity(user, orderItem, clothingCategory);
-				return reviewRepository.save(review).getId();
+				try {
+					return reviewRepository.saveAndFlush(review).getId();
+				} catch (DataIntegrityViolationException e) {
+					return reviewRepository.findByOrderItemIdAndReviewTypeAndReviewStatus(
+						orderItemId, ReviewType.INITIAL, ReviewStatus.DRAFT)
+						.map(Review::getId)
+						.orElseThrow(() -> new AppException(ErrorCode.INTERNAL_SERVER_ERROR));
+				}
 			});
 	}
 

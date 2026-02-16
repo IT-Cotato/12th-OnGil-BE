@@ -138,11 +138,7 @@ public class ReviewConverter {
 		return ReviewDetailResponse.ProductInfo.builder()
 			.productId(product.getId())
 			.productName(product.getName())
-			.clothingCategory(Optional.ofNullable(product.getCategory())
-				.map(Category::getParentCategory)
-				.map(Category::getName)
-				.map(ClothingCategory::fromDisplayName)
-				.orElse(null))
+			.clothingCategory(resolveClothingCategory(product))
 			.brandName(product.getBrand() != null ? product.getBrand().getName() : null)
 			.thumbnailImageUrl(getFirstImage(product.getImageUrls()))
 			.build();
@@ -281,14 +277,18 @@ public class ReviewConverter {
 		return PendingReviewResponse.ProductInfo.builder()
 			.productId(product.getId())
 			.productName(product.getName())
-			.clothingCategory(Optional.ofNullable(product.getCategory())
-				.map(Category::getParentCategory)
-				.map(Category::getName)
-				.map(ClothingCategory::fromDisplayName)
-				.orElse(null))
+			.clothingCategory(resolveClothingCategory(product))
 			.brandName(product.getBrand() != null ? product.getBrand().getName() : null)
 			.thumbnailImageUrl(getFirstImage(product.getImageUrls()))
 			.build();
+	}
+
+	private ClothingCategory resolveClothingCategory(Product product) {
+		return Optional.ofNullable(product.getCategory())
+			.map(Category::getParentCategory)
+			.map(Category::getName)
+			.map(ClothingCategory::fromDisplayName)
+			.orElse(null);
 	}
 
 	// 공통 유틸리티 메서드

@@ -139,7 +139,7 @@ public class ReviewDetailResponse {
 		@Schema(description = "소재 답변 enum (VERY_GOOD / GOOD / NORMAL / BAD / VERY_BAD)")
 		private String materialAnswer;
 
-		@Schema(description = "소재 2차 질문 방향 (POSITIVE / NEGATIVE / null")
+		@Schema(description = "소재 2차 질문 방향 (POSITIVE / NEGATIVE / null)")
 		private String materialSecondaryType;
 	}
 
