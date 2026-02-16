@@ -2,6 +2,7 @@ package com.ongil.backend.domain.review.service;
 
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +21,13 @@ import com.ongil.backend.domain.review.entity.Review;
 import com.ongil.backend.domain.review.enums.ClothingCategory;
 import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.MaterialFeatureType;
+import com.ongil.backend.domain.review.enums.ReviewStatus;
+import com.ongil.backend.domain.review.enums.ReviewType;
 import com.ongil.backend.domain.review.repository.ReviewRepository;
 import com.ongil.backend.domain.review.validator.ReviewValidator;
 import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
+import com.ongil.backend.global.common.exception.AppException;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
 
@@ -49,16 +53,28 @@ public class ReviewCommandService {
 		OrderItem orderItem = getOrderItemOrThrow(orderItemId);
 
 		reviewValidator.validateReviewAuthority(orderItem, userId);
-		reviewValidator.validateInitialReviewAlreadyExists(orderItemId);
+		reviewValidator.validateInitialReviewAlreadyCompleted(orderItemId);
 
-		Category category = orderItem.getProduct().getCategory();
-		String categoryName = (category.getParentCategory() != null)
-			? category.getParentCategory().getName()
-			: category.getName();
-		ClothingCategory clothingCategory = ClothingCategory.fromDisplayName(categoryName);
+		// 이미 DRAFT 리뷰가 있으면 기존 리뷰 ID 반환
+		return reviewRepository.findByOrderItemIdAndReviewTypeAndReviewStatus(orderItemId, ReviewType.INITIAL, ReviewStatus.DRAFT)
+			.map(Review::getId)
+			.orElseGet(() -> {
+				Category category = orderItem.getProduct().getCategory();
+				String categoryName = (category.getParentCategory() != null)
+					? category.getParentCategory().getName()
+					: category.getName();
+				ClothingCategory clothingCategory = ClothingCategory.fromDisplayName(categoryName);
 
-		Review review = reviewWriteConverter.toInitialReviewEntity(user, orderItem, clothingCategory);
-		return reviewRepository.save(review).getId();
+				Review review = reviewWriteConverter.toInitialReviewEntity(user, orderItem, clothingCategory);
+				try {
+					return reviewRepository.saveAndFlush(review).getId();
+				} catch (DataIntegrityViolationException e) {
+					return reviewRepository.findByOrderItemIdAndReviewTypeAndReviewStatus(
+						orderItemId, ReviewType.INITIAL, ReviewStatus.DRAFT)
+						.map(Review::getId)
+						.orElseThrow(() -> new AppException(ErrorCode.INTERNAL_SERVER_ERROR));
+				}
+			});
 	}
 
 	@Transactional

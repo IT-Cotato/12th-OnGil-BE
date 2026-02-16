@@ -182,7 +182,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 	// N+1 문제 해결: 여러 OrderItem에 대해 리뷰 작성된 ID 목록 한번에 조회
 	@Query("SELECT r.orderItem.id FROM Review r " +
 		"WHERE r.orderItem.id IN :orderItemIds " +
-		"AND r.reviewType = :reviewType")
+		"AND r.reviewType = :reviewType " +
+		"AND r.reviewStatus = 'COMPLETED'")
 	List<Long> findReviewedOrderItemIds(
 		@Param("orderItemIds") List<Long> orderItemIds,
 		@Param("reviewType") ReviewType reviewType
@@ -201,4 +202,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 		ReviewType reviewType,
 		ReviewStatus reviewStatus
 	);
+
+	Optional<Review> findByOrderItemIdAndReviewTypeAndReviewStatus(Long orderItemId, ReviewType reviewType, ReviewStatus reviewStatus);
 }

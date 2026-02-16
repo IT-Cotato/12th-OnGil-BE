@@ -115,18 +115,14 @@ public class SearchService {
 
 		SearchHits<ProductDocument> hits = elasticsearchOperations.search(nativeQuery, ProductDocument.class);
 
-		LinkedHashSet<String> categorySet = new LinkedHashSet<>();
-		LinkedHashSet<String> brandSet = new LinkedHashSet<>();
-
+		// ES 점수 순서 그대로 카테고리/상품명/브랜드 모두 수집
+		LinkedHashSet<String> suggestions = new LinkedHashSet<>();
 		for (SearchHit<ProductDocument> hit : hits) {
 			ProductDocument doc = hit.getContent();
-
-			if (doc.getCategoryName() != null) categorySet.add(doc.getCategoryName());
-			if (doc.getBrandName() != null) brandSet.add(doc.getBrandName());
+			if (doc.getCategoryName() != null) suggestions.add(doc.getCategoryName());
+			if (doc.getName() != null) suggestions.add(doc.getName());
+			if (doc.getBrandName() != null) suggestions.add(doc.getBrandName());
 		}
-
-		List<String> suggestions = new ArrayList<>(categorySet);
-		suggestions.addAll(brandSet);
 
 		return suggestions.stream()
 			.limit(12)
@@ -171,7 +167,33 @@ public class SearchService {
 		return List.of();
 	}
 
-	// 검색어에 따른 상품 ID 목록 추출
+	// 검색어를 정규화된 대표 키워드로 변환
+	public String extractRepresentativeKeyword(String query) {
+		NativeQuery nativeQuery = NativeQuery.builder()
+			.withQuery(q -> q.bool(b -> b
+				.should(s -> s.match(m -> m.field("brandName.autocomplete").query(query).boost(3.0f)))
+				.should(s -> s.match(m -> m.field("categoryName.autocomplete").query(query).boost(2.0f)))
+				.should(s -> s.match(m -> m.field("name.autocomplete").query(query).boost(1.0f)))
+			))
+			.withMaxResults(1)
+			.build();
+
+		SearchHits<ProductDocument> hits = elasticsearchOperations.search(nativeQuery, ProductDocument.class);
+		if (hits.isEmpty()) return null;
+
+		ProductDocument top = hits.getSearchHits().get(0).getContent();
+
+		// 가장 점수 높은 문서에서 query와 가장 유사한 필드 값 반환
+		String q = query.toLowerCase();
+		if (top.getBrandName() != null && top.getBrandName().toLowerCase().contains(q)) return top.getBrandName();
+		if (top.getCategoryName() != null && top.getCategoryName().toLowerCase().contains(q)) return top.getCategoryName();
+		if (top.getName() != null && top.getName().toLowerCase().contains(q)) return top.getName();
+
+		// 완전 일치 없으면 카테고리 > 브랜드 순으로 대표값 반환
+		if (top.getCategoryName() != null) return top.getCategoryName();
+		if (top.getBrandName() != null) return top.getBrandName();
+		return null;
+	}
 	public List<Long> getProductIdsByQuery(String query) {
 		String keyword = normalize(query);
 		if (keyword.isEmpty()) return List.of();

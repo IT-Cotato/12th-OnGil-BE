@@ -193,18 +193,9 @@ public class ProductService {
 
 		// 추천 검색어에 이용하기 위한 과정
 		if (hasQuery && !products.isEmpty()) {
-			Product firstProduct = products.getContent().get(0);
-			String savedKeyword = null;
-
-			if (firstProduct.getBrand() != null && firstProduct.getBrand().getName() != null) {
-				savedKeyword = firstProduct.getBrand().getName();
-			}
-			else if (firstProduct.getCategory() != null && firstProduct.getCategory().getName() != null) {
-				savedKeyword = firstProduct.getCategory().getName();
-			}
-
-			if (savedKeyword != null && !savedKeyword.isBlank()) {
-				recordSearchSideEffects(savedKeyword, userId);
+			String representativeKeyword = searchService.extractRepresentativeKeyword(query);
+			if (representativeKeyword != null && !representativeKeyword.isBlank()) {
+				recordSearchSideEffects(representativeKeyword, userId);
 			}
 		}
 

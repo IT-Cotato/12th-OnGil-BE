@@ -3,10 +3,12 @@ package com.ongil.backend.domain.review.converter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
+import com.ongil.backend.domain.category.entity.Category;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.review.dto.response.MyReviewResponse;
@@ -14,7 +16,10 @@ import com.ongil.backend.domain.review.dto.response.PendingReviewResponse;
 import com.ongil.backend.domain.review.dto.response.ReviewDetailResponse;
 import com.ongil.backend.domain.review.dto.response.ReviewListResponse;
 import com.ongil.backend.domain.review.entity.Review;
+import com.ongil.backend.domain.review.enums.ClothingCategory;
+import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.ReviewType;
+import com.ongil.backend.domain.review.enums.SizeAnswer;
 import com.ongil.backend.domain.user.entity.User;
 
 @Component
@@ -83,6 +88,7 @@ public class ReviewConverter {
 
 		ReviewDetailResponse.ReviewDetailResponseBuilder builder = ReviewDetailResponse.builder()
 			.reviewId(review.getId())
+			.reviewStatus(review.getReviewStatus().name())
 			.reviewType(review.getReviewType().name())
 			.rating(review.getRating())
 			.helpfulCount(review.getHelpfulCount())
@@ -132,6 +138,7 @@ public class ReviewConverter {
 		return ReviewDetailResponse.ProductInfo.builder()
 			.productId(product.getId())
 			.productName(product.getName())
+			.clothingCategory(resolveClothingCategory(product))
 			.brandName(product.getBrand() != null ? product.getBrand().getName() : null)
 			.thumbnailImageUrl(getFirstImage(product.getImageUrls()))
 			.build();
@@ -139,18 +146,38 @@ public class ReviewConverter {
 
 	// 1차 리뷰 답변 구성
 	private ReviewDetailResponse.InitialFirstAnswers buildInitialFirstAnswers(Review review) {
+		if (review.getSizeAnswer() == null && review.getColorAnswer() == null && review.getMaterialAnswer() == null) {
+			return null;
+		}
+
+		SizeAnswer sizeAnswer = review.getSizeAnswer();
+		MaterialAnswer materialAnswer = review.getMaterialAnswer();
+
+		String sizeSecondaryType = null;
+		if (sizeAnswer != null && sizeAnswer.isNeedsSecondaryQuestion()) {
+			sizeSecondaryType = (sizeAnswer == SizeAnswer.LOOSE || sizeAnswer == SizeAnswer.TOO_BIG_NEED_ALTERATION)
+				? "POSITIVE" : "NEGATIVE";
+		}
+
+		String materialSecondaryType = null;
+		if (materialAnswer != null && materialAnswer.isNeedsSecondaryQuestion()) {
+			materialSecondaryType = materialAnswer.isPositive() ? "POSITIVE" : "NEGATIVE";
+		}
+
 		return ReviewDetailResponse.InitialFirstAnswers.builder()
-			.sizeAnswer(review.getSizeAnswer().getDisplayName())
-			.colorAnswer(review.getColorAnswer().getDisplayName())
-			.materialAnswer(review.getMaterialAnswer().getDisplayName())
+			.sizeAnswer(sizeAnswer != null ? sizeAnswer.name() : null)
+			.sizeSecondaryType(sizeSecondaryType)
+			.colorAnswer(review.getColorAnswer() != null ? review.getColorAnswer().name() : null)
+			.materialAnswer(materialAnswer != null ? materialAnswer.name() : null)
+			.materialSecondaryType(materialSecondaryType)
 			.build();
 	}
 
 	// 2차 리뷰 답변 구성
 	private ReviewDetailResponse.InitialSecondAnswers buildInitialSecondAnswers(Review review) {
 		return ReviewDetailResponse.InitialSecondAnswers.builder()
-			.fitIssueParts(review.getFitIssueParts())
-			.materialFeatures(review.getMaterialFeatures())
+			.fitIssueParts(parseToList(review.getFitIssueParts(), ","))
+			.materialFeatures(parseToList(review.getMaterialFeatures(), ","))
 			.build();
 	}
 
@@ -225,13 +252,15 @@ public class ReviewConverter {
 	  작성 가능한 리뷰 응답 변환
 	 */
 	public PendingReviewResponse toPendingReviewResponse(
-		OrderItem orderItem, ReviewType availableType
+		OrderItem orderItem, ReviewType availableType, Review draftReview
 	) {
 		Product product = orderItem.getProduct();
 
 		return PendingReviewResponse.builder()
 			.orderItemId(orderItem.getId())
 			.availableReviewType(availableType.name())
+			.reviewStatus(draftReview != null ? draftReview.getReviewStatus().name() : null)
+			.reviewId(draftReview != null ? draftReview.getId() : null)
 			.product(buildPendingProductInfo(product))
 			.purchaseOption(formatPurchaseOption(orderItem))
 			.orderedAt(orderItem.getOrder().getCreatedAt())
@@ -248,9 +277,18 @@ public class ReviewConverter {
 		return PendingReviewResponse.ProductInfo.builder()
 			.productId(product.getId())
 			.productName(product.getName())
+			.clothingCategory(resolveClothingCategory(product))
 			.brandName(product.getBrand() != null ? product.getBrand().getName() : null)
 			.thumbnailImageUrl(getFirstImage(product.getImageUrls()))
 			.build();
+	}
+
+	private ClothingCategory resolveClothingCategory(Product product) {
+		return Optional.ofNullable(product.getCategory())
+			.map(Category::getParentCategory)
+			.map(Category::getName)
+			.map(ClothingCategory::fromDisplayName)
+			.orElse(null);
 	}
 
 	// 공통 유틸리티 메서드

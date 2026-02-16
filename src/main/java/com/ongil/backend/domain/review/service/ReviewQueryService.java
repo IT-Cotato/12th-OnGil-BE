@@ -160,14 +160,18 @@ public class ReviewQueryService {
 			LocalDateTime orderDate = orderItem.getOrder().getCreatedAt();
 
 			// 일반 리뷰 작성 가능 여부 확인 (주문 완료 직후)
-			if (!reviewRepository.existsByOrderItemIdAndReviewType(orderItem.getId(), ReviewType.INITIAL)) {
-				pendingReviews.add(reviewConverter.toPendingReviewResponse(orderItem, ReviewType.INITIAL));
+			if (!reviewRepository.existsByOrderItemIdAndReviewTypeAndReviewStatus(orderItem.getId(), ReviewType.INITIAL, ReviewStatus.COMPLETED)) {
+				Review draftReview = reviewRepository.findByOrderItemIdAndReviewTypeAndReviewStatus(
+					orderItem.getId(), ReviewType.INITIAL, ReviewStatus.DRAFT).orElse(null);
+				pendingReviews.add(reviewConverter.toPendingReviewResponse(orderItem, ReviewType.INITIAL, draftReview));
 			}
 
 			// 한달 후 리뷰 작성 가능 여부 확인 (주문 완료 5일 후)
 			if (orderDate.plusDays(ONE_MONTH_REVIEW_AVAILABLE_DAYS).isBefore(LocalDateTime.now())) {
-				if (!reviewRepository.existsByOrderItemIdAndReviewType(orderItem.getId(), ReviewType.ONE_MONTH)) {
-					pendingReviews.add(reviewConverter.toPendingReviewResponse(orderItem, ReviewType.ONE_MONTH));
+				if (!reviewRepository.existsByOrderItemIdAndReviewTypeAndReviewStatus(orderItem.getId(), ReviewType.ONE_MONTH, ReviewStatus.COMPLETED)) {
+					Review draftReview = reviewRepository.findByOrderItemIdAndReviewTypeAndReviewStatus(
+						orderItem.getId(), ReviewType.ONE_MONTH, ReviewStatus.DRAFT).orElse(null);
+					pendingReviews.add(reviewConverter.toPendingReviewResponse(orderItem, ReviewType.ONE_MONTH, draftReview));
 				}
 			}
 		}

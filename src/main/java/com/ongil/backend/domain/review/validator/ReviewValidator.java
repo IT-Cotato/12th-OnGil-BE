@@ -55,7 +55,7 @@ public class ReviewValidator {
 		}
 	}
 
-	public void validateInitialReviewAlreadyExists(Long orderItemId) {
+	public void validateInitialReviewAlreadyCompleted(Long orderItemId) {
 		if (reviewRepository.existsByOrderItemIdAndReviewTypeAndReviewStatus(
 			orderItemId, ReviewType.INITIAL, ReviewStatus.COMPLETED)) {
 			throw new AppException(ErrorCode.REVIEW_ALREADY_EXISTS);

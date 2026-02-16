@@ -21,7 +21,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "reviews")
+@Table(name = "reviews",
+	uniqueConstraints = {
+		@UniqueConstraint(columnNames = {"order_item_id", "review_type", "review_status"})
+	}
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 @AllArgsConstructor
