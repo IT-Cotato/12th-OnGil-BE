@@ -59,15 +59,19 @@ public class KakaoLoginService {
 		boolean isNewUser = !userRepository.existsByLoginTypeAndLoginId(LoginType.KAKAO, socialId);
 
 		User user = userRepository.findByLoginTypeAndLoginId(LoginType.KAKAO, socialId)
-			.orElseGet(() -> userRepository.save(
-				User.builder()
-					.loginType(LoginType.KAKAO)
-					.loginId(socialId)
-					.email(extractEmail(userInfo))
-					.profileImg(extractProfileImg(userInfo))
-					.name(extractNickname(userInfo))
-					.build()
-			));
+			.orElseGet(() -> {
+				User newUser = userRepository.save(
+					User.builder()
+						.loginType(LoginType.KAKAO)
+						.loginId(socialId)
+						.email(extractEmail(userInfo))
+						.profileImg(extractProfileImg(userInfo))
+						.name(extractNickname(userInfo))
+						.build()
+				);
+				newUser.restorePoints(2000);
+				return newUser;
+			});
 
 		// JWT 발급
 		String accessToken = jwtTokenProvider.createAccessToken(user.getId());

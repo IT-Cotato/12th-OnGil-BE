@@ -54,15 +54,19 @@ public class GoogleLoginService {
 		boolean isNewUser = !userRepository.existsByLoginTypeAndLoginId(LoginType.GOOGLE, socialId);
 
 		User user = userRepository.findByLoginTypeAndLoginId(LoginType.GOOGLE, socialId)
-			.orElseGet(() -> userRepository.save(
-				User.builder()
-					.loginType(LoginType.GOOGLE)
-					.loginId(socialId)
-					.email(extractEmail(userInfo))
-					.profileImg(extractProfileImg(userInfo))
-					.name(extractName(userInfo))
-					.build()
-			));
+			.orElseGet(() -> {
+				User newUser = userRepository.save(
+					User.builder()
+						.loginType(LoginType.GOOGLE)
+						.loginId(socialId)
+						.email(extractEmail(userInfo))
+						.profileImg(extractProfileImg(userInfo))
+						.name(extractName(userInfo))
+						.build()
+				);
+				newUser.restorePoints(2000);
+				return newUser;
+			});
 
 		String accessToken = jwtTokenProvider.createAccessToken(user.getId());
 		String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
