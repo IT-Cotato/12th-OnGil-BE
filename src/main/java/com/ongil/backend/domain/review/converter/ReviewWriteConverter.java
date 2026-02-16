@@ -13,6 +13,7 @@ import com.ongil.backend.domain.review.entity.Review;
 import com.ongil.backend.domain.review.enums.ClothingCategory;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
+import com.ongil.backend.domain.review.enums.SizeAnswer;
 import com.ongil.backend.domain.user.entity.User;
 
 @Component
@@ -33,6 +34,18 @@ public class ReviewWriteConverter {
 		boolean needsSizeQ = review.getSizeAnswer() != null && review.getSizeAnswer().isNeedsSecondaryQuestion();
 		boolean needsMaterialQ = review.getMaterialAnswer() != null && review.getMaterialAnswer().isNeedsSecondaryQuestion();
 
+		String sizeSecondaryType = null;
+		if (needsSizeQ) {
+			SizeAnswer sizeAnswer = review.getSizeAnswer();
+			sizeSecondaryType = (sizeAnswer == SizeAnswer.LOOSE || sizeAnswer == SizeAnswer.TOO_BIG_NEED_ALTERATION)
+				? "POSITIVE" : "NEGATIVE";
+		}
+
+		String materialSecondaryType = null;
+		if (needsMaterialQ) {
+			materialSecondaryType = review.getMaterialAnswer().isPositive() ? "POSITIVE" : "NEGATIVE";
+		}
+
 		List<String> availableBodyParts = (needsSizeQ && review.getClothingCategory() != null)
 			? review.getClothingCategory().getBodyParts()
 			: Collections.emptyList();
@@ -40,7 +53,9 @@ public class ReviewWriteConverter {
 		return ReviewStep1Response.of(
 			review.getId(),
 			needsSizeQ,
+			sizeSecondaryType,
 			needsMaterialQ,
+			materialSecondaryType,
 			availableBodyParts
 		);
 	}

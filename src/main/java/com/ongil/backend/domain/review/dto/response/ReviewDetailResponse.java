@@ -3,6 +3,8 @@ package com.ongil.backend.domain.review.dto.response;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.ongil.backend.domain.review.enums.ClothingCategory;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,6 +16,9 @@ public class ReviewDetailResponse {
 
 	@Schema(description = "리뷰 ID")
 	private Long reviewId;
+
+	@Schema(description = "리뷰 상태 (DRAFT: 작성 중 / COMPLETED: 작성 완료)")
+	private String reviewStatus;
 
 	@Schema(description = "리뷰 타입 (INITIAL / ONE_MONTH)")
 	private String reviewType;
@@ -107,6 +112,9 @@ public class ReviewDetailResponse {
 		@Schema(description = "상품명")
 		private String productName;
 
+		@Schema(description = "상위 카테고리")
+		private ClothingCategory clothingCategory;
+
 		@Schema(description = "브랜드명")
 		private String brandName;
 
@@ -119,14 +127,20 @@ public class ReviewDetailResponse {
 	@Schema(description = "구매 직후 리뷰 - 1차 질문 답변 (사이즈/색감/소재)")
 	public static class InitialFirstAnswers {
 
-		@Schema(description = "사이즈 답변")
+		@Schema(description = "사이즈 답변 enum (TIGHT_IMMEDIATELY / TIGHT_WHEN_MOVING / COMFORTABLE / LOOSE / TOO_BIG_NEED_ALTERATION)")
 		private String sizeAnswer;
 
-		@Schema(description = "색감 답변")
+		@Schema(description = "사이즈 2차 질문 방향 (POSITIVE / NEGATIVE / null)")
+		private String sizeSecondaryType;
+
+		@Schema(description = "색감 답변 enum (BRIGHTER_THAN_SCREEN / SAME_AS_SCREEN / DARKER_THAN_SCREEN)")
 		private String colorAnswer;
 
-		@Schema(description = "소재 답변")
+		@Schema(description = "소재 답변 enum (VERY_GOOD / GOOD / NORMAL / BAD / VERY_BAD)")
 		private String materialAnswer;
+
+		@Schema(description = "소재 2차 질문 방향 (POSITIVE / NEGATIVE / null")
+		private String materialSecondaryType;
 	}
 
 	@Getter
@@ -134,11 +148,11 @@ public class ReviewDetailResponse {
 	@Schema(description = "구매 직후 리뷰 - 2차 질문 답변 (핏/소재특징)")
 	public static class InitialSecondAnswers {
 
-		@Schema(description = "핏 문제 부위")
-		private String fitIssueParts;
+		@Schema(description = "핏 문제 부위 목록")
+		private List<String> fitIssueParts;
 
-		@Schema(description = "소재 특징")
-		private String materialFeatures;
+		@Schema(description = "소재 특징 목록")
+		private List<String> materialFeatures;
 	}
 
 	@Getter
