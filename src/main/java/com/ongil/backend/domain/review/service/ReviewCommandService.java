@@ -207,9 +207,9 @@ public class ReviewCommandService {
 			for (String url : urls) {
 				try {
 					s3ImageService.delete(url.trim());
-				} catch (Exception e) {
+				} catch (AppException e) {
 					// S3 삭제 실패 시 로그만 남기고 계속 진행
-					log.warn("리뷰 이미지 삭제 실패: {}", url, e);
+					log.warn("리뷰 ID {} 이미지 삭제 실패: {}", review.getId(), url, e);
 				}
 			}
 		}
