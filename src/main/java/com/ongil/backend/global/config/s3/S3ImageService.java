@@ -74,6 +74,11 @@ public class S3ImageService {
 	 * S3에서 기존 이미지를 삭제한다.
 	 */
 	public void delete(String imageUrl) {
+		if (!imageUrl.startsWith(generatePrefix())) {
+			log.info("S3 URL이 아니므로 삭제 생략: {}", imageUrl);
+			return;
+		}
+
 		String key = extractKey(imageUrl);
 
 		try {
