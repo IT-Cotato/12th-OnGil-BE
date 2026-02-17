@@ -30,9 +30,12 @@ import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.AppException;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.config.s3.S3ImageService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -46,6 +49,7 @@ public class ReviewCommandService {
 	private final AiReviewGeneratorService aiReviewGeneratorService;
 	private final ReviewValidator reviewValidator;
 	private final ReviewWriteConverter reviewWriteConverter;
+	private final S3ImageService s3ImageService;
 
 	@Transactional
 	public Long initializeReview(Long userId, Long orderItemId) {
@@ -81,6 +85,9 @@ public class ReviewCommandService {
 	public ReviewStep1Response updateReviewStep1(Long userId, Long reviewId, ReviewStep1Request request) {
 		Review review = getReviewOrThrow(reviewId);
 		reviewValidator.validateReviewAuthority(review.getOrderItem(), userId);
+
+		// 기존 리뷰 이미지 삭제 (S3에서)
+		deleteExistingReviewImages(review);
 
 		review.clearStep2AndStep3();
 
@@ -152,6 +159,9 @@ public class ReviewCommandService {
 
 		reviewValidator.validateReviewAuthority(review.getOrderItem(), userId);
 
+		// 기존 리뷰 이미지 삭제 (재제출 시)
+		deleteExistingReviewImages(review);
+
 		String joinedSizeReview = (request.getSizeReview() != null && !request.getSizeReview().isEmpty())
 			? String.join("\n", request.getSizeReview()) : null;
 
@@ -185,6 +195,24 @@ public class ReviewCommandService {
 	private OrderItem getOrderItemOrThrow(Long orderItemId) {
 		return orderItemRepository.findById(orderItemId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.ORDER_ITEM_NOT_FOUND));
+	}
+
+	/**
+	 * 리뷰에 저장된 기존 이미지들을 S3에서 삭제한다.
+	 */
+	private void deleteExistingReviewImages(Review review) {
+		String imageUrls = review.getReviewImageUrls();
+		if (imageUrls != null && !imageUrls.isEmpty()) {
+			String[] urls = imageUrls.split(",");
+			for (String url : urls) {
+				try {
+					s3ImageService.delete(url.trim());
+				} catch (AppException e) {
+					// S3 삭제 실패 시 로그만 남기고 계속 진행
+					log.warn("리뷰 ID {} 이미지 삭제 실패: {}", review.getId(), url, e);
+				}
+			}
+		}
 	}
 
 }
