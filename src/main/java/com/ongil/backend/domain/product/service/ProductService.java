@@ -503,7 +503,9 @@ public class ProductService {
 	 */
 	private RecommendedProductResponse toRecommendedResponse(Product product) {
 		if (product.getBrand() == null) {
-			throw new IllegalStateException("상품의 브랜드 정보가 누락되었습니다.");
+			throw new IllegalStateException(
+				String.format("상품의 브랜드 정보가 누락되었습니다. Product ID: %d", product.getId())
+			);
 		}
 
 		String thumbnailUrl = null;
