@@ -184,8 +184,10 @@ public class ReviewCommandService {
 		Double avgRating = reviewRepository.getAverageRating(productId);
 
 		// 상품 엔티티 통계 업데이트
+		// reviewCount가 Integer 범위를 초과하지 않도록 제한
+		int countAsInt = reviewCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : reviewCount.intValue();
 		review.getProduct().updateReviewStats(
-			reviewCount.intValue(),
+			countAsInt,
 			avgRating != null ? avgRating : 0.0
 		);
 	}
