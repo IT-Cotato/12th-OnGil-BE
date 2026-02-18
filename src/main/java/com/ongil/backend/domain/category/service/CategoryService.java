@@ -2,7 +2,9 @@ package com.ongil.backend.domain.category.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -46,11 +48,13 @@ public class CategoryService {
 
 		// Cache Miss → DB 조회
 		List<Category> parentCategories = categoryRepository.findAllParentCategoriesWithSub();
+		Set<Long> activeCategoryIds = new HashSet<>(productRepository.findCategoryIdsWithOnSaleProducts());
+
 		List<CategoryResponse> response = parentCategories.stream()
 			.map(parent -> {
-				// 상품이 있는 하위 카테고리만 필터링
+				// 판매 중인 상품이 있는 하위 카테고리만 필터링
 				List<SubCategoryResponse> filteredSubs = parent.getSubCategories().stream()
-					.filter(sub -> productRepository.existsByCategoryIdAndOnSaleTrue(sub.getId()))
+					.filter(sub -> activeCategoryIds.contains(sub.getId()))
 					.map(categoryConverter::toSubCategoryResponse)
 					.collect(Collectors.toList());
 
@@ -100,9 +104,10 @@ public class CategoryService {
 	// 추천 하위 카테고리 조회 (상품이 있는 하위 카테고리만)
 	public List<CategorySimpleResponse> getRecommendedSubCategories(int count) {
 		List<Category> subCategories = categoryRepository.findAllSubCategories();
+		Set<Long> activeCategoryIds = new HashSet<>(productRepository.findCategoryIdsWithOnSaleProducts());
 
 		return subCategories.stream()
-			.filter(category -> productRepository.existsByCategoryIdAndOnSaleTrue(category.getId()))
+			.filter(category -> activeCategoryIds.contains(category.getId()))
 			.limit(count)
 			.map(categoryConverter::toSimpleResponse)
 			.collect(Collectors.toList());

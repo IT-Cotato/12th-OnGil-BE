@@ -14,7 +14,7 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
 	List<Brand> findAllOrderByName();
 
 	@Query(value = "SELECT b.* FROM brands b " +
-		"WHERE EXISTS (SELECT 1 FROM products p WHERE p.brand_id = b.id AND p.on_sale = true) " +
+		"WHERE EXISTS (SELECT 1 FROM products p WHERE p.brand_id = b.id AND p.on_sale = true AND p.product_type <> 'SPECIAL_SALE') " +
 		"ORDER BY RAND() LIMIT 3", nativeQuery = true)
 	List<Brand> findRandomBrands();
 }

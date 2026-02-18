@@ -238,6 +238,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	// 특정 카테고리를 사용하는 상품이 있는지 확인
 	boolean existsByCategoryId(Long categoryId);
 
-	// 특정 카테고리에 판매 중인 상품이 있는지 확인
-	boolean existsByCategoryIdAndOnSaleTrue(Long categoryId);
+	// 판매 중인 상품이 존재하는 카테고리 ID 목록 일괄 조회
+	@Query("SELECT DISTINCT p.category.id FROM Product p WHERE p.onSale = true")
+	List<Long> findCategoryIdsWithOnSaleProducts();
 }
