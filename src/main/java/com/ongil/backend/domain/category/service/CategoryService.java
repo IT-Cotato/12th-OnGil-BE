@@ -2,7 +2,9 @@ package com.ongil.backend.domain.category.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -32,7 +34,7 @@ public class CategoryService {
 	private final CategoryConverter categoryConverter;
 	private final RedisCacheService redisCacheService;
 
-	// 모든 카테고리 조회 (상위 + 하위)
+	// 모든 카테고리 조회 (상위 + 하위, 상품이 있는 카테고리만)
 	public List<CategoryResponse> getAllCategories() {
 		// Redis 캐시 확인
 		List<CategoryResponse> cached = redisCacheService.getList(
@@ -46,7 +48,24 @@ public class CategoryService {
 
 		// Cache Miss → DB 조회
 		List<Category> parentCategories = categoryRepository.findAllParentCategoriesWithSub();
-		List<CategoryResponse> response = categoryConverter.toResponseList(parentCategories);
+		Set<Long> activeCategoryIds = new HashSet<>(productRepository.findCategoryIdsWithOnSaleProducts());
+
+		List<CategoryResponse> response = parentCategories.stream()
+			.map(parent -> {
+				// 판매 중인 상품이 있는 하위 카테고리만 필터링
+				List<SubCategoryResponse> filteredSubs = parent.getSubCategories().stream()
+					.filter(sub -> activeCategoryIds.contains(sub.getId()))
+					.map(categoryConverter::toSubCategoryResponse)
+					.collect(Collectors.toList());
+
+				if (filteredSubs.isEmpty()) {
+					return null; // 하위 카테고리에 상품이 전부 없으면 상위 카테고리도 제외
+				}
+
+				return categoryConverter.toResponse(parent, filteredSubs);
+			})
+			.filter(r -> r != null)
+			.collect(Collectors.toList());
 
 		// Redis 캐싱 (무한 TTL)
 		redisCacheService.save(
@@ -64,27 +83,45 @@ public class CategoryService {
 		return categoryConverter.toSubCategoryResponseList(subCategories);
 	}
 
-	// 랜덤 카테고리 조회
+	// 랜덤 카테고리 조회 (상품이 있는 카테고리만)
 	public List<CategoryRandomResponse> getRandomCategories(int count) {
 		List<Category> allCategories = categoryRepository.findAllByOrderByDisplayOrder();
+		Set<Long> activeCategoryIds = new HashSet<>(productRepository.findCategoryIdsWithOnSaleProducts());
 
-		List<Category> shuffledCategories = new ArrayList<>(allCategories);
-		Collections.shuffle(shuffledCategories);
-
-		return shuffledCategories.stream()
-			.limit(count)
-			.map(category -> {
-				String thumbnailUrl = getTopProductThumbnail(category);
-				return categoryConverter.toRandomResponse(category, thumbnailUrl);
+		// 상품이 있는 카테고리만 사전 필터링 (상위 카테고리는 하위 중 하나라도 있으면 포함)
+		List<Category> activeCategories = allCategories.stream()
+			.filter(category -> {
+				if (category.getParentCategory() != null) {
+					// 하위 카테고리: 직접 확인
+					return activeCategoryIds.contains(category.getId());
+				}
+				// 상위 카테고리: 하위 카테고리 중 하나라도 상품이 있으면 포함
+				return category.getSubCategories().stream()
+					.anyMatch(sub -> activeCategoryIds.contains(sub.getId()));
 			})
 			.collect(Collectors.toList());
+
+		Collections.shuffle(activeCategories);
+
+		// 사전 필터링된 카테고리만 썸네일 조회 (DB 호출 최소화)
+		List<CategoryRandomResponse> result = new ArrayList<>();
+		for (Category category : activeCategories) {
+			if (result.size() >= count) break;
+			String thumbnailUrl = getTopProductThumbnail(category);
+			if (thumbnailUrl != null) {
+				result.add(categoryConverter.toRandomResponse(category, thumbnailUrl));
+			}
+		}
+		return result;
 	}
 
-	// 추천 하위 카테고리 조회
+	// 추천 하위 카테고리 조회 (상품이 있는 하위 카테고리만)
 	public List<CategorySimpleResponse> getRecommendedSubCategories(int count) {
 		List<Category> subCategories = categoryRepository.findAllSubCategories();
+		Set<Long> activeCategoryIds = new HashSet<>(productRepository.findCategoryIdsWithOnSaleProducts());
 
 		return subCategories.stream()
+			.filter(category -> activeCategoryIds.contains(category.getId()))
 			.limit(count)
 			.map(categoryConverter::toSimpleResponse)
 			.collect(Collectors.toList());
