@@ -502,6 +502,10 @@ public class ProductService {
 	 * Product → RecommendedProductResponse 변환
 	 */
 	private RecommendedProductResponse toRecommendedResponse(Product product) {
+		if (product.getBrand() == null) {
+			throw new IllegalStateException("상품의 브랜드 정보가 누락되었습니다.");
+		}
+
 		String thumbnailUrl = null;
 		if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
 			String[] urls = product.getImageUrls().split(",");
@@ -515,7 +519,7 @@ public class ProductService {
 			.discountRate(product.getDiscountRate())
 			.finalPrice(product.getEffectivePrice())
 			.thumbnailImageUrl(thumbnailUrl)
-			.brandName(product.getBrand() != null ? product.getBrand().getName() : null)
+			.brandName(product.getBrand().getName())
 			.productType(product.getProductType())
 			.viewCount(product.getViewCount())
 			.cartCount(product.getCartCount())
