@@ -185,4 +185,10 @@ public class Product extends BaseEntity {
 			this.category = category;
 		}
 	}
+
+	// 리뷰 개수 및 평점 업데이트
+	public void updateReviewStats(Integer count, Double rating) {
+		this.reviewCount = count;
+		this.reviewRating = rating;
+	}
 }

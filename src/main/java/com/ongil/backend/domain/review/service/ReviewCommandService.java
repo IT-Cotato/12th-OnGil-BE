@@ -170,6 +170,24 @@ public class ReviewCommandService {
 		);
 
 		user.restorePoints(REVIEW_REWARD_POINTS);
+
+		// 상품의 리뷰 개수 및 평점 업데이트
+		updateProductReviewStats(review);
+	}
+
+	private void updateProductReviewStats(Review review) {
+		Long productId = review.getProduct().getId();
+		
+		// 상품의 완료된 리뷰 개수 조회
+		Long reviewCount = reviewRepository.countByProductIdAndStatus(productId, ReviewStatus.COMPLETED);
+		// 상품의 평균 평점 조회
+		Double avgRating = reviewRepository.getAverageRating(productId);
+
+		// 상품 엔티티 통계 업데이트
+		review.getProduct().updateReviewStats(
+			reviewCount.intValue(),
+			avgRating != null ? avgRating : 0.0
+		);
 	}
 
 	private Review getReviewOrThrow(Long reviewId) {

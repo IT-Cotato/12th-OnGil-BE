@@ -124,7 +124,8 @@ public class SizeReviewPrompter implements ReviewPrompter {
 
 		prompt.append("\n[출력 형식 지시]");
 		prompt.append("\n- 반드시 각 문장 사이를 '|' 기호로만 구분할 것.");
-		prompt.append("\n- 문장 끝에 마침표를 찍지 말고 바로 '|'로 이을 것.");
+		prompt.append("\n- 문장 끝은 반드시 '~임'으로 끝낼 것.");
+		prompt.append("\n- 마침표를 찍지 말고 바로 '|'로 이을 것.");
 		return prompt.toString();
 	}
 }
