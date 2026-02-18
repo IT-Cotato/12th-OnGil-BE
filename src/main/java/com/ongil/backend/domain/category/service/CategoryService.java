@@ -86,12 +86,26 @@ public class CategoryService {
 	// 랜덤 카테고리 조회 (상품이 있는 카테고리만)
 	public List<CategoryRandomResponse> getRandomCategories(int count) {
 		List<Category> allCategories = categoryRepository.findAllByOrderByDisplayOrder();
+		Set<Long> activeCategoryIds = new HashSet<>(productRepository.findCategoryIdsWithOnSaleProducts());
 
-		List<Category> shuffledCategories = new ArrayList<>(allCategories);
-		Collections.shuffle(shuffledCategories);
+		// 상품이 있는 카테고리만 사전 필터링 (상위 카테고리는 하위 중 하나라도 있으면 포함)
+		List<Category> activeCategories = allCategories.stream()
+			.filter(category -> {
+				if (category.getParentCategory() != null) {
+					// 하위 카테고리: 직접 확인
+					return activeCategoryIds.contains(category.getId());
+				}
+				// 상위 카테고리: 하위 카테고리 중 하나라도 상품이 있으면 포함
+				return category.getSubCategories().stream()
+					.anyMatch(sub -> activeCategoryIds.contains(sub.getId()));
+			})
+			.collect(Collectors.toList());
 
+		Collections.shuffle(activeCategories);
+
+		// 사전 필터링된 카테고리만 썸네일 조회 (DB 호출 최소화)
 		List<CategoryRandomResponse> result = new ArrayList<>();
-		for (Category category : shuffledCategories) {
+		for (Category category : activeCategories) {
 			if (result.size() >= count) break;
 			String thumbnailUrl = getTopProductThumbnail(category);
 			if (thumbnailUrl != null) {
