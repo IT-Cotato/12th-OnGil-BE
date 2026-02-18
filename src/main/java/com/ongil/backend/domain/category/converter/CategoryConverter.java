@@ -30,6 +30,19 @@ public class CategoryConverter {
 			.build();
 	}
 
+	/**
+	 * Category → CategoryResponse (필터링된 하위 카테고리 목록 지정)
+	 */
+	public CategoryResponse toResponse(Category category, List<SubCategoryResponse> subCategories) {
+		return CategoryResponse.builder()
+			.categoryId(category.getId())
+			.name(category.getName())
+			.iconUrl(category.getIconUrl())
+			.displayOrder(category.getDisplayOrder())
+			.subCategories(subCategories)
+			.build();
+	}
+
 	public List<CategoryResponse> toResponseList(List<Category> categories) {
 		return categories.stream()
 			.map(this::toResponse)

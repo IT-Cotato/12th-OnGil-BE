@@ -198,6 +198,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("SELECT p FROM Product p " +
 		"WHERE p.onSale = true " +
+		"AND p.productType <> com.ongil.backend.domain.product.enums.ProductType.SPECIAL_SALE " +
 		"ORDER BY (COALESCE(p.viewCount, 0) + COALESCE(p.cartCount, 0)) DESC")
 	List<Product> findPopularProducts(Pageable pageable);
 
@@ -208,6 +209,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 	@EntityGraph(attributePaths = {"brand", "category"})
 	@Query("SELECT p FROM Product p " +
 		"WHERE p.onSale = true " +
+		"AND p.productType <> com.ongil.backend.domain.product.enums.ProductType.SPECIAL_SALE " +
 		"AND p.category.id IN :categoryIds " +
 		"AND p.id NOT IN :excludeProductIds " +
 		"AND (" +
@@ -235,4 +237,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
 	// 특정 카테고리를 사용하는 상품이 있는지 확인
 	boolean existsByCategoryId(Long categoryId);
+
+	// 특정 카테고리에 판매 중인 상품이 있는지 확인
+	boolean existsByCategoryIdAndOnSaleTrue(Long categoryId);
 }
