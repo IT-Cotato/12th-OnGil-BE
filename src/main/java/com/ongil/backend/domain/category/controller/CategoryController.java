@@ -46,7 +46,7 @@ public class CategoryController {
 	@Operation(summary = "랜덤 카테고리 조회", description = "홈 화면용 랜덤 카테고리를 조회합니다. 상품 이미지 포함.")
 	@GetMapping("/random")
 	public DataResponse<List<CategoryRandomResponse>> getRandomCategories(
-		@RequestParam(defaultValue = "8") @Min(1) @Max(100) int count
+		@RequestParam(defaultValue = "4") @Min(1) @Max(100) int count
 	) {
 		List<CategoryRandomResponse> categories = categoryService.getRandomCategories(count);
 		return DataResponse.from(categories);

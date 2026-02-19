@@ -29,6 +29,9 @@ public class ProductSimpleResponse {
 	@Schema(description = "대표 이미지 URL")
 	private String thumbnailImageUrl;
 
+	@Schema(description = "브랜드 ID")
+	private Long brandId;
+
 	@Schema(description = "브랜드명")
 	private String brandName;
 

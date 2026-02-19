@@ -62,6 +62,7 @@ public class ProductConverter {
 			.discountRate(product.getDiscountRate())
 			.finalPrice(calculateFinalPrice(product))
 			.thumbnailImageUrl(getFirstImage(product.getImageUrls()))
+			.brandId(product.getBrand().getId())
 			.brandName(product.getBrand().getName())
 			.productType(product.getProductType())
 			.viewCount(product.getViewCount())
