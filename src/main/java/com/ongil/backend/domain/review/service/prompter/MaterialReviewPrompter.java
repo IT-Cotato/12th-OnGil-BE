@@ -167,7 +167,6 @@ public class MaterialReviewPrompter implements ReviewPrompter {
 
 		prompt.append("\n[최종 출력 형식 지시]");
 		prompt.append("\n- 모든 문장은 반드시 '|' 기호로만 구분하여 나열할 것.");
-		prompt.append("\n- 문장 끝은 반드시 '~임'으로 끝낼 것.");
 		prompt.append("\n- 마침표(.)나 줄바꿈(\n)을 구분자로 사용하지 말 것.");
 
 		return prompt.toString();
