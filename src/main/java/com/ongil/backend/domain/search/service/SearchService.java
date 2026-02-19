@@ -19,10 +19,12 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import co.elastic.clients.elasticsearch._types.aggregations.StringTermsAggregate;
 import lombok.extern.slf4j.Slf4j;
@@ -67,25 +69,38 @@ public class SearchService {
 		return SearchResDto.of(List.of(), alternatives);
 	}
 
-	public List<String> recommendAlternatives(String keyword, int limit) {
+	public List<String> recommendAlternatives(String keyword, int size) {
 		NativeQuery nativeQuery = NativeQuery.builder()
-			.withQuery(q -> q.fuzzy(f -> f
-				.field("keyword")
-				.value(keyword)
-				.fuzziness("2")
-				.prefixLength(1)
+			.withQuery(q -> q.bool(b -> b
+				.should(s -> s.match(m -> m.field("brandName.autocomplete").query(keyword)))
+				.should(s -> s.match(m -> m.field("categoryName.autocomplete").query(keyword)))
+				.should(s -> s.match(m -> m.field("name.autocomplete").query(keyword)))
 			))
-			.withMinScore(0.1f)
-			.withMaxResults(limit * 2)
+			.withMaxResults(50)
 			.build();
 
-		SearchHits<SearchLogDocument> hits = elasticsearchOperations.search(nativeQuery, SearchLogDocument.class);
+		SearchHits<ProductDocument> hits =
+			elasticsearchOperations.search(nativeQuery, ProductDocument.class);
+
+		LevenshteinDistance levenshtein = new LevenshteinDistance();
+		String lowerKeyword = keyword.toLowerCase();
 
 		return hits.getSearchHits().stream()
-			.map(hit -> hit.getContent().getKeyword())
-			.filter(k -> !k.equals(keyword))
+			.map(hit -> {
+				ProductDocument doc = hit.getContent();
+				List<String> candidates = new ArrayList<>();
+				if (doc.getBrandName() != null) candidates.add(doc.getBrandName());
+				if (doc.getCategoryName() != null) candidates.add(doc.getCategoryName());
+				if (doc.getName() != null) candidates.add(doc.getName());
+				return candidates;
+			})
+			.flatMap(List::stream)
 			.distinct()
-			.limit(limit)
+			.sorted(Comparator.comparingInt(val ->
+				levenshtein.apply(lowerKeyword, val.toLowerCase())
+			))
+			.filter(val -> !val.equalsIgnoreCase(keyword))
+			.limit(size)
 			.toList();
 	}
 
