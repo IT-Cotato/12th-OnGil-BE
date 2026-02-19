@@ -2,7 +2,6 @@ package com.ongil.backend.domain.pricealert.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import lombok.Getter;
 
 @Getter
@@ -13,8 +12,7 @@ public class PriceAlertRequest {
 	@Schema(description = "상품 ID", example = "1")
 	private Long productId;
 
-	@NotNull(message = "목표 가격은 필수입니다.")
-	@Positive(message = "목표 가격은 양수여야 합니다.")
-	@Schema(description = "목표 가격 (사용자가 선택한 할인가)", example = "47500")
-	private Integer targetPrice;
+	@NotNull(message = "할인율은 필수입니다.")
+	@Schema(description = "할인율 (10, 20, 30, 40 중 선택)", example = "20", allowableValues = {"10", "20", "30", "40"})
+	private Integer discountRate;
 }
