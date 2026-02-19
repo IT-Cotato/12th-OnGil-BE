@@ -1,49 +1,37 @@
 package com.ongil.backend.domain.product.service;
 
-import java.time.Duration;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.ongil.backend.domain.product.dto.response.AiMaterialDescriptionResponse;
-import com.theokanning.openai.completion.chat.ChatCompletionRequest;
-import com.theokanning.openai.completion.chat.ChatMessage;
-import com.theokanning.openai.service.OpenAiService;
+import com.ongil.backend.global.openai.OpenAiClient;
+import com.ongil.backend.global.openai.OpenAiException;
+import com.ongil.backend.global.openai.OpenAiRequest;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AiMaterialService {
 
-	private final OpenAiService openAiService;
-
-	public AiMaterialService(@Value("${openai.api-key}") String apiKey) {
-		this.openAiService = new OpenAiService(apiKey, Duration.ofSeconds(60));
-	}
+	private final OpenAiClient openAiClient;
 
 	public AiMaterialDescriptionResponse generate(String material) {
-
 		try {
-			String prompt = createPrompt(material);
-
-			ChatCompletionRequest request = ChatCompletionRequest.builder()
-				.model("gpt-3.5-turbo")
-				.messages(List.of(
-					new ChatMessage("system", "당신은 의류 소재 전문가입니다. 60대 이상 어르신이 이해하기 쉽게 설명해주세요."),
-					new ChatMessage("user", prompt)
-				))
-				.temperature(0.3)
-				.maxTokens(1500)
-				.build();
-
-			String response = openAiService.createChatCompletion(request)
-				.getChoices()
-				.get(0)
-				.getMessage()
-				.getContent();
-
+			OpenAiRequest request = OpenAiRequest.of(
+				"gpt-3.5-turbo",
+				"당신은 의류 소재 전문가입니다. 60대 이상 어르신이 이해하기 쉽게 설명해주세요.",
+				createPrompt(material),
+				0.3
+			);
+			String response = openAiClient.call(request);
 			return parseResponse(response);
-
+		} catch (OpenAiException e) {
+			log.warn("[AiMaterialService] AI 호출 실패, 기본값 반환. 소재: {}", material);
+			return AiMaterialDescriptionResponse.createDefault();
 		} catch (Exception e) {
+			log.warn("[AiMaterialService] 응답 파싱 실패, 기본값 반환. 소재: {}", material);
 			return AiMaterialDescriptionResponse.createDefault();
 		}
 	}
@@ -86,22 +74,17 @@ public class AiMaterialService {
 	}
 
 	private AiMaterialDescriptionResponse parseResponse(String response) {
-		try {
-			String[] sections = response.split("\\[장점\\]|\\[단점\\]|\\[세탁방법\\]");
+		String[] sections = response.split("\\[장점\\]|\\[단점\\]|\\[세탁방법\\]");
 
-			if (sections.length < 4) {
-				return AiMaterialDescriptionResponse.createDefault();
-			}
-
-			return AiMaterialDescriptionResponse.builder()
-				.advantages(cleanSection(sections[1]))
-				.disadvantages(cleanSection(sections[2]))
-				.care(cleanSection(sections[3]))
-				.build();
-
-		} catch (Exception e) {
+		if (sections.length < 4) {
 			return AiMaterialDescriptionResponse.createDefault();
 		}
+
+		return AiMaterialDescriptionResponse.builder()
+			.advantages(cleanSection(sections[1]))
+			.disadvantages(cleanSection(sections[2]))
+			.care(cleanSection(sections[3]))
+			.build();
 	}
 
 	private String cleanSection(String section) {
