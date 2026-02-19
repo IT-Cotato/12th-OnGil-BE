@@ -29,6 +29,8 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class BrandService {
 
+	private static final int BRAND_PRODUCT_COUNT = 6;
+
 	private final BrandRepository brandRepository;
 	private final ProductRepository productRepository;
 	private final BrandConverter brandConverter;
@@ -79,24 +81,42 @@ public class BrandService {
 		return products.map(productConverter::toSimpleResponse);
 	}
 
-	// 추천 브랜드 조회 (랜덤 3개 브랜드 + 각 브랜드별 6개 상품)
+	/**
+	 * 홈 화면 추천 브랜드 조회
+	 * 랜덤으로 선택된 브랜드 3개와 각 브랜드별 상품 6개를 반환
+	 */
 	public List<BrandRecommendResponse> getRecommendBrands() {
 		List<Brand> randomBrands = brandRepository.findRandomBrands();
 
 		return randomBrands.stream()
-			.map(brand -> {
-				List<Product> products = productRepository.findRandomProductsByBrandId(brand.getId(), 6);
-				List<ProductSimpleResponse> productResponses = products.stream()
-					.map(productConverter::toSimpleResponse)
-					.collect(Collectors.toList());
+			.map(this::buildBrandRecommendResponse)
+			.collect(Collectors.toList());
+	}
 
-				return BrandRecommendResponse.builder()
-					.id(brand.getId())
-					.name(brand.getName())
-					.logoImageUrl(brand.getLogoImageUrl())
-					.products(productResponses)
-					.build();
-			})
+	/**
+	 * 브랜드 추천 응답 객체 생성
+	 * 브랜드 정보와 해당 브랜드의 상품 목록을 조합하여 응답 객체를 생성
+	 */
+	private BrandRecommendResponse buildBrandRecommendResponse(Brand brand) {
+		List<ProductSimpleResponse> productResponses = fetchBrandProducts(brand.getId());
+
+		return BrandRecommendResponse.builder()
+			.id(brand.getId())
+			.name(brand.getName())
+			.logoImageUrl(brand.getLogoImageUrl())
+			.products(productResponses)
+			.build();
+	}
+
+	/**
+	 * 브랜드별 랜덤 상품 조회
+	 * 지정된 개수만큼 랜덤 상품을 조회하여 간단한 응답 형태로 변환
+	 */
+	private List<ProductSimpleResponse> fetchBrandProducts(Long brandId) {
+		List<Product> products = productRepository.findRandomProductsByBrandId(brandId, BRAND_PRODUCT_COUNT);
+		
+		return products.stream()
+			.map(productConverter::toSimpleResponse)
 			.collect(Collectors.toList());
 	}
 }

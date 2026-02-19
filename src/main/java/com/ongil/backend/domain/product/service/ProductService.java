@@ -400,7 +400,7 @@ public class ProductService {
 	}
 
 	/**
-	 * 인기 상품 조회
+	 * 인기 상품 조회 (비로그인 사용자 또는 기록이 없는 신규 사용자용)
 	 */
 	private List<RecommendedProductResponse> getPopularProducts(int size) {
 		Pageable pageable = PageRequest.of(0, size);
@@ -410,31 +410,17 @@ public class ProductService {
 
 	/**
 	 * 개인화 추천 (로그인 사용자)
+	 * 사용자의 최근 활동(조회, 장바구니)을 기반으로 유사한 상품을 추천
 	 */
 	private List<RecommendedProductResponse> getPersonalizedRecommendations(Long userId, int size) {
-		LocalDateTime since = LocalDateTime.now().minusDays(DAYS_TO_LOOK_BACK);
-
-		// 1. 최근 30일간 조회한 상품 ID
-		List<Long> viewedProductIds = productViewHistoryRepository
-			.findDistinctProductIdsByUserIdAndCreatedAtAfter(userId, since);
-
-		// 2. 장바구니에 담은 상품 ID
-		List<Long> cartProductIds = cartRepository.findProductIdsByUserId(userId);
-
-		// 3. 기준 상품 ID 합치기
-		Set<Long> baseProductIds = new HashSet<>();
-		baseProductIds.addAll(viewedProductIds);
-		baseProductIds.addAll(cartProductIds);
-
-		// 기록이 없으면 인기 상품 반환 (신규 사용자)
+		// 1. 기준 상품 ID 수집 (조회 이력 + 장바구니)
+		Set<Long> baseProductIds = collectBaseProductIds(userId);
+		
 		if (baseProductIds.isEmpty()) {
 			return getPopularProducts(size);
 		}
 
-		// 4. 구매한 상품 ID (제외 대상)
-		List<Long> purchasedProductIds = orderItemRepository.findProductIdsByUserId(userId);
-
-		// 5. 기준 상품들 조회
+		// 2. 기준 상품 조회 및 검증
 		List<Product> baseProducts = productRepository.findByIdInAndOnSaleTrue(
 			new ArrayList<>(baseProductIds)
 		);
@@ -443,7 +429,43 @@ public class ProductService {
 			return getPopularProducts(size);
 		}
 
-		// 6. 필터 조건 계산
+		// 3. 추천 필터 조건 계산
+		RecommendationFilter filter = calculateRecommendationFilter(baseProducts);
+
+		// 4. 제외할 상품 ID 수집 (기준 상품 + 구매 완료 상품)
+		Set<Long> excludeIds = collectExcludeProductIds(userId, baseProductIds);
+
+		// 5. 추천 상품 조회
+		List<Product> recommendations = fetchRecommendedProducts(filter, excludeIds, size);
+
+		// 6. 부족한 경우 인기 상품으로 보충
+		recommendations = fillWithPopularProducts(recommendations, excludeIds, size);
+
+		return toRecommendedResponseList(recommendations);
+	}
+
+	/**
+	 * 사용자의 기준 상품 ID 수집 (최근 조회 이력 + 장바구니)
+	 */
+	private Set<Long> collectBaseProductIds(Long userId) {
+		LocalDateTime since = LocalDateTime.now().minusDays(DAYS_TO_LOOK_BACK);
+
+		List<Long> viewedProductIds = productViewHistoryRepository
+			.findDistinctProductIdsByUserIdAndCreatedAtAfter(userId, since);
+
+		List<Long> cartProductIds = cartRepository.findProductIdsByUserId(userId);
+
+		Set<Long> baseProductIds = new HashSet<>();
+		baseProductIds.addAll(viewedProductIds);
+		baseProductIds.addAll(cartProductIds);
+
+		return baseProductIds;
+	}
+
+	/**
+	 * 추천 필터 조건 계산 (카테고리 + 가격 범위)
+	 */
+	private RecommendationFilter calculateRecommendationFilter(List<Product> baseProducts) {
 		List<Long> categoryIds = baseProducts.stream()
 			.map(p -> p.getCategory().getId())
 			.distinct()
@@ -457,45 +479,72 @@ public class ProductService {
 		int minPrice = Math.max(0, avgPrice - PRICE_RANGE);
 		int maxPrice = avgPrice + PRICE_RANGE;
 
-		// 7. 제외할 상품 ID (기준 상품 + 구매한 상품)
+		return new RecommendationFilter(categoryIds, minPrice, maxPrice);
+	}
+
+	/**
+	 * 제외할 상품 ID 수집 (기준 상품 + 구매 완료 상품)
+	 */
+	private Set<Long> collectExcludeProductIds(Long userId, Set<Long> baseProductIds) {
+		List<Long> purchasedProductIds = orderItemRepository.findProductIdsByUserId(userId);
+
 		Set<Long> excludeIds = new HashSet<>(baseProductIds);
 		excludeIds.addAll(purchasedProductIds);
+
+		// 빈 리스트 방지 (쿼리 안전성)
 		if (excludeIds.isEmpty()) {
 			excludeIds.add(-1L);
 		}
 
-		// 8. 추천 상품 조회 (카테고리 + 가격 필터, 인기순 정렬)
+		return excludeIds;
+	}
+
+	/**
+	 * 필터 조건에 맞는 추천 상품 조회
+	 */
+	private List<Product> fetchRecommendedProducts(RecommendationFilter filter, Set<Long> excludeIds, int size) {
 		Pageable pageable = PageRequest.of(0, size);
-		List<Product> recommendations = productRepository.findRecommendedProducts(
-			categoryIds,
-			minPrice,
-			maxPrice,
+		return productRepository.findRecommendedProducts(
+			filter.getCategoryIds(),
+			filter.getMinPrice(),
+			filter.getMaxPrice(),
 			new ArrayList<>(excludeIds),
 			pageable
 		);
+	}
 
-		// 9. 부족하면 인기 상품으로 채우기 (제외 대상을 고려해 충분히 조회)
-		if (recommendations.size() < size) {
-			Set<Long> foundIds = recommendations.stream()
-				.map(Product::getId)
-				.collect(Collectors.toSet());
-			excludeIds.addAll(foundIds);
+	/**
+	 * 추천 상품이 부족한 경우 인기 상품으로 보충
+	 */
+	private List<Product> fillWithPopularProducts(List<Product> recommendations, Set<Long> excludeIds, int size) {
+		if (recommendations.size() >= size) {
+			return recommendations;
+		}
 
-			int needed = size - recommendations.size();
-			int fetchSize = needed + excludeIds.size();
-			List<Product> popularProducts = productRepository.findPopularProducts(
-				PageRequest.of(0, fetchSize)
-			);
+		// 이미 추천된 상품 ID 수집
+		Set<Long> foundIds = recommendations.stream()
+			.map(Product::getId)
+			.collect(Collectors.toSet());
+		excludeIds.addAll(foundIds);
 
-			for (Product p : popularProducts) {
-				if (!excludeIds.contains(p.getId())) {
-					recommendations.add(p);
-					if (recommendations.size() >= size) break;
+		// 필요한 개수 계산 및 인기 상품 조회
+		int needed = size - recommendations.size();
+		int fetchSize = needed + excludeIds.size();
+		List<Product> popularProducts = productRepository.findPopularProducts(
+			PageRequest.of(0, fetchSize)
+		);
+
+		// 제외 대상이 아닌 상품만 추가
+		for (Product p : popularProducts) {
+			if (!excludeIds.contains(p.getId())) {
+				recommendations.add(p);
+				if (recommendations.size() >= size) {
+					break;
 				}
 			}
 		}
 
-		return toRecommendedResponseList(recommendations);
+		return recommendations;
 	}
 
 	/**
@@ -527,5 +576,32 @@ public class ProductService {
 		return products.stream()
 			.map(this::toRecommendedResponse)
 			.collect(Collectors.toList());
+	}
+
+	/**
+	 * 추천 상품 필터 조건을 담는 내부 클래스
+	 */
+	private static class RecommendationFilter {
+		private final List<Long> categoryIds;
+		private final int minPrice;
+		private final int maxPrice;
+
+		public RecommendationFilter(List<Long> categoryIds, int minPrice, int maxPrice) {
+			this.categoryIds = categoryIds;
+			this.minPrice = minPrice;
+			this.maxPrice = maxPrice;
+		}
+
+		public List<Long> getCategoryIds() {
+			return categoryIds;
+		}
+
+		public int getMinPrice() {
+			return minPrice;
+		}
+
+		public int getMaxPrice() {
+			return maxPrice;
+		}
 	}
 }
