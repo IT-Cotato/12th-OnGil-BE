@@ -70,36 +70,46 @@ public class SearchService {
 	}
 
 	public List<String> recommendAlternatives(String keyword, int size) {
-		NativeQuery nativeQuery = NativeQuery.builder()
-			.withQuery(q -> q.bool(b -> b
-				.should(s -> s.match(m -> m.field("brandName.autocomplete").query(keyword)))
-				.should(s -> s.match(m -> m.field("categoryName.autocomplete").query(keyword)))
-				.should(s -> s.match(m -> m.field("name.autocomplete").query(keyword)))
+		NativeQuery logQuery = NativeQuery.builder()
+			.withMaxResults(0)
+			.withAggregation("frequent_keywords", Aggregation.of(a -> a
+				.terms(t -> t
+					.field("keyword")
+					.size(200)
+				)
 			))
-			.withMaxResults(50)
 			.build();
 
-		SearchHits<ProductDocument> hits =
-			elasticsearchOperations.search(nativeQuery, ProductDocument.class);
+		SearchHits<SearchLogDocument> logHits =
+			elasticsearchOperations.search(logQuery, SearchLogDocument.class);
+
+		List<String> logKeywords = new ArrayList<>();
+		if (logHits.getAggregations() != null) {
+			ElasticsearchAggregations aggregations = (ElasticsearchAggregations) logHits.getAggregations();
+			ElasticsearchAggregation aggregation = aggregations.get("frequent_keywords");
+			if (aggregation != null) {
+				var aggregate = aggregation.aggregation().getAggregate();
+				if (aggregate != null && aggregate.isSterms()) {
+					logKeywords = aggregate.sterms().buckets().array().stream()
+						.map(bucket -> bucket.key().stringValue())
+						.toList();
+				}
+			}
+		}
+
+		if (logKeywords.isEmpty()) {
+			return List.of();
+		}
 
 		LevenshteinDistance levenshtein = new LevenshteinDistance();
 		String lowerKeyword = keyword.toLowerCase();
+		int maxDistance = Math.max(2, lowerKeyword.length() / 2);
 
-		return hits.getSearchHits().stream()
-			.map(hit -> {
-				ProductDocument doc = hit.getContent();
-				List<String> candidates = new ArrayList<>();
-				if (doc.getBrandName() != null) candidates.add(doc.getBrandName());
-				if (doc.getCategoryName() != null) candidates.add(doc.getCategoryName());
-				if (doc.getName() != null) candidates.add(doc.getName());
-				return candidates;
-			})
-			.flatMap(List::stream)
-			.distinct()
-			.sorted(Comparator.comparingInt(val ->
-				levenshtein.apply(lowerKeyword, val.toLowerCase())
-			))
-			.filter(val -> !val.equalsIgnoreCase(keyword))
+		return logKeywords.stream()
+			.filter(k -> !k.equalsIgnoreCase(keyword))
+			.filter(k -> k.length() >= 2)
+			.filter(k -> levenshtein.apply(lowerKeyword, k.toLowerCase()) <= maxDistance)
+			.sorted(Comparator.comparingInt(k -> levenshtein.apply(lowerKeyword, k.toLowerCase())))
 			.limit(size)
 			.toList();
 	}
