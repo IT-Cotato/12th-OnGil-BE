@@ -3,11 +3,16 @@ package com.ongil.backend.domain.category.dto.response;
 import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
 @Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class CategoryResponse {
 
 	@Schema(description = "카테고리 ID")
