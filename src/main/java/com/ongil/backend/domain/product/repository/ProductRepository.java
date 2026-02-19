@@ -44,19 +44,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     SELECT p FROM Product p
     WHERE (:targetIds IS NULL OR p.id IN :targetIds)
       AND (:categoryId IS NULL OR p.category.id = :categoryId)
-      AND (:brandId IS NULL OR p.brand.id = :brandId)
-      AND (:minPrice IS NULL OR p.price >= :minPrice)
-      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-      AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
+      AND (:brandIds IS NULL OR p.brand.id IN :brandIds)
+      AND (:minPrice IS NULL OR
+          (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice >= :minPrice)
+          OR ((p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price >= :minPrice))
+      AND (:maxPrice IS NULL OR
+          (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice <= :maxPrice)
+          OR ((p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price <= :maxPrice))
+      AND (:sizesPattern IS NULL OR FUNCTION('REGEXP_LIKE', p.sizes, :sizesPattern) = true)
       AND p.onSale = true
     """)
 	Page<Product> findAllByCondition(
 		@Param("targetIds") List<Long> targetIds,
 		@Param("categoryId") Long categoryId,
-		@Param("brandId") Long brandId,
+		@Param("brandIds") List<Long> brandIds,
 		@Param("minPrice") Integer minPrice,
 		@Param("maxPrice") Integer maxPrice,
-		@Param("size") String size,
+		@Param("sizesPattern") String sizesPattern,
 		Pageable pageable
 	);
 
@@ -66,19 +70,23 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     SELECT p FROM Product p
     WHERE (:targetIds IS NULL OR p.id IN :targetIds)
       AND p.category.parentCategory.id = :parentCategoryId
-      AND (:brandId IS NULL OR p.brand.id = :brandId)
-      AND (:minPrice IS NULL OR p.price >= :minPrice)
-      AND (:maxPrice IS NULL OR p.price <= :maxPrice)
-      AND (:size IS NULL OR p.sizes LIKE CONCAT('%', :size, '%'))
+      AND (:brandIds IS NULL OR p.brand.id IN :brandIds)
+      AND (:minPrice IS NULL OR
+          (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice >= :minPrice)
+          OR ((p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price >= :minPrice))
+      AND (:maxPrice IS NULL OR
+          (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice <= :maxPrice)
+          OR ((p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price <= :maxPrice))
+      AND (:sizesPattern IS NULL OR FUNCTION('REGEXP_LIKE', p.sizes, :sizesPattern) = true)
       AND p.onSale = true
     """)
 	Page<Product> findAllByParentCategoryCondition(
 		@Param("targetIds") List<Long> targetIds,
 		@Param("parentCategoryId") Long parentCategoryId,
-		@Param("brandId") Long brandId,
+		@Param("brandIds") List<Long> brandIds,
 		@Param("minPrice") Integer minPrice,
 		@Param("maxPrice") Integer maxPrice,
-		@Param("size") String size,
+		@Param("sizesPattern") String sizesPattern,
 		Pageable pageable
 	);
 
