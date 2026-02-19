@@ -247,6 +247,8 @@ public class ReviewQueryService {
 
 	// 정렬 기준에 따른 Pageable 생성
 	private Pageable createPageable(int page, int size, ReviewSortType sortType) {
+		if (size <= 0) size = 10;
+		if (page < 0) page = 0;
 		Sort sort = switch (sortType) {
 			case BEST -> Sort.by(Sort.Direction.DESC, "helpfulCount");
 			case RATING_HIGH -> Sort.by(Sort.Direction.DESC, "rating").and(Sort.by(Sort.Direction.DESC, "createdAt"));

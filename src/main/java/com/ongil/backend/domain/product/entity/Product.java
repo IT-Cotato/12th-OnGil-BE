@@ -132,6 +132,12 @@ public class Product extends BaseEntity {
 		this.aiMaterialCare = care;
 	}
 
+	// 리뷰 통계 갱신
+	public void updateReviewStats(int reviewCount, double reviewRating) {
+		this.reviewCount = reviewCount;
+		this.reviewRating = reviewRating;
+	}
+
 	// 실제 가격 반환 (할인가가 있으면 할인가, 없으면 원가)
 	public Integer getEffectivePrice() {
 		return (discountPrice != null && discountPrice > 0) ? discountPrice : price;
