@@ -230,7 +230,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		"AND p.id NOT IN :excludeProductIds " +
 		"AND (" +
 		"  (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice BETWEEN :minPrice AND :maxPrice) " +
-		"  OR (p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price BETWEEN :minPrice AND :maxPrice" +
+		"  OR ((p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price BETWEEN :minPrice AND :maxPrice)" +
 		") " +
 		"ORDER BY (COALESCE(p.viewCount, 0) + COALESCE(p.cartCount, 0)) DESC")
 	List<Product> findRecommendedProducts(
