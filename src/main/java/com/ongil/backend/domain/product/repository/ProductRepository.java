@@ -16,6 +16,14 @@ import com.ongil.backend.domain.product.enums.ProductType;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+	// 리뷰 통계 원자적 갱신
+	@Modifying
+	@Query("UPDATE Product p SET " +
+		"p.reviewCount = (SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId AND r.reviewStatus = 'COMPLETED'), " +
+		"p.reviewRating = (SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r WHERE r.product.id = :productId AND r.reviewStatus = 'COMPLETED') " +
+		"WHERE p.id = :productId")
+	void updateReviewStats(@Param("productId") Long productId);
+
 	// 조회수 증가
 	@Modifying
 	@Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.id = :productId")

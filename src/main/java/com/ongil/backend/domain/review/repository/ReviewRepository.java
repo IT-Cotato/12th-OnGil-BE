@@ -163,12 +163,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 		@Param("reviewType") ReviewType reviewType
 	);
 
-	// 상품별 전체 완료된 리뷰 개수 (초기 + 한달 후)
-	@Query("SELECT COUNT(r) FROM Review r " +
-		"WHERE r.product.id = :productId " +
-		"AND r.reviewStatus = 'COMPLETED'")
-	int countCompletedByProductId(@Param("productId") Long productId);
-
 	// 내가 작성한 리뷰 조회
 	@EntityGraph(attributePaths = {"product", "product.brand", "orderItem"})
 	Page<Review> findByUserIdAndReviewStatus(Long userId, ReviewStatus status, Pageable pageable);

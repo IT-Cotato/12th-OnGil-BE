@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.ongil.backend.domain.category.entity.Category;
 import com.ongil.backend.domain.order.entity.OrderItem;
 import com.ongil.backend.domain.order.repository.OrderItemRepository;
-import com.ongil.backend.domain.product.entity.Product;
+import com.ongil.backend.domain.product.repository.ProductRepository;
 import com.ongil.backend.domain.review.converter.ReviewWriteConverter;
 import com.ongil.backend.domain.review.dto.request.AiReviewGenerateRequest;
 import com.ongil.backend.domain.review.dto.request.ReviewFinalSubmitRequest;
@@ -44,6 +44,7 @@ public class ReviewCommandService {
 	private final ReviewRepository reviewRepository;
 	private final UserRepository userRepository;
 	private final OrderItemRepository orderItemRepository;
+	private final ProductRepository productRepository;
 	private final AiReviewGeneratorService aiReviewGeneratorService;
 	private final ReviewValidator reviewValidator;
 	private final ReviewWriteConverter reviewWriteConverter;
@@ -172,11 +173,8 @@ public class ReviewCommandService {
 
 		user.restorePoints(REVIEW_REWARD_POINTS);
 
-		// 상품 리뷰 통계 갱신
-		Product product = review.getProduct();
-		int reviewCount = reviewRepository.countCompletedByProductId(product.getId());
-		Double avgRating = reviewRepository.getAverageRating(product.getId());
-		product.updateReviewStats(reviewCount, avgRating);
+		// 상품 리뷰 통계 갱신 (원자적 UPDATE)
+		productRepository.updateReviewStats(review.getProduct().getId());
 	}
 
 	private Review getReviewOrThrow(Long reviewId) {
