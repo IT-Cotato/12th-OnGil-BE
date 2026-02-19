@@ -1,10 +1,7 @@
 package com.ongil.backend.domain.product.service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -14,8 +11,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.ongil.backend.domain.cart.repository.CartRepository;
-import com.ongil.backend.domain.order.repository.OrderItemRepository;
 
 import com.ongil.backend.domain.product.converter.ProductConverter;
 import com.ongil.backend.domain.product.converter.SizeGuideConverter;
@@ -57,8 +52,6 @@ public class ProductService {
 	private final ProductRepository productRepository;
 	private final ProductOptionRepository productOptionRepository;
 	private final ProductViewHistoryRepository productViewHistoryRepository;
-	private final CartRepository cartRepository;
-	private final OrderItemRepository orderItemRepository;
 	private final ProductConverter productConverter;
 	private final AiMaterialService aiMaterialService;
 	private final UserRepository userRepository;
@@ -68,8 +61,6 @@ public class ProductService {
 	private final CategoryRepository categoryRepository;
 
 	private static final int SIMILAR_CUSTOMERS_LIMIT = 4;
-	private static final int PRICE_RANGE = 10000;
-	private static final int DAYS_TO_LOOK_BACK = 30;
 
 	// 상품 상세 조회
 	@Transactional
@@ -388,113 +379,12 @@ public class ProductService {
 
 	/**
 	 * 홈화면 추천 상품 조회
-	 * - 로그인: 최근 30일 조회/장바구니 기준 같은 카테고리 + 비슷한 가격(±10,000원) 필터 적용
-	 * - 비로그인: 전체 인기 상품
-	 * - 정렬: 전체 고객 기준 viewCount + cartCount 순
+	 * - 인기 상품 순(viewCount + cartCount) 반환
+	 * - 특가 상품(SPECIAL_SALE) 제외
 	 */
 	public List<ProductSimpleResponse> getRecommendedProducts(Long userId, int size) {
-		if (userId == null) {
-			return getPopularProducts(size);
-		}
-		return getPersonalizedRecommendations(userId, size);
-	}
-
-	/**
-	 * 인기 상품 조회
-	 */
-	private List<ProductSimpleResponse> getPopularProducts(int size) {
 		Pageable pageable = PageRequest.of(0, size);
 		List<Product> products = productRepository.findPopularProducts(pageable);
 		return productConverter.toSimpleResponseList(products);
-	}
-
-	/**
-	 * 개인화 추천 (로그인 사용자)
-	 */
-	private List<ProductSimpleResponse> getPersonalizedRecommendations(Long userId, int size) {
-		LocalDateTime since = LocalDateTime.now().minusDays(DAYS_TO_LOOK_BACK);
-
-		// 1. 최근 30일간 조회한 상품 ID
-		List<Long> viewedProductIds = productViewHistoryRepository
-			.findDistinctProductIdsByUserIdAndCreatedAtAfter(userId, since);
-
-		// 2. 장바구니에 담은 상품 ID
-		List<Long> cartProductIds = cartRepository.findProductIdsByUserId(userId);
-
-		// 3. 기준 상품 ID 합치기
-		Set<Long> baseProductIds = new HashSet<>();
-		baseProductIds.addAll(viewedProductIds);
-		baseProductIds.addAll(cartProductIds);
-
-		// 기록이 없으면 인기 상품 반환 (신규 사용자)
-		if (baseProductIds.isEmpty()) {
-			return getPopularProducts(size);
-		}
-
-		// 4. 구매한 상품 ID (제외 대상)
-		List<Long> purchasedProductIds = orderItemRepository.findProductIdsByUserId(userId);
-
-		// 5. 기준 상품들 조회
-		List<Product> baseProducts = productRepository.findByIdInAndOnSaleTrue(
-			new ArrayList<>(baseProductIds)
-		);
-
-		if (baseProducts.isEmpty()) {
-			return getPopularProducts(size);
-		}
-
-		// 6. 필터 조건 계산
-		List<Long> categoryIds = baseProducts.stream()
-			.map(p -> p.getCategory().getId())
-			.distinct()
-			.collect(Collectors.toList());
-
-		int avgPrice = (int) baseProducts.stream()
-			.mapToInt(Product::getEffectivePrice)
-			.average()
-			.orElse(0);
-
-		int minPrice = Math.max(0, avgPrice - PRICE_RANGE);
-		int maxPrice = avgPrice + PRICE_RANGE;
-
-		// 7. 제외할 상품 ID (기준 상품 + 구매한 상품)
-		Set<Long> excludeIds = new HashSet<>(baseProductIds);
-		excludeIds.addAll(purchasedProductIds);
-		if (excludeIds.isEmpty()) {
-			excludeIds.add(-1L);
-		}
-
-		// 8. 추천 상품 조회 (카테고리 + 가격 필터, 인기순 정렬)
-		Pageable pageable = PageRequest.of(0, size);
-		List<Product> recommendations = productRepository.findRecommendedProducts(
-			categoryIds,
-			minPrice,
-			maxPrice,
-			new ArrayList<>(excludeIds),
-			pageable
-		);
-
-		// 9. 부족하면 인기 상품으로 채우기 (제외 대상을 고려해 충분히 조회)
-		if (recommendations.size() < size) {
-			Set<Long> foundIds = recommendations.stream()
-				.map(Product::getId)
-				.collect(Collectors.toSet());
-			excludeIds.addAll(foundIds);
-
-			int needed = size - recommendations.size();
-			int fetchSize = needed + excludeIds.size();
-			List<Product> popularProducts = productRepository.findPopularProducts(
-				PageRequest.of(0, fetchSize)
-			);
-
-			for (Product p : popularProducts) {
-				if (!excludeIds.contains(p.getId())) {
-					recommendations.add(p);
-					if (recommendations.size() >= size) break;
-				}
-			}
-		}
-
-		return productConverter.toSimpleResponseList(recommendations);
 	}
 }
