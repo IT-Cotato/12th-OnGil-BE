@@ -505,9 +505,9 @@ public class ProductService {
 	private List<Product> fetchRecommendedProducts(RecommendationFilter filter, Set<Long> excludeIds, int size) {
 		Pageable pageable = PageRequest.of(0, size);
 		return productRepository.findRecommendedProducts(
-			filter.getCategoryIds(),
-			filter.getMinPrice(),
-			filter.getMaxPrice(),
+			filter.categoryIds(),
+			filter.minPrice(),
+			filter.maxPrice(),
 			new ArrayList<>(excludeIds),
 			pageable
 		);
@@ -579,29 +579,8 @@ public class ProductService {
 	}
 
 	/**
-	 * 추천 상품 필터 조건을 담는 내부 클래스
+	 * 추천 상품 필터 조건을 담는 레코드
 	 */
-	private static class RecommendationFilter {
-		private final List<Long> categoryIds;
-		private final int minPrice;
-		private final int maxPrice;
-
-		public RecommendationFilter(List<Long> categoryIds, int minPrice, int maxPrice) {
-			this.categoryIds = categoryIds;
-			this.minPrice = minPrice;
-			this.maxPrice = maxPrice;
-		}
-
-		public List<Long> getCategoryIds() {
-			return categoryIds;
-		}
-
-		public int getMinPrice() {
-			return minPrice;
-		}
-
-		public int getMaxPrice() {
-			return maxPrice;
-		}
+	private record RecommendationFilter(List<Long> categoryIds, int minPrice, int maxPrice) {
 	}
 }
