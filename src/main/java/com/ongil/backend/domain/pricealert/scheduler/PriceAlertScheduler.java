@@ -37,7 +37,7 @@ public class PriceAlertScheduler {
 
 		for (PriceAlert alert : alerts) {
 			Product product = alert.getProduct();
-			Integer currentPrice = product.getPrice();
+			Integer currentPrice = product.getEffectivePrice();
 			Integer targetPrice = alert.getTargetPrice();
 
 			if (currentPrice <= targetPrice) {

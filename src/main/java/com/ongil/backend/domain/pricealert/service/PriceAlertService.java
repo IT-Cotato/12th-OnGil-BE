@@ -43,8 +43,8 @@ public class PriceAlertService {
 		priceAlertRepository.findByUserIdAndProductIdAndIsActiveTrue(userId, request.getProductId())
 			.ifPresent(PriceAlert::deactivate);
 
-		// 할인율로 목표 가격 계산
-		int targetPrice = product.getPrice() * (100 - request.getDiscountRate()) / 100;
+		// 할인율로 목표 가격 계산 (할인가 있으면 할인가 기준, 없으면 원가 기준)
+		int targetPrice = product.getEffectivePrice() * (100 - request.getDiscountRate()) / 100;
 
 		// 새 건 생성
 		PriceAlert priceAlert = PriceAlert.builder()
