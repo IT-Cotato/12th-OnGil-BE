@@ -73,18 +73,18 @@ public class ProductController {
 	public DataResponse<ProductSearchPageResDto> getProducts(
 		@RequestParam(required = false) String query,
 		@RequestParam(required = false) Long categoryId,
-		@RequestParam(required = false) Long brandId,
+		@RequestParam(required = false) List<Long> brandIds,
 		@RequestParam(required = false) String priceRange,
-		@RequestParam(required = false) String clothingSize,
+		@RequestParam(required = false) List<String> clothingSizes,
 		@RequestParam(required = false, defaultValue = "POPULAR") ProductSortType sortType,
 		@PageableDefault(size = 20) Pageable pageable,
 		@AuthenticationPrincipal Long userId
 	) {
 		ProductSearchCondition condition = ProductSearchCondition.builder()
 			.categoryId(categoryId)
-			.brandId(brandId)
+			.brandIds(brandIds != null && !brandIds.isEmpty() ? brandIds : null)
 			.priceRange(priceRange)
-			.size(clothingSize)
+			.sizes(clothingSizes != null && !clothingSizes.isEmpty() ? clothingSizes : null)
 			.build();
 
 		ProductSearchPageResDto res = productService.getProducts(condition, sortType, pageable, query, userId);

@@ -160,10 +160,10 @@ public class ProductService {
 				products = productRepository.findAllByParentCategoryCondition(
 					targetIds,
 					condition.getCategoryId(),
-					condition.getBrandId(),
+					condition.getBrandIds(),
 					minPrice,
 					maxPrice,
-					condition.getSize(),
+					condition.buildSizesPattern(),
 					pageableWithSort
 				);
 			} else {
@@ -171,10 +171,10 @@ public class ProductService {
 				products = productRepository.findAllByCondition(
 					targetIds,
 					condition.getCategoryId(),
-					condition.getBrandId(),
+					condition.getBrandIds(),
 					minPrice,
 					maxPrice,
-					condition.getSize(),
+					condition.buildSizesPattern(),
 					pageableWithSort
 				);
 			}
@@ -183,10 +183,10 @@ public class ProductService {
 			products = productRepository.findAllByCondition(
 				targetIds,
 				null,
-				condition.getBrandId(),
+				condition.getBrandIds(),
 				minPrice,
 				maxPrice,
-				condition.getSize(),
+				condition.buildSizesPattern(),
 				pageableWithSort
 			);
 		}
