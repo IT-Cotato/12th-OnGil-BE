@@ -382,7 +382,7 @@ public class ProductService {
 	 * - 인기 상품 순(viewCount + cartCount) 반환
 	 * - 특가 상품(SPECIAL_SALE) 제외
 	 */
-	public List<ProductSimpleResponse> getRecommendedProducts(Long userId, int size) {
+	public List<ProductSimpleResponse> getRecommendedProducts(int size) {
 		Pageable pageable = PageRequest.of(0, size);
 		List<Product> products = productRepository.findPopularProducts(pageable);
 		return productConverter.toSimpleResponseList(products);

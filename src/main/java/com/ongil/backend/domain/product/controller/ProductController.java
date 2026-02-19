@@ -150,10 +150,9 @@ public class ProductController {
 	)
 	@GetMapping("/recommend")
 	public DataResponse<List<ProductSimpleResponse>> getRecommendedProducts(
-		@AuthenticationPrincipal Long userId,
 		@RequestParam(defaultValue = "10") @Min(1) @Max(100) int size
 	) {
-		List<ProductSimpleResponse> products = productService.getRecommendedProducts(userId, size);
+		List<ProductSimpleResponse> products = productService.getRecommendedProducts(size);
 		return DataResponse.from(products);
 	}
 }
