@@ -36,7 +36,6 @@ public class MaterialReviewPrompter implements ReviewPrompter {
             한 문장에는 하나의 느낌만 작성
             1인칭 후기 톤 사용
             시니어가 이해하기 쉬운 말만 사용
-            모든 문장 끝맺음은 반드시 "~임"
             판단, 비교, 조언, 추천, 해결책 작성 금지
             
             ━━━━━━━━━━━━━━━━━━
