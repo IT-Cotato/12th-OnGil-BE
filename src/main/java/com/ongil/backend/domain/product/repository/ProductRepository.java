@@ -218,36 +218,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 		"ORDER BY (COALESCE(p.viewCount, 0) + COALESCE(p.cartCount, 0)) DESC")
 	List<Product> findPopularProducts(Pageable pageable);
 
-	/**
-	 * 개인화 추천 - 같은 카테고리 + 비슷한 가격대
-	 * 정렬: viewCount + cartCount 순
-	 */
-	@EntityGraph(attributePaths = {"brand", "category"})
-	@Query("SELECT p FROM Product p " +
-		"WHERE p.onSale = true " +
-		"AND p.productType <> com.ongil.backend.domain.product.enums.ProductType.SPECIAL_SALE " +
-		"AND p.category.id IN :categoryIds " +
-		"AND p.id NOT IN :excludeProductIds " +
-		"AND (" +
-		"  (p.discountPrice IS NOT NULL AND p.discountPrice > 0 AND p.discountPrice BETWEEN :minPrice AND :maxPrice) " +
-		"  OR (p.discountPrice IS NULL OR p.discountPrice = 0) AND p.price BETWEEN :minPrice AND :maxPrice" +
-		") " +
-		"ORDER BY (COALESCE(p.viewCount, 0) + COALESCE(p.cartCount, 0)) DESC")
-	List<Product> findRecommendedProducts(
-		@Param("categoryIds") List<Long> categoryIds,
-		@Param("minPrice") Integer minPrice,
-		@Param("maxPrice") Integer maxPrice,
-		@Param("excludeProductIds") List<Long> excludeProductIds,
-		Pageable pageable
-	);
-
-	/**
-	 * 상품 ID 목록으로 상품 조회
-	 */
-	@EntityGraph(attributePaths = {"brand", "category"})
-	@Query("SELECT p FROM Product p WHERE p.id IN :productIds AND p.onSale = true")
-	List<Product> findByIdInAndOnSaleTrue(@Param("productIds") List<Long> productIds);
-
 	// 특정 브랜드를 사용하는 상품이 있는지 확인
 	boolean existsByBrandId(Long brandId);
 
