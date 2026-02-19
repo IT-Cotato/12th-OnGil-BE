@@ -14,7 +14,7 @@ import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
 import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
-import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
+
 import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.enums.ProductSortType;
 import com.ongil.backend.domain.product.service.ProductService;
@@ -149,11 +149,11 @@ public class ProductController {
 			"""
 	)
 	@GetMapping("/recommend")
-	public DataResponse<List<RecommendedProductResponse>> getRecommendedProducts(
+	public DataResponse<List<ProductSimpleResponse>> getRecommendedProducts(
 		@AuthenticationPrincipal Long userId,
 		@RequestParam(defaultValue = "10") @Min(1) @Max(100) int size
 	) {
-		List<RecommendedProductResponse> products = productService.getRecommendedProducts(userId, size);
+		List<ProductSimpleResponse> products = productService.getRecommendedProducts(userId, size);
 		return DataResponse.from(products);
 	}
 }

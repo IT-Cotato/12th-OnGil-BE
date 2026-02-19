@@ -25,7 +25,7 @@ import com.ongil.backend.domain.product.dto.response.ProductDetailResponse;
 import com.ongil.backend.domain.product.dto.response.ProductOptionResponse;
 import com.ongil.backend.domain.product.dto.response.ProductSearchPageResDto;
 import com.ongil.backend.domain.product.dto.response.ProductSimpleResponse;
-import com.ongil.backend.domain.product.dto.response.RecommendedProductResponse;
+
 import com.ongil.backend.domain.product.dto.response.SizeGuideResponse;
 import com.ongil.backend.domain.product.entity.Product;
 import com.ongil.backend.domain.product.entity.ProductOption;
@@ -392,7 +392,7 @@ public class ProductService {
 	 * - 비로그인: 전체 인기 상품
 	 * - 정렬: 전체 고객 기준 viewCount + cartCount 순
 	 */
-	public List<RecommendedProductResponse> getRecommendedProducts(Long userId, int size) {
+	public List<ProductSimpleResponse> getRecommendedProducts(Long userId, int size) {
 		if (userId == null) {
 			return getPopularProducts(size);
 		}
@@ -402,16 +402,16 @@ public class ProductService {
 	/**
 	 * 인기 상품 조회
 	 */
-	private List<RecommendedProductResponse> getPopularProducts(int size) {
+	private List<ProductSimpleResponse> getPopularProducts(int size) {
 		Pageable pageable = PageRequest.of(0, size);
 		List<Product> products = productRepository.findPopularProducts(pageable);
-		return toRecommendedResponseList(products);
+		return productConverter.toSimpleResponseList(products);
 	}
 
 	/**
 	 * 개인화 추천 (로그인 사용자)
 	 */
-	private List<RecommendedProductResponse> getPersonalizedRecommendations(Long userId, int size) {
+	private List<ProductSimpleResponse> getPersonalizedRecommendations(Long userId, int size) {
 		LocalDateTime since = LocalDateTime.now().minusDays(DAYS_TO_LOOK_BACK);
 
 		// 1. 최근 30일간 조회한 상품 ID
@@ -495,37 +495,6 @@ public class ProductService {
 			}
 		}
 
-		return toRecommendedResponseList(recommendations);
-	}
-
-	/**
-	 * Product → RecommendedProductResponse 변환
-	 */
-	private RecommendedProductResponse toRecommendedResponse(Product product) {
-		String thumbnailUrl = null;
-		if (product.getImageUrls() != null && !product.getImageUrls().isEmpty()) {
-			String[] urls = product.getImageUrls().split(",");
-			thumbnailUrl = urls[0].trim();
-		}
-
-		return RecommendedProductResponse.builder()
-			.id(product.getId())
-			.name(product.getName())
-			.price(product.getPrice())
-			.discountRate(product.getDiscountRate())
-			.finalPrice(product.getEffectivePrice())
-			.thumbnailImageUrl(thumbnailUrl)
-			.brandName(product.getBrand() != null ? product.getBrand().getName() : null)
-			.productType(product.getProductType())
-			.viewCount(product.getViewCount())
-			.cartCount(product.getCartCount())
-			.reviewRating(product.getReviewRating())
-			.build();
-	}
-
-	private List<RecommendedProductResponse> toRecommendedResponseList(List<Product> products) {
-		return products.stream()
-			.map(this::toRecommendedResponse)
-			.collect(Collectors.toList());
+		return productConverter.toSimpleResponseList(recommendations);
 	}
 }
