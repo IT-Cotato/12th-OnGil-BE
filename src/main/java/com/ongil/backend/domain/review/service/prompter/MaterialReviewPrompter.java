@@ -1,5 +1,7 @@
 package com.ongil.backend.domain.review.service.prompter;
 
+import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.ongil.backend.domain.review.dto.request.AiReviewGenerateRequest;
@@ -128,30 +130,38 @@ public class MaterialReviewPrompter implements ReviewPrompter {
 		prompt.append("소재 평가: ").append(request.getMaterialAnswer().getDisplayName()).append("\n");
 
 		if (!request.getMaterialFeatures().isEmpty()) {
-			prompt.append("선택한 소재 특징:\n");
-			boolean hasThicknessAll = false;
+			boolean hasThicknessAll = request.getMaterialFeatures().contains("두께감:선택지전체");
+			List<String> otherFeatures = request.getMaterialFeatures().stream()
+				.filter(f -> !"두께감:선택지전체".equals(f))
+				.toList();
 
-			for (String feature : request.getMaterialFeatures()) {
-				if ("두께감:선택지전체".equals(feature)) {
-					hasThicknessAll = true;
-					continue;
-				}
-				prompt.append("- ").append(feature).append("\n");
-			}
-
-			prompt.append("\n[문장 생성 규칙]");
-			prompt.append("\n1. 위 리스트에 나열된 각 특징마다 서로 다른 느낌의 '2문장씩'을 반드시 생성할 것.");
-
-			if (hasThicknessAll) {
-				prompt.append("\n[특수 지시] 두께감은 아래 3가지 상황에 맞춰 생성하되, 각 문장 사이를 '|' 기호로 구분할 것:\n");
+			// 두께감 전체 선택 단독인 경우
+			if (hasThicknessAll && otherFeatures.isEmpty()) {
+				prompt.append("\n[특수 지시] 두께감만 선택됨. 아래 3가지 상황에 맞춰 각각 1문장씩 생성하되, '|' 기호로 구분할 것:\n");
 				if (isPositive) {
 					prompt.append("1. 두꺼워서 따뜻함 | 2. 얇아서 시원함 | 3. 적당한 두께임\n");
 				} else {
 					prompt.append("1. 소재가 너무 두꺼워서 답답함 | 2. 너무 얇아서 추운 느낌임 | 3. 두께가 애매해서 아쉬움\n");
 				}
+			} else {
+				prompt.append("선택한 소재 특징:\n");
+				for (String feature : otherFeatures) {
+					prompt.append("- ").append(feature).append("\n");
+				}
+
+				prompt.append("\n[문장 생성 규칙]");
+				prompt.append("\n1. 위 리스트에 나열된 각 특징마다 서로 다른 느낌의 '2문장씩'을 반드시 생성할 것.");
+
+				if (hasThicknessAll) {
+					prompt.append("\n[특수 지시] 두께감은 아래 3가지 상황에 맞춰 생성하되, 각 문장 사이를 '|' 기호로 구분할 것:\n");
+					if (isPositive) {
+						prompt.append("1. 두꺼워서 따뜻함 | 2. 얇아서 시원함 | 3. 적당한 두께임\n");
+					} else {
+						prompt.append("1. 소재가 너무 두꺼워서 답답함 | 2. 너무 얇아서 추운 느낌임 | 3. 두께가 애매해서 아쉬움\n");
+					}
+				}
 			}
-		}
-		else {
+		} else {
 			prompt.append("\n[지시] 특정 소재 속성 언급 없이, 전반적으로 무난하고 평범하다는 인상의 서로 다른 '2문장'을 생성할 것.\n");
 		}
 
