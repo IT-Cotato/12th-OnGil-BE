@@ -23,7 +23,9 @@ import com.ongil.backend.global.config.redis.CacheKeyConstants;
 import com.ongil.backend.global.config.redis.RedisCacheService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,13 +45,18 @@ public class BrandService {
 			BrandResponse.class
 		);
 
-		if (cached != null) {
+		if (cached != null && !cached.isEmpty()) {
 			return cached;
 		}
 
 		// Cache Miss → DB 조회
 		List<Brand> brands = brandRepository.findAllOrderByName();
 		List<BrandResponse> response = brandConverter.toResponseList(brands);
+
+		if (response.isEmpty()) {
+			log.warn("조회된 브랜드가 없습니다.");
+			return response;
+		}
 
 		// Redis 캐싱 (무한 TTL)
 		redisCacheService.save(

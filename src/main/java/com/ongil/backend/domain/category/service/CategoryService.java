@@ -23,7 +23,9 @@ import com.ongil.backend.global.config.redis.CacheKeyConstants;
 import com.ongil.backend.global.config.redis.RedisCacheService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -42,7 +44,7 @@ public class CategoryService {
 			CategoryResponse.class
 		);
 
-		if (cached != null) {
+		if (cached != null && !cached.isEmpty()) {
 			return cached;
 		}
 
@@ -66,6 +68,11 @@ public class CategoryService {
 			})
 			.filter(r -> r != null)
 			.collect(Collectors.toList());
+
+		if (response.isEmpty()) {
+			log.warn("조회된 카테고리가 없습니다.");
+			return response;
+		}
 
 		// Redis 캐싱 (무한 TTL)
 		redisCacheService.save(
