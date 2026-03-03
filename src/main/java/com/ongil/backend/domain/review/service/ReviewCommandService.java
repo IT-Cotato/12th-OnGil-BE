@@ -182,31 +182,37 @@ public class ReviewCommandService {
 	}
 
 	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {
-		Review review = reviewRepository.findById(reviewId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND));
+		if (!reviewRepository.existsById(reviewId)) {
+			throw new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND);
+		}
 
-		boolean exists = reviewHelpfulRepository.existsByReviewIdAndUserId(reviewId, userId);
+		// delete 결과로 이전 상태 판단 (TOCTOU 제거)
+		int deleted = reviewHelpfulRepository.deleteByReviewIdAndUserId(reviewId, userId);
+		boolean isHelpful;
 
-		if (exists) {
-			reviewHelpfulRepository.deleteByReviewIdAndUserId(reviewId, userId);
+		if (deleted > 0) {
+			// 도움돼요 취소
 			reviewRepository.decrementHelpfulCount(reviewId);
+			isHelpful = false;
 		} else {
+			// 도움돼요 추가
 			User user = getUserOrThrow(userId);
+			Review reviewRef = reviewRepository.getReferenceById(reviewId);
 			ReviewHelpful helpful = ReviewHelpful.builder()
-				.review(review)
+				.review(reviewRef)
 				.user(user)
 				.build();
 			reviewHelpfulRepository.save(helpful);
 			reviewRepository.incrementHelpfulCount(reviewId);
+			isHelpful = true;
 		}
 
-		int updatedCount = exists
-			? Math.max(0, review.getHelpfulCount() - 1)
-			: review.getHelpfulCount() + 1;
+		// DB에서 최신 count 조회
+		int updatedCount = reviewRepository.findHelpfulCountById(reviewId).orElse(0);
 
 		return ReviewHelpfulResponse.builder()
 			.reviewId(reviewId)
-			.isHelpful(!exists)
+			.isHelpful(isHelpful)
 			.helpfulCount(updatedCount)
 			.build();
 	}

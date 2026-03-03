@@ -188,11 +188,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE Review r SET r.helpfulCount = r.helpfulCount + 1 WHERE r.id = :reviewId")
-	void incrementHelpfulCount(@Param("reviewId") Long reviewId);
+	int incrementHelpfulCount(@Param("reviewId") Long reviewId);
 
 	@Modifying(clearAutomatically = true)
 	@Query("UPDATE Review r SET r.helpfulCount = r.helpfulCount - 1 WHERE r.id = :reviewId AND r.helpfulCount > 0")
-	void decrementHelpfulCount(@Param("reviewId") Long reviewId);
+	int decrementHelpfulCount(@Param("reviewId") Long reviewId);
+
+	@Query("SELECT r.helpfulCount FROM Review r WHERE r.id = :reviewId")
+	Optional<Integer> findHelpfulCountById(@Param("reviewId") Long reviewId);
 
 	@Modifying
 	@Query("DELETE FROM Review r WHERE r.reviewStatus = 'DRAFT' AND r.createdAt < :threshold")
