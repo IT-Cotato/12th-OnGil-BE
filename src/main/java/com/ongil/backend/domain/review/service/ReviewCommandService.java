@@ -17,13 +17,16 @@ import com.ongil.backend.domain.review.dto.request.ReviewStep1Request;
 import com.ongil.backend.domain.review.dto.request.ReviewStep2MaterialRequest;
 import com.ongil.backend.domain.review.dto.request.ReviewStep2SizeRequest;
 import com.ongil.backend.domain.review.dto.response.AiReviewResponse;
+import com.ongil.backend.domain.review.dto.response.ReviewHelpfulResponse;
 import com.ongil.backend.domain.review.dto.response.ReviewStep1Response;
 import com.ongil.backend.domain.review.entity.Review;
+import com.ongil.backend.domain.review.entity.ReviewHelpful;
 import com.ongil.backend.domain.review.enums.ClothingCategory;
 import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.MaterialFeatureType;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
+import com.ongil.backend.domain.review.repository.ReviewHelpfulRepository;
 import com.ongil.backend.domain.review.repository.ReviewRepository;
 import com.ongil.backend.domain.review.validator.ReviewValidator;
 import com.ongil.backend.domain.user.entity.User;
@@ -42,6 +45,7 @@ public class ReviewCommandService {
 	private static final int REVIEW_REWARD_POINTS = 500;
 
 	private final ReviewRepository reviewRepository;
+	private final ReviewHelpfulRepository reviewHelpfulRepository;
 	private final UserRepository userRepository;
 	private final OrderItemRepository orderItemRepository;
 	private final ProductRepository productRepository;
@@ -175,6 +179,36 @@ public class ReviewCommandService {
 
 		// 상품 리뷰 통계 갱신 (원자적 UPDATE)
 		productRepository.updateReviewStats(review.getProduct().getId());
+	}
+
+	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {
+		Review review = reviewRepository.findById(reviewId)
+			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND));
+
+		boolean exists = reviewHelpfulRepository.existsByReviewIdAndUserId(reviewId, userId);
+
+		if (exists) {
+			reviewHelpfulRepository.deleteByReviewIdAndUserId(reviewId, userId);
+			reviewRepository.decrementHelpfulCount(reviewId);
+		} else {
+			User user = getUserOrThrow(userId);
+			ReviewHelpful helpful = ReviewHelpful.builder()
+				.review(review)
+				.user(user)
+				.build();
+			reviewHelpfulRepository.save(helpful);
+			reviewRepository.incrementHelpfulCount(reviewId);
+		}
+
+		int updatedCount = exists
+			? Math.max(0, review.getHelpfulCount() - 1)
+			: review.getHelpfulCount() + 1;
+
+		return ReviewHelpfulResponse.builder()
+			.reviewId(reviewId)
+			.isHelpful(!exists)
+			.helpfulCount(updatedCount)
+			.build();
 	}
 
 	private Review getReviewOrThrow(Long reviewId) {

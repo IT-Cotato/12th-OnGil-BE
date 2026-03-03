@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,8 +15,6 @@ import org.springframework.data.repository.query.Param;
 import com.ongil.backend.domain.review.entity.Review;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
-
-import jakarta.persistence.LockModeType;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
@@ -189,9 +186,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 		@Param("reviewType") ReviewType reviewType
 	);
 
-	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	@Query("SELECT r FROM Review r WHERE r.id = :reviewId")
-	Optional<Review> findByIdWithLock(@Param("reviewId") Long reviewId);
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE Review r SET r.helpfulCount = r.helpfulCount + 1 WHERE r.id = :reviewId")
+	void incrementHelpfulCount(@Param("reviewId") Long reviewId);
+
+	@Modifying(clearAutomatically = true)
+	@Query("UPDATE Review r SET r.helpfulCount = r.helpfulCount - 1 WHERE r.id = :reviewId AND r.helpfulCount > 0")
+	void decrementHelpfulCount(@Param("reviewId") Long reviewId);
 
 	@Modifying
 	@Query("DELETE FROM Review r WHERE r.reviewStatus = 'DRAFT' AND r.createdAt < :threshold")

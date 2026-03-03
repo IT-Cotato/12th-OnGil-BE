@@ -107,7 +107,7 @@ public class ReviewController {
 		@PathVariable Long reviewId,
 		@AuthenticationPrincipal Long userId
 	) {
-		ReviewHelpfulResponse response = reviewQueryService.toggleHelpful(reviewId, userId);
+		ReviewHelpfulResponse response = reviewCommandService.toggleHelpful(reviewId, userId);
 		return DataResponse.from(response);
 	}
 
