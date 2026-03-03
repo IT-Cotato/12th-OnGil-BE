@@ -21,7 +21,6 @@ import com.ongil.backend.domain.review.converter.ReviewConverter;
 import com.ongil.backend.domain.review.dto.request.ReviewListRequest;
 import com.ongil.backend.domain.review.dto.response.*;
 import com.ongil.backend.domain.review.entity.Review;
-import com.ongil.backend.domain.review.entity.ReviewHelpful;
 import com.ongil.backend.domain.review.enums.ColorAnswer;
 import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.ReviewSortType;
@@ -213,36 +212,6 @@ public class ReviewQueryService {
 		}
 
 		return count;
-	}
-
-	// 6. 리뷰 도움돼요 토글
-	@Transactional
-	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {
-		// 리뷰에 대한 PESSIMISTIC WRITE 락 획득
-		Review review = reviewRepository.findByIdWithLock(reviewId)
-			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND));
-
-		User user = getUserOrThrow(userId);
-
-		boolean exists = reviewHelpfulRepository.existsByReviewIdAndUserId(reviewId, userId);
-
-		if (exists) {
-			reviewHelpfulRepository.deleteByReviewIdAndUserId(reviewId, userId);
-			review.decrementHelpfulCount();
-		} else {
-			ReviewHelpful helpful = ReviewHelpful.builder()
-				.review(review)
-				.user(user)
-				.build();
-			reviewHelpfulRepository.save(helpful);
-			review.incrementHelpfulCount();
-		}
-
-		return ReviewHelpfulResponse.builder()
-			.reviewId(reviewId)
-			.isHelpful(!exists)
-			.helpfulCount(review.getHelpfulCount())
-			.build();
 	}
 
 	// 정렬 기준에 따른 Pageable 생성

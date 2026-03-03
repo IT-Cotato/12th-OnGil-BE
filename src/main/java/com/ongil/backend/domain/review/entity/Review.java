@@ -121,16 +121,6 @@ public class Review extends BaseEntity {
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product product;
 
-	public void incrementHelpfulCount() {
-		this.helpfulCount++;
-	}
-
-	public void decrementHelpfulCount() {
-		if (this.helpfulCount > 0) {
-			this.helpfulCount--;
-		}
-	}
-
 	public void updateStep1(int rating, SizeAnswer sizeAnswer, ColorAnswer colorAnswer, MaterialAnswer materialAnswer) {
 		this.rating = rating;
 		this.sizeAnswer = sizeAnswer;

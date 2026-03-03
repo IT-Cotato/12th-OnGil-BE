@@ -17,13 +17,16 @@ import com.ongil.backend.domain.review.dto.request.ReviewStep1Request;
 import com.ongil.backend.domain.review.dto.request.ReviewStep2MaterialRequest;
 import com.ongil.backend.domain.review.dto.request.ReviewStep2SizeRequest;
 import com.ongil.backend.domain.review.dto.response.AiReviewResponse;
+import com.ongil.backend.domain.review.dto.response.ReviewHelpfulResponse;
 import com.ongil.backend.domain.review.dto.response.ReviewStep1Response;
 import com.ongil.backend.domain.review.entity.Review;
+import com.ongil.backend.domain.review.entity.ReviewHelpful;
 import com.ongil.backend.domain.review.enums.ClothingCategory;
 import com.ongil.backend.domain.review.enums.MaterialAnswer;
 import com.ongil.backend.domain.review.enums.MaterialFeatureType;
 import com.ongil.backend.domain.review.enums.ReviewStatus;
 import com.ongil.backend.domain.review.enums.ReviewType;
+import com.ongil.backend.domain.review.repository.ReviewHelpfulRepository;
 import com.ongil.backend.domain.review.repository.ReviewRepository;
 import com.ongil.backend.domain.review.validator.ReviewValidator;
 import com.ongil.backend.domain.user.entity.User;
@@ -42,6 +45,7 @@ public class ReviewCommandService {
 	private static final int REVIEW_REWARD_POINTS = 500;
 
 	private final ReviewRepository reviewRepository;
+	private final ReviewHelpfulRepository reviewHelpfulRepository;
 	private final UserRepository userRepository;
 	private final OrderItemRepository orderItemRepository;
 	private final ProductRepository productRepository;
@@ -175,6 +179,42 @@ public class ReviewCommandService {
 
 		// 상품 리뷰 통계 갱신 (원자적 UPDATE)
 		productRepository.updateReviewStats(review.getProduct().getId());
+	}
+
+	public ReviewHelpfulResponse toggleHelpful(Long reviewId, Long userId) {
+		if (!reviewRepository.existsById(reviewId)) {
+			throw new EntityNotFoundException(ErrorCode.REVIEW_NOT_FOUND);
+		}
+
+		// delete 결과로 이전 상태 판단 (TOCTOU 제거)
+		int deleted = reviewHelpfulRepository.deleteByReviewIdAndUserId(reviewId, userId);
+		boolean isHelpful;
+
+		if (deleted > 0) {
+			// 도움돼요 취소
+			reviewRepository.decrementHelpfulCount(reviewId);
+			isHelpful = false;
+		} else {
+			// 도움돼요 추가
+			User user = getUserOrThrow(userId);
+			Review reviewRef = reviewRepository.getReferenceById(reviewId);
+			ReviewHelpful helpful = ReviewHelpful.builder()
+				.review(reviewRef)
+				.user(user)
+				.build();
+			reviewHelpfulRepository.save(helpful);
+			reviewRepository.incrementHelpfulCount(reviewId);
+			isHelpful = true;
+		}
+
+		// DB에서 최신 count 조회
+		int updatedCount = reviewRepository.findHelpfulCountById(reviewId).orElse(0);
+
+		return ReviewHelpfulResponse.builder()
+			.reviewId(reviewId)
+			.isHelpful(isHelpful)
+			.helpfulCount(updatedCount)
+			.build();
 	}
 
 	private Review getReviewOrThrow(Long reviewId) {
