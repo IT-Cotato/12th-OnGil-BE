@@ -1,5 +1,7 @@
 package com.ongil.backend.domain.pricealert.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +16,7 @@ import com.ongil.backend.domain.user.entity.User;
 import com.ongil.backend.domain.user.repository.UserRepository;
 import com.ongil.backend.global.common.exception.EntityNotFoundException;
 import com.ongil.backend.global.common.exception.ErrorCode;
+import com.ongil.backend.global.common.exception.ValidationException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -30,8 +33,14 @@ public class PriceAlertService {
 	 * 사용자가 상품 상세 화면에서 원하는 할인가를 선택하여 DB에 저장
 	 * 실제 알림 발송은 PriceAlertScheduler가 주기적으로 가격을 확인하여 처리
 	 */
+	private static final List<Integer> ALLOWED_DISCOUNT_RATES = List.of(10, 20, 30, 40);
+
 	@Transactional
 	public PriceAlert createOrUpdatePriceAlert(Long userId, PriceAlertRequest request) {
+
+		if (!ALLOWED_DISCOUNT_RATES.contains(request.getDiscountRate())) {
+			throw new ValidationException(ErrorCode.INVALID_DISCOUNT_RATE);
+		}
 
 		User user = userRepository.findById(userId)
 			.orElseThrow(() -> new EntityNotFoundException(ErrorCode.USER_NOT_FOUND));

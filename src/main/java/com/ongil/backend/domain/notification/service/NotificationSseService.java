@@ -31,19 +31,19 @@ public class NotificationSseService {
 		SseEmitter emitter = new SseEmitter(SSE_TIMEOUT);
 		emitters.put(userId, emitter);
 
-		// 연결 종료 시 제거
+		// 연결 종료 시 제거 (value 지정으로 새로 등록된 emitter를 잘못 제거하는 race condition 방지)
 		emitter.onCompletion(() -> {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.info("SSE 연결 종료 - userId: {}", userId);
 		});
 
 		emitter.onTimeout(() -> {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.info("SSE 타임아웃 - userId: {}", userId);
 		});
 
 		emitter.onError(e -> {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.error("SSE 에러 - userId: {}", userId, e);
 		});
 
@@ -53,7 +53,7 @@ public class NotificationSseService {
 				.name("connect")
 				.data("SSE 연결 성공"));
 		} catch (IOException e) {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.error("SSE 초기 이벤트 전송 실패 - userId: {}", userId, e);
 		}
 
@@ -76,7 +76,7 @@ public class NotificationSseService {
 				.data(notification));
 			log.info("SSE 알림 전송 성공 - userId: {}, notificationId: {}", userId, notification.getNotificationId());
 		} catch (IOException e) {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.error("SSE 알림 전송 실패 - userId: {}", userId, e);
 		}
 	}

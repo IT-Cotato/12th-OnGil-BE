@@ -88,6 +88,7 @@ public enum ErrorCode {
 
 	// PRICE_ALERT
 	PRICE_ALERT_NOT_FOUND(HttpStatus.NOT_FOUND, "설정된 가격 알림이 없습니다.", "ALERT-001"),
+	INVALID_DISCOUNT_RATE(HttpStatus.BAD_REQUEST, "할인율은 10, 20, 30, 40 중 하나여야 합니다.", "ALERT-002"),
 
 	// FILE / S3
 	FILE_IS_EMPTY(HttpStatus.BAD_REQUEST, "파일이 비어 있습니다.", "FILE-001"),

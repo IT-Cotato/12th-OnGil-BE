@@ -1,5 +1,6 @@
 package com.ongil.backend.domain.notification.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -51,12 +52,9 @@ public class NotificationService {
 		notification.markAsRead();
 	}
 
-	// 모든 알림 읽음 처리
+	// 모든 알림 읽음 처리 (벌크 UPDATE로 N+1 방지)
 	@Transactional
 	public void markAllAsRead(Long userId) {
-		List<Notification> notifications = notificationRepository
-			.findByUserIdAndIsReadFalseOrderByNotifiedAtDesc(userId);
-
-		notifications.forEach(Notification::markAsRead);
+		notificationRepository.markAllAsRead(userId, LocalDateTime.now());
 	}
 }
