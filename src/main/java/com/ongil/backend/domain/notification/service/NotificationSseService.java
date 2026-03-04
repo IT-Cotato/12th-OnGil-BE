@@ -53,7 +53,7 @@ public class NotificationSseService {
 				.name("connect")
 				.data("SSE 연결 성공"));
 		} catch (IOException e) {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.error("SSE 초기 이벤트 전송 실패 - userId: {}", userId, e);
 		}
 
@@ -76,7 +76,7 @@ public class NotificationSseService {
 				.data(notification));
 			log.info("SSE 알림 전송 성공 - userId: {}, notificationId: {}", userId, notification.getNotificationId());
 		} catch (IOException e) {
-			emitters.remove(userId);
+			emitters.remove(userId, emitter);
 			log.error("SSE 알림 전송 실패 - userId: {}", userId, e);
 		}
 	}
